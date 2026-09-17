@@ -62,7 +62,7 @@ export default function CustomerForm({ formData, onChange, errors, customQrs }) 
           <div>
             <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
               <Phone className="w-3.5 h-3.5 text-amber-600" />
-              Philippine Mobile Number <span className="text-red-500">*</span>
+              Mobile Number <span className="text-red-500">*</span>
             </label>
             <input
               type="tel"

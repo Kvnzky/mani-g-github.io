@@ -204,7 +204,7 @@ export default function App() {
     if (!customerData.mobileNumber.trim()) {
       errors.mobileNumber = 'Mobile number is required.';
     } else if (!mobileRegex.test(cleanMobile)) {
-      errors.mobileNumber = 'Please enter a valid Philippine mobile number (e.g. 09171234567 or +639171234567).';
+      errors.mobileNumber = 'Please enter a valid mobile number (e.g. 09171234567 or +639171234567).';
     }
 
     if (!customerData.deliveryAddress.trim()) {
@@ -387,13 +387,13 @@ export default function App() {
             {/* Friendly Hero Banner */}
             <div className="text-center space-y-2 py-5 sm:py-7 bg-gradient-to-b from-amber-100/60 to-transparent rounded-3xl p-4 sm:p-8 border border-amber-200/50 shadow-xs">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
-                <span>🇵🇭</span> Hot & Crispy Everyday
+                <span>🇵🇭</span> Crispy na, Crunchy pa.
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-mani-950 tracking-tight">
-                MANI G?
+                MANI WONDERING
               </h2>
               <p className="text-base sm:text-lg text-amber-800 font-extrabold italic tracking-tight">
-                “G ka ba sa crunch?”
+                “Wondering where your money went? We know.” 👀🥜
               </p>
               <p className="text-xs sm:text-sm text-mani-600 max-w-md mx-auto font-medium leading-relaxed">
                 Choose your favorite flavors, enter your delivery address, and pick your payment method!
@@ -467,7 +467,7 @@ export default function App() {
                     <div className="flex items-center gap-2">
                       <span className="text-xl">🛒</span>
                       <h3 className="text-base sm:text-lg font-black text-mani-900">
-                        Live Order Summary
+                        Order Summary
                       </h3>
                     </div>
                     {totalPacks > 0 && (
@@ -620,10 +620,10 @@ export default function App() {
       <footer className="border-t border-mani-200/80 bg-white py-6 text-center text-xs text-mani-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-1">
           <p className="font-bold text-mani-700">
-            🥜 MANI G? — “G ka ba sa crunch?”
+            🥜 MANI WONDERING — “Wondering where your money went? We know.” 👀🥜
           </p>
           <p className="text-mani-400 text-[11px]">
-            Freshly roasted artisanal peanuts • Hot & crispy everyday
+            Freshly roasted artisanal peanuts • Crispy na, Crunchy pa.
           </p>
         </div>
       </footer>

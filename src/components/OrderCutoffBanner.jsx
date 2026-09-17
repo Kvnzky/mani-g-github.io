@@ -31,18 +31,27 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
     return null;
   }
 
-  // Format seconds into Days (if > 0), HH:MM:SS
+  // Format military time (e.g. 23:59, 17:00) to normal 12-hour format (e.g. 11:59 PM, 5:00 PM)
+  const formatNormalTime = (timeStr) => {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1];
+    if (isNaN(hours)) return timeStr;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes} ${ampm}`;
+  };
+
+  // Format seconds into HH:MM:SS
   const formatCountdown = (totalSeconds) => {
-    const days = Math.floor(totalSeconds / 86400);
-    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
     const pad = (n) => String(n).padStart(2, '0');
-
-    if (days > 0) {
-      return `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-    }
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   };
 
@@ -88,7 +97,7 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-mani-700 font-semibold mt-1">
-              Cutoff schedule: <span className="font-bold text-mani-900">{cutoffInfo.cutoffDate}</span> at <span className="font-bold text-mani-900">{cutoffInfo.cutoffTime}</span> (Philippine Time)
+              Cutoff schedule: <span className="font-bold text-mani-900">{cutoffInfo.cutoffDate}</span> at <span className="font-bold text-mani-900">{formatNormalTime(cutoffInfo.cutoffTime)}</span>
             </p>
           </div>
         </div>

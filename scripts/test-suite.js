@@ -136,10 +136,12 @@ async function runTests() {
 
   // Test 2.3: Set cutoff in future -> CUTOFF SCHEDULED with remainingSeconds > 0
   try {
+    const futureDate = new Date(Date.now() + 86400000 * 2);
+    const futureDateStr = futureDate.toISOString().split('T')[0];
     await fetch(`${BASE_URL}/api/admin/cutoff`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
-      body: JSON.stringify({ enabled: true, date: '2026-09-17', time: '23:59' })
+      body: JSON.stringify({ enabled: true, date: futureDateStr, time: '23:59' })
     });
     const cutoffRes = await fetch(`${BASE_URL}/api/cutoff`);
     const cutoff = await cutoffRes.json();
@@ -150,10 +152,12 @@ async function runTests() {
 
   // Test 2.4: Set cutoff in past -> CLOSED
   try {
+    const pastDate = new Date(Date.now() - 86400000 * 2);
+    const pastDateStr = pastDate.toISOString().split('T')[0];
     await fetch(`${BASE_URL}/api/admin/cutoff`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
-      body: JSON.stringify({ enabled: true, date: '2026-09-16', time: '12:00' })
+      body: JSON.stringify({ enabled: true, date: pastDateStr, time: '12:00' })
     });
     const cutoffRes = await fetch(`${BASE_URL}/api/cutoff`);
     const cutoff = await cutoffRes.json();

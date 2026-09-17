@@ -26,7 +26,7 @@ export default function Header({
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg sm:text-2xl font-black tracking-tight text-mani-900 flex items-center gap-1.5">
-                  MANI G?
+                  MANI WONDERING
                 </h1>
                 <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300/60">
                   <Sparkles className="w-3 h-3 text-amber-700" />
@@ -34,7 +34,7 @@ export default function Header({
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-mani-600 font-extrabold italic leading-tight">
-                “G ka ba sa crunch?”
+                “Wondering where your money went? We know.” 👀🥜
               </p>
             </div>
           </div>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#7C552E" />
-  <title>🥜 MANI G? — “G ka ba sa crunch?”</title>
+  <title>🥜 MANI WONDERING — “Wondering where your money went? We know.” 👀🥜</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -182,7 +182,7 @@
         if (!customer.mobile.trim()) {
           errs.mobile = 'Mobile number is required';
         } else if (!/^(09|\+639|639)\d{9}$/.test(cleanMobile)) {
-          errs.mobile = 'Valid Philippine mobile required (e.g. 09171234567)';
+          errs.mobile = 'Valid mobile number required (e.g. 09171234567)';
         }
         if (!customer.deliveryAddress.trim()) {
           errs.deliveryAddress = 'Delivery address is required';
@@ -272,8 +272,8 @@
               <div onClick={() => setView('order')} className="cursor-pointer flex items-center gap-2.5">
                 <span className="text-3xl filter drop-shadow">🥜</span>
                 <div>
-                  <h1 className="text-lg sm:text-xl font-black text-mani-900 leading-none tracking-tight">MANI G?</h1>
-                  <p className="text-xs text-mani-600 font-medium italic">“G ka ba sa crunch?”</p>
+                  <h1 className="text-lg sm:text-xl font-black text-mani-900 leading-none tracking-tight">MANI WONDERING</h1>
+                  <p className="text-xs text-mani-600 font-medium italic">“Wondering where your money went? We know.” 👀🥜</p>
                 </div>
               </div>
 
@@ -502,13 +502,13 @@
                 {/* Hero Header */}
                 <div className="text-center py-4 bg-gradient-to-b from-amber-100/60 to-transparent rounded-3xl p-5 border border-amber-200/60 shadow-xs">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-amber-900 bg-amber-200/80 px-3 py-1 rounded-full">
-                    Freshly Roasted Daily 🇵🇭
+                    Crispy na, Crunchy pa. 🇵🇭
                   </span>
                   <h2 className="text-3xl sm:text-4xl font-black text-mani-900 mt-2 tracking-tight">
-                    🥜 MANI G?
+                    🥜 MANI WONDERING
                   </h2>
                   <p className="text-sm sm:text-base text-amber-900 mt-1 font-bold italic">
-                    “G ka ba sa crunch?”
+                    “Wondering where your money went? We know.” 👀🥜
                   </p>
                 </div>
 
@@ -601,7 +601,7 @@
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-mani-800 mb-1">Mobile Number (PH) *</label>
+                      <label className="block text-xs font-bold text-mani-800 mb-1">Mobile Number *</label>
                       <input
                         type="tel"
                         placeholder="0917 123 4567"
