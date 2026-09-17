@@ -47,9 +47,9 @@ export default function App() {
     paymentMethod: 'Cash on Delivery'
   });
 
-  // Configurable QR codes
+  // Configurable QR codes (v2 with new images)
   const [customQrs, setCustomQrs] = useState(() => {
-    const saved = localStorage.getItem('mani_qr_config');
+    const saved = localStorage.getItem('mani_qr_config_v2');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -164,7 +164,7 @@ export default function App() {
 
   const handleUpdateQrs = (newQrs) => {
     setCustomQrs(newQrs);
-    localStorage.setItem('mani_qr_config', JSON.stringify(newQrs));
+    localStorage.setItem('mani_qr_config_v2', JSON.stringify(newQrs));
   };
 
   const handleQuantityChange = (productId, newQty) => {

@@ -106,7 +106,7 @@ const htmlTemplate = `<!DOCTYPE html>
       });
 
       const [customQrs, setCustomQrs] = useState(() => {
-        const saved = localStorage.getItem('mani_qr_config');
+        const saved = localStorage.getItem('mani_qr_config_v2');
         if (saved) {
           try { return JSON.parse(saved); } catch (e) {}
         }
@@ -146,7 +146,7 @@ const htmlTemplate = `<!DOCTYPE html>
       }, [appsScriptUrl]);
 
       useEffect(() => {
-        localStorage.setItem('mani_qr_config', JSON.stringify(customQrs));
+        localStorage.setItem('mani_qr_config_v2', JSON.stringify(customQrs));
       }, [customQrs]);
 
       const handleQty = (id, change) => {
