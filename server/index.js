@@ -210,6 +210,7 @@ app.post('/api/orders', async (req, res) => {
       mobileNumber: formatPhilippineMobile(mobileNumber),
       deliveryAddress: deliveryAddress.trim(),
       paymentMethod: chosenPayment,
+      paymentStatus: 'Unpaid',
       items,
       flavorQuantities: flavorQtyMap,
       totalPacks,
@@ -300,9 +301,11 @@ app.get('/api/orders', (req, res) => {
     bbq: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.bbq || 0), 0),
     sourCream: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.['sour-cream'] || 0), 0),
     bawangOnly: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.['bawang-only'] || 0), 0),
-    specialOrder: dayOrders.reduce((sum, o) => sum + (o.specialOrderQty || 0), 0),
-    pickup: dayOrders.filter(o => o.orderType === 'Pickup').length,
-    delivery: dayOrders.filter(o => o.orderType === 'Delivery').length,
+    cod: dayOrders.filter(o => (o.paymentMethod || '').toLowerCase().includes('cash')).length,
+    gcash: dayOrders.filter(o => (o.paymentMethod || '').toLowerCase().includes('gcash')).length,
+    maribank: dayOrders.filter(o => (o.paymentMethod || '').toLowerCase().includes('maribank')).length,
+    paid: dayOrders.filter(o => (o.paymentStatus || '').toLowerCase() === 'paid').length,
+    unpaid: dayOrders.filter(o => (o.paymentStatus || '').toLowerCase() !== 'paid').length
   };
 
   res.json({
@@ -337,7 +340,7 @@ app.patch('/api/orders/:id/status', async (req, res) => {
     try {
       fetch(settings.appsScriptUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'updateStatus',
           spreadsheetId: settings.spreadsheetId,
@@ -347,6 +350,46 @@ app.patch('/api/orders/:id/status', async (req, res) => {
         }),
         redirect: 'follow'
       }).catch(err => console.error('Status sync to GAS failed:', err.message));
+    } catch (e) {}
+  }
+
+  res.json({ success: true, order: orders[orderIndex] });
+});
+
+// API: Update Payment Status (Paid / Unpaid)
+app.patch('/api/orders/:id/payment-status', async (req, res) => {
+  const { id } = req.params;
+  const { paymentStatus } = req.body;
+
+  const validPaymentStatuses = ['Paid', 'Unpaid'];
+  if (!validPaymentStatuses.includes(paymentStatus)) {
+    return res.status(400).json({ error: `Invalid paymentStatus. Must be one of: ${validPaymentStatuses.join(', ')}` });
+  }
+
+  const orderIndex = orders.findIndex(o => o.id === id || o.orderId === id);
+  if (orderIndex === -1) {
+    return res.status(404).json({ error: 'Order not found.' });
+  }
+
+  orders[orderIndex].paymentStatus = paymentStatus;
+  orders[orderIndex].updatedAt = new Date().toISOString();
+  saveOrders();
+
+  // If Google Apps Script is configured, update payment status on Google Sheet
+  if (settings.appsScriptUrl) {
+    try {
+      fetch(settings.appsScriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'updatePaymentStatus',
+          spreadsheetId: settings.spreadsheetId,
+          orderId: orders[orderIndex].orderId,
+          orderDate: orders[orderIndex].orderDate,
+          paymentStatus
+        }),
+        redirect: 'follow'
+      }).catch(err => console.error('Payment status sync to GAS failed:', err.message));
     } catch (e) {}
   }
 

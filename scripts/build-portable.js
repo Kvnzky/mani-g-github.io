@@ -228,6 +228,7 @@ const htmlTemplate = `<!DOCTYPE html>
           mobileNumber: customer.mobile.trim(),
           deliveryAddress: customer.deliveryAddress.trim(),
           paymentMethod: customer.paymentMethod,
+          paymentStatus: 'Unpaid',
           items: itemsOrdered,
           flavorQuantities: quantities,
           totalPacks,
@@ -418,21 +419,63 @@ const htmlTemplate = `<!DOCTYPE html>
                               {ord.paymentMethod || 'Cash on Delivery'}
                             </span>
                           </div>
-                          <select
-                            value={ord.status}
-                            onChange={(e) => {
-                              const newSt = e.target.value;
-                              setOrders(prev => prev.map(o => o.orderId === ord.orderId ? { ...o, status: newSt } : o));
-                            }}
-                            className="text-xs font-bold px-2 py-1 rounded-lg border bg-amber-50 text-amber-900 border-amber-300"
-                          >
-                            <option value="New">🟡 New</option>
-                            <option value="Confirmed">🔵 Confirmed</option>
-                            <option value="Preparing">🟠 Preparing</option>
-                            <option value="Ready">🟣 Ready</option>
-                            <option value="Completed">🟢 Completed</option>
-                            <option value="Cancelled">🔴 Cancelled</option>
-                          </select>
+                          <div className="flex items-center gap-1.5">
+                            <select
+                              value={ord.paymentStatus || 'Unpaid'}
+                              onChange={(e) => {
+                                const newPSt = e.target.value;
+                                setOrders(prev => prev.map(o => o.orderId === ord.orderId ? { ...o, paymentStatus: newPSt } : o));
+                                if (appsScriptUrl) {
+                                  fetch(appsScriptUrl, {
+                                    method: 'POST',
+                                    mode: 'no-cors',
+                                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                    body: JSON.stringify({
+                                      action: 'updatePaymentStatus',
+                                      spreadsheetId: DEFAULT_SPREADSHEET_ID,
+                                      orderId: ord.orderId,
+                                      orderDate: ord.orderDate,
+                                      paymentStatus: newPSt
+                                    })
+                                  }).catch(console.error);
+                                }
+                              }}
+                              className={"text-xs font-bold px-2 py-1 rounded-lg border " + ((ord.paymentStatus || 'Unpaid').toLowerCase() === 'paid' ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-amber-100 text-amber-900 border-amber-300')}
+                            >
+                              <option value="Unpaid">🟡 Unpaid</option>
+                              <option value="Paid">🟢 Paid</option>
+                            </select>
+
+                            <select
+                              value={ord.status}
+                              onChange={(e) => {
+                                const newSt = e.target.value;
+                                setOrders(prev => prev.map(o => o.orderId === ord.orderId ? { ...o, status: newSt } : o));
+                                if (appsScriptUrl) {
+                                  fetch(appsScriptUrl, {
+                                    method: 'POST',
+                                    mode: 'no-cors',
+                                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                    body: JSON.stringify({
+                                      action: 'updateStatus',
+                                      spreadsheetId: DEFAULT_SPREADSHEET_ID,
+                                      orderId: ord.orderId,
+                                      orderDate: ord.orderDate,
+                                      status: newSt
+                                    })
+                                  }).catch(console.error);
+                                }
+                              }}
+                              className="text-xs font-bold px-2 py-1 rounded-lg border bg-amber-50 text-amber-900 border-amber-300"
+                            >
+                              <option value="New">🟡 New</option>
+                              <option value="Confirmed">🔵 Confirmed</option>
+                              <option value="Preparing">🟠 Preparing</option>
+                              <option value="Ready">🟣 Ready</option>
+                              <option value="Completed">🟢 Completed</option>
+                              <option value="Cancelled">🔴 Cancelled</option>
+                            </select>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">

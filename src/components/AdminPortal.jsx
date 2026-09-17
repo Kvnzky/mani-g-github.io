@@ -15,6 +15,7 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
 
   const [settings, setSettings] = useState(() => ({
     spreadsheetId: localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID,
@@ -69,13 +70,24 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
       setOrders(local);
       const totalPacks = local.reduce((sum, o) => sum + (o.totalPacks || 0), 0);
       const totalRevenue = local.reduce((sum, o) => sum + (o.subtotal || 0), 0);
+      const paidOrders = local.filter(o => (o.paymentStatus || '').toLowerCase() === 'paid').length;
+      const unpaidOrders = local.filter(o => (o.paymentStatus || '').toLowerCase() !== 'paid').length;
       setDailySummary({
         totalOrders: local.length,
         totalPacks,
+        totalSales: totalRevenue,
         totalRevenue,
         newOrders: local.filter(o => o.status === 'New').length,
         completedOrders: local.filter(o => o.status === 'Completed').length,
-        cancelledOrders: local.filter(o => o.status === 'Cancelled').length
+        cancelledOrders: local.filter(o => o.status === 'Cancelled').length,
+        paidOrders,
+        unpaidOrders,
+        salted: local.reduce((sum, o) => sum + (o.flavorQuantities?.salted || 0), 0),
+        unsalted: local.reduce((sum, o) => sum + (o.flavorQuantities?.unsalted || 0), 0),
+        spicy: local.reduce((sum, o) => sum + (o.flavorQuantities?.spicy || 0), 0),
+        bbq: local.reduce((sum, o) => sum + (o.flavorQuantities?.bbq || 0), 0),
+        sourCream: local.reduce((sum, o) => sum + (o.flavorQuantities?.['sour-cream'] || 0), 0),
+        bawangOnly: local.reduce((sum, o) => sum + (o.flavorQuantities?.['bawang-only'] || 0), 0)
       });
     } finally {
       setIsLoading(false);
@@ -126,8 +138,69 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
       const updated = local.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
       localStorage.setItem('mani_orders', JSON.stringify(updated));
       setOrders(updated);
+
+      // Direct sync to Google Apps Script if URL configured
+      const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL).trim();
+      if (appsUrl) {
+        const targetOrder = local.find(o => o.orderId === orderId);
+        fetch(appsUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'updateStatus',
+            spreadsheetId: settings.spreadsheetId || DEFAULT_SPREADSHEET_ID,
+            orderId,
+            orderDate: targetOrder?.orderDate,
+            status: newStatus
+          })
+        }).catch(err => console.warn('Direct GAS status update error:', err));
+      }
     } finally {
       setUpdatingOrderId(null);
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (orderId, newPaymentStatus) => {
+    setUpdatingPaymentId(orderId);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/payment-status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentStatus: newPaymentStatus })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
+      } else {
+        throw new Error('Fallback to local');
+      }
+    } catch (e) {
+      // LocalStorage update for static GitHub Pages
+      const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+      const updated = local.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o);
+      localStorage.setItem('mani_orders', JSON.stringify(updated));
+      setOrders(updated);
+
+      // Direct sync to Google Apps Script if URL configured
+      const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL).trim();
+      if (appsUrl) {
+        const targetOrder = local.find(o => o.orderId === orderId);
+        fetch(appsUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'updatePaymentStatus',
+            spreadsheetId: settings.spreadsheetId || DEFAULT_SPREADSHEET_ID,
+            orderId,
+            orderDate: targetOrder?.orderDate,
+            paymentStatus: newPaymentStatus
+          })
+        }).catch(err => console.warn('Direct GAS payment status update error:', err));
+      }
+    } finally {
+      setUpdatingPaymentId(null);
     }
   };
 
@@ -477,21 +550,42 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <span className="text-xs text-mani-500 font-medium">Status:</span>
-                        <select
-                          value={ord.status}
-                          disabled={updatingOrderId === ord.orderId}
-                          onChange={(e) => handleUpdateStatus(ord.orderId, e.target.value)}
-                          className={`text-xs font-bold px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${statusInfo.color}`}
-                        >
-                          <option value="New">🟡 New</option>
-                          <option value="Confirmed">🔵 Confirmed</option>
-                          <option value="Preparing">🟠 Preparing</option>
-                          <option value="Ready">🟣 Ready</option>
-                          <option value="Completed">🟢 Completed</option>
-                          <option value="Cancelled">🔴 Cancelled</option>
-                        </select>
+                      <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+                        {/* Paid / Unpaid Status */}
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-mani-500 font-medium">Payment:</span>
+                          <select
+                            value={ord.paymentStatus || 'Unpaid'}
+                            disabled={updatingPaymentId === ord.orderId}
+                            onChange={(e) => handleUpdatePaymentStatus(ord.orderId, e.target.value)}
+                            className={`text-xs font-black px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${
+                              (ord.paymentStatus || 'Unpaid').toLowerCase() === 'paid'
+                                ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                                : 'bg-amber-100 text-amber-900 border-amber-300'
+                            }`}
+                          >
+                            <option value="Unpaid">🟡 Unpaid</option>
+                            <option value="Paid">🟢 Paid</option>
+                          </select>
+                        </div>
+
+                        {/* Order Status */}
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-mani-500 font-medium">Status:</span>
+                          <select
+                            value={ord.status}
+                            disabled={updatingOrderId === ord.orderId}
+                            onChange={(e) => handleUpdateStatus(ord.orderId, e.target.value)}
+                            className={`text-xs font-bold px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${statusInfo.color}`}
+                          >
+                            <option value="New">🟡 New</option>
+                            <option value="Confirmed">🔵 Confirmed</option>
+                            <option value="Preparing">🟠 Preparing</option>
+                            <option value="Ready">🟣 Ready</option>
+                            <option value="Completed">🟢 Completed</option>
+                            <option value="Cancelled">🔴 Cancelled</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
 
@@ -572,20 +666,34 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
                 <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Total Orders</span>
-                <div className="text-3xl font-black text-amber-950 mt-1">{dailySummary.totalOrders}</div>
+                <div className="text-2xl sm:text-3xl font-black text-amber-950 mt-1">{dailySummary.totalOrders}</div>
               </div>
 
               <div className="p-4 rounded-2xl bg-orange-50 border border-orange-200">
                 <span className="text-xs font-bold text-orange-800 uppercase tracking-wider">Total Packs</span>
-                <div className="text-3xl font-black text-orange-950 mt-1">{dailySummary.totalPacks}</div>
+                <div className="text-2xl sm:text-3xl font-black text-orange-950 mt-1">{dailySummary.totalPacks}</div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 col-span-2 sm:col-span-1">
                 <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Total Sales</span>
-                <div className="text-3xl font-black text-emerald-950 mt-1">{formatPHP(dailySummary.totalSales)}</div>
+                <div className="text-2xl sm:text-3xl font-black text-emerald-950 mt-1">{formatPHP(dailySummary.totalSales || dailySummary.totalRevenue || 0)}</div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-300">
+                <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">🟢 Paid Orders</span>
+                <div className="text-2xl sm:text-3xl font-black text-emerald-950 mt-1">
+                  {dailySummary.paid !== undefined ? dailySummary.paid : (dailySummary.paidOrders || 0)}
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-300">
+                <span className="text-xs font-bold text-amber-900 uppercase tracking-wider">🟡 Unpaid Orders</span>
+                <div className="text-2xl sm:text-3xl font-black text-amber-950 mt-1">
+                  {dailySummary.unpaid !== undefined ? dailySummary.unpaid : (dailySummary.unpaidOrders || 0)}
+                </div>
               </div>
             </div>
 

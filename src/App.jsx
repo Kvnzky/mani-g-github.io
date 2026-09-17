@@ -196,6 +196,7 @@ export default function App() {
         mobileNumber: payload.mobileNumber,
         deliveryAddress: payload.deliveryAddress,
         paymentMethod: payload.paymentMethod,
+        paymentStatus: 'Unpaid',
         items: orderedItems,
         flavorQuantities: { ...quantities },
         totalPacks,
