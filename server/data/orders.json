@@ -1,0 +1,240 @@
+[
+  {
+    "id": "ord_1789606810511_lb8qpk",
+    "orderId": "MANI-20260917-006",
+    "orderDate": "2026-09-17",
+    "orderTime": "09:00:10 AM",
+    "customerName": "Pedro Penduko",
+    "mobileNumber": "09229998888",
+    "deliveryAddress": "789 Mabini St, Manila",
+    "paymentMethod": "Maribank",
+    "items": [
+      {
+        "id": "sour-cream",
+        "name": "Sour Cream",
+        "quantity": 2,
+        "price": 50
+      }
+    ],
+    "flavorQuantities": {
+      "salted": 0,
+      "unsalted": 0,
+      "spicy": 0,
+      "bbq": 0,
+      "sour-cream": 2,
+      "bawang-only": 0
+    },
+    "totalPacks": 2,
+    "subtotal": 100,
+    "status": "New",
+    "createdAt": "2026-09-17T01:00:10.511Z",
+    "syncedToGoogleSheets": false
+  },
+  {
+    "id": "ord_1789606810505_zg3d0w",
+    "orderId": "MANI-20260917-005",
+    "orderDate": "2026-09-17",
+    "orderTime": "09:00:10 AM",
+    "customerName": "Maria Santos",
+    "mobileNumber": "09189876543",
+    "deliveryAddress": "Block 12 Lot 5 Golden Hills, Antipolo, Rizal",
+    "paymentMethod": "GCash",
+    "items": [
+      {
+        "id": "bbq",
+        "name": "BBQ",
+        "quantity": 2,
+        "price": 50
+      },
+      {
+        "id": "bawang-only",
+        "name": "Bawang Only",
+        "quantity": 1,
+        "price": 60
+      }
+    ],
+    "flavorQuantities": {
+      "salted": 0,
+      "unsalted": 0,
+      "spicy": 0,
+      "bbq": 2,
+      "sour-cream": 0,
+      "bawang-only": 1
+    },
+    "totalPacks": 3,
+    "subtotal": 160,
+    "status": "New",
+    "createdAt": "2026-09-17T01:00:10.505Z",
+    "syncedToGoogleSheets": false
+  },
+  {
+    "id": "ord_1789606810491_dki732",
+    "orderId": "MANI-20260917-004",
+    "orderDate": "2026-09-17",
+    "orderTime": "09:00:10 AM",
+    "customerName": "Juan Dela Cruz",
+    "mobileNumber": "09171234567",
+    "deliveryAddress": "Unit 4B Sunrise Condominium, Ortigas Center, Pasig City",
+    "paymentMethod": "Cash on Delivery",
+    "items": [
+      {
+        "id": "salted",
+        "name": "Salted",
+        "quantity": 2,
+        "price": 50
+      },
+      {
+        "id": "spicy",
+        "name": "Spicy",
+        "quantity": 1,
+        "price": 50
+      }
+    ],
+    "flavorQuantities": {
+      "salted": 2,
+      "unsalted": 0,
+      "spicy": 1,
+      "bbq": 0,
+      "sour-cream": 0,
+      "bawang-only": 0
+    },
+    "totalPacks": 3,
+    "subtotal": 150,
+    "status": "New",
+    "createdAt": "2026-09-17T01:00:10.491Z",
+    "syncedToGoogleSheets": false
+  },
+  {
+    "id": "ord_1789605865345_touje5",
+    "orderId": "MANI-20260917-003",
+    "orderDate": "2026-09-17",
+    "orderTime": "08:44:25 AM",
+    "customerName": "Juan Dela Cruz",
+    "mobileNumber": "09171234567",
+    "items": [
+      {
+        "id": "salted",
+        "name": "Salted",
+        "quantity": 2,
+        "price": 50
+      },
+      {
+        "id": "spicy",
+        "name": "Spicy",
+        "quantity": 1,
+        "price": 50
+      },
+      {
+        "id": "bbq",
+        "name": "BBQ",
+        "quantity": 3,
+        "price": 50
+      }
+    ],
+    "flavorQuantities": {
+      "salted": 2,
+      "unsalted": 0,
+      "spicy": 1,
+      "bbq": 3,
+      "sour-cream": 0,
+      "bawang-only": 0
+    },
+    "totalPacks": 6,
+    "subtotal": 300,
+    "status": "Confirmed",
+    "createdAt": "2026-09-17T00:44:25.345Z",
+    "syncedToGoogleSheets": false,
+    "updatedAt": "2026-09-17T00:44:25.360Z"
+  },
+  {
+    "id": "ord_1789599300985_ffl98s",
+    "orderId": "MANI-20260917-002",
+    "orderDate": "2026-09-17",
+    "orderTime": "06:55:00 AM",
+    "customerName": "Maria Clara",
+    "mobileNumber": "09189876543",
+    "orderType": "Delivery",
+    "address": "456 Mabini Street, Barangay Maligaya, Quezon City",
+    "notes": "Please ring bell",
+    "items": [
+      {
+        "id": "bawang-only",
+        "name": "Bawang Only",
+        "quantity": 2,
+        "price": 60
+      }
+    ],
+    "specialOrders": [
+      {
+        "name": "Custom Spicy Garlic",
+        "flavor": "Garlic + extra spicy",
+        "instructions": "Less salt, crispy roast",
+        "quantity": 1,
+        "price": 55
+      }
+    ],
+    "flavorQuantities": {
+      "salted": 0,
+      "unsalted": 0,
+      "spicy": 0,
+      "bbq": 0,
+      "sour-cream": 0,
+      "bawang-only": 2
+    },
+    "specialOrderDesc": "Custom Spicy Garlic (Garlic + extra spicy - Less salt, crispy roast)",
+    "specialOrderQty": 1,
+    "totalPacks": 3,
+    "subtotal": 175,
+    "status": "New",
+    "createdAt": "2026-09-16T22:55:00.985Z",
+    "syncedToGoogleSheets": false
+  },
+  {
+    "id": "ord_1789599300977_o26jzu",
+    "orderId": "MANI-20260917-001",
+    "orderDate": "2026-09-17",
+    "orderTime": "06:55:00 AM",
+    "customerName": "Juan Dela Cruz",
+    "mobileNumber": "09171234567",
+    "orderType": "Pickup",
+    "address": "N/A (Pickup)",
+    "notes": "Extra spicy please",
+    "items": [
+      {
+        "id": "salted",
+        "name": "Salted",
+        "quantity": 2,
+        "price": 50
+      },
+      {
+        "id": "spicy",
+        "name": "Spicy",
+        "quantity": 1,
+        "price": 50
+      },
+      {
+        "id": "bbq",
+        "name": "BBQ",
+        "quantity": 3,
+        "price": 50
+      }
+    ],
+    "specialOrders": [],
+    "flavorQuantities": {
+      "salted": 2,
+      "unsalted": 0,
+      "spicy": 1,
+      "bbq": 3,
+      "sour-cream": 0,
+      "bawang-only": 0
+    },
+    "specialOrderDesc": "",
+    "specialOrderQty": 0,
+    "totalPacks": 6,
+    "subtotal": 300,
+    "status": "Preparing",
+    "createdAt": "2026-09-16T22:55:00.977Z",
+    "syncedToGoogleSheets": false,
+    "updatedAt": "2026-09-16T22:55:01.027Z"
+  }
+]
