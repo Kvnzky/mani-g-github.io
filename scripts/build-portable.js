@@ -70,6 +70,7 @@ const htmlTemplate = `<!DOCTYPE html>
     ];
 
     const DEFAULT_SPREADSHEET_ID = '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI';
+    const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec';
     const DEFAULT_GCASH_QR = "___DEFAULT_GCASH_QR___";
     const DEFAULT_MARIBANK_QR = "___DEFAULT_MARIBANK_QR___";
     const GCASH_NUMBER = "09055182263";
@@ -129,7 +130,7 @@ const htmlTemplate = `<!DOCTYPE html>
       });
 
       const [appsScriptUrl, setAppsScriptUrl] = useState(() => {
-        return localStorage.getItem('mani_apps_script_url') || '';
+        return localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL;
       });
 
       useEffect(() => {

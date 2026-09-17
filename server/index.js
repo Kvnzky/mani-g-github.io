@@ -28,7 +28,7 @@ const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
 // Initialize settings
 let settings = {
   spreadsheetId: DEFAULT_SPREADSHEET_ID,
-  appsScriptUrl: process.env.APPS_SCRIPT_URL || '',
+  appsScriptUrl: process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec',
   timezone: 'Asia/Manila'
 };
 
