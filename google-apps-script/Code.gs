@@ -1,19 +1,27 @@
 /**
- * 🥜 MANI (PEANUTS) ORDERING APP - GOOGLE APPS SCRIPT
+ * 🥜 MANI G? ORDERING APP - GOOGLE APPS SCRIPT BACKEND
  * 
  * Target Google Sheet: https://docs.google.com/spreadsheets/d/1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI/edit
  * Default Spreadsheet ID: 1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI
  * 
- * Instructions:
- * 1. Open your Google Sheet
- * 2. Click Extensions > Apps Script
- * 3. Delete any code in Code.gs and paste this entire code
- * 4. Click Deploy > New deployment
- * 5. Select type: "Web app"
- * 6. Description: "Mani Ordering Web App Backend"
- * 7. Execute as: "Me" (your Google account)
- * 8. Who has access: "Anyone"
- * 9. Click Deploy, Authorize permissions, and copy the Web App URL!
+ * 17-Column Standard Order Layout:
+ * 1 (A): Order ID
+ * 2 (B): Order Date
+ * 3 (C): Order Time
+ * 4 (D): Customer Name
+ * 5 (E): Mobile Number
+ * 6 (F): Payment Mode
+ * 7 (G): Delivery Address
+ * 8 (H): Paid Status (Paid / Unpaid)
+ * 9 (I): Salted Qty
+ * 10 (J): Unsalted Qty
+ * 11 (K): Spicy Qty
+ * 12 (L): BBQ Qty
+ * 13 (M): Sour Cream Qty
+ * 14 (N): Bawang Only Qty
+ * 15 (O): Total Packs
+ * 16 (P): Total Amount (₱)
+ * 17 (Q): Order Status
  */
 
 var DEFAULT_SPREADSHEET_ID = '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI';
@@ -33,60 +41,44 @@ function getTimezone() {
 }
 
 /**
- * Handle HTTP GET (Health check, Connectivity Test, and Zero-CORS Browser Direct Orders)
+ * Handle HTTP GET (Health check, Self-healing layout trigger, and Status queries)
  */
 function doGet(e) {
   var tz = getTimezone();
   var ssId = (typeof DEFAULT_SPREADSHEET_ID !== 'undefined' ? DEFAULT_SPREADSHEET_ID : '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI');
 
-  // If no action or parameters, return health check
   if (!e || !e.parameter || !e.parameter.action) {
-    var output = ContentService.createTextOutput(JSON.stringify({
+    return ContentService.createTextOutput(JSON.stringify({
       status: 'ok',
-      app: 'Mani Orders Google Apps Script API',
+      app: 'MANI G? Google Apps Script Backend',
       spreadsheetId: ssId,
       serverTime: Utilities.formatDate(new Date(), tz, "yyyy-MM-dd HH:mm:ss 'GMT'XXX")
     })).setMimeType(ContentService.MimeType.JSON);
-    return output;
   }
 
-  // If action is requested via GET (e.g. for zero-install browser mode)
   var lock = LockService.getScriptLock();
   var hasLock = lock.tryLock(30000);
-  
   if (!hasLock) {
-    return ContentService.createTextOutput(JSON.stringify({
-      success: false,
-      error: 'System busy. Please retry.'
-    })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'System busy. Please retry.' }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
   try {
     var action = e.parameter.action;
     var ss = getTargetSpreadsheet(e.parameter.spreadsheetId);
 
-    if (action === 'addOrder' && e.parameter.order) {
-      var orderData = JSON.parse(decodeURIComponent(e.parameter.order));
-      var result = handleAddOrder(ss, orderData);
-      
-      if (e.parameter.callback) {
-        return ContentService.createTextOutput(e.parameter.callback + '(' + JSON.stringify(result) + ')')
-          .setMimeType(ContentService.MimeType.JAVASCRIPT);
-      }
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+    if (action === 'fixSheet' || action === 'repairLayout') {
+      var result = handleFixAllSheets(ss);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'updateStatus') {
       var result = handleUpdateStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.status);
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'updatePaymentStatus') {
       var result = handleUpdatePaymentStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.paymentStatus);
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     }
 
-    return ContentService.createTextOutput(JSON.stringify({ status: 'ok' }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ status: 'ok' })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -96,27 +88,21 @@ function doGet(e) {
 }
 
 /**
- * Handle HTTP POST (Order Submissions & Status Updates)
+ * Handle HTTP POST (Order Submissions, Layout Fixes & Status Updates)
  */
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  // Wait up to 30 seconds for other concurrent writes to avoid conflicts
   var hasLock = lock.tryLock(30000);
-  
   if (!hasLock) {
-    return ContentService.createTextOutput(JSON.stringify({
-      success: false,
-      error: 'System is busy with another order. Please retry.'
-    })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'System busy. Please retry.' }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
   try {
     var rawData = e.postData ? e.postData.contents : null;
     if (!rawData) {
-      return ContentService.createTextOutput(JSON.stringify({
-        success: false,
-        error: 'No post data received'
-      })).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'No post data received' }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
 
     var payload = JSON.parse(rawData);
@@ -125,31 +111,44 @@ function doPost(e) {
 
     if (action === 'addOrder') {
       var result = handleAddOrder(ss, payload.order);
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'updateStatus') {
       var result = handleUpdateStatus(ss, payload.orderId, payload.orderDate, payload.status);
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'updatePaymentStatus') {
       var result = handleUpdatePaymentStatus(ss, payload.orderId, payload.orderDate, payload.paymentStatus);
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'fixSheet' || action === 'repairLayout') {
+      var result = handleFixAllSheets(ss);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     } else {
-      return ContentService.createTextOutput(JSON.stringify({
-        success: false,
-        error: 'Unknown action: ' + action
-      })).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'Unknown action: ' + action }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
-
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({
-      success: false,
-      error: err.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * Self-healing: Repair and align all sheets in the spreadsheet
+ */
+function handleFixAllSheets(ss) {
+  var sheets = ss.getSheets();
+  var fixed = [];
+  for (var i = 0; i < sheets.length; i++) {
+    var sh = sheets[i];
+    var name = sh.getName();
+    // Only process date-formatted tabs (e.g. 2026-09-17) or active sheets
+    if (/^\d{4}-\d{2}-\d{2}$/.test(name) || i === 0) {
+      fixAndAlignSheet(sh, name);
+      fixed.push(name);
+    }
+  }
+  return { success: true, fixedTabs: fixed, message: 'All sheets successfully realigned with correct headers and column mappings.' };
 }
 
 /**
@@ -161,34 +160,27 @@ function handleAddOrder(ss, order) {
   }
 
   var tz = getTimezone();
-  // Determine Philippine Date (YYYY-MM-DD)
   var orderDate = order.orderDate || Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
   var orderTime = order.orderTime || Utilities.formatDate(new Date(), tz, 'hh:mm:ss a');
 
   var sheetName = orderDate;
   var sheet = ss.getSheetByName(sheetName);
 
-  var isNewSheet = false;
   if (!sheet) {
     sheet = ss.insertSheet(sheetName);
-    isNewSheet = true;
     setupSheetHeadersAndSummary(sheet, sheetName);
+  } else {
+    // Auto-check if existing sheet headers are outdated
+    var h8 = String(sheet.getRange(7, 8).getValue() || '');
+    if (h8 !== 'Paid Status') {
+      fixAndAlignSheet(sheet, sheetName);
+    }
   }
 
-  // Find next available row in order table (Data starts from row 8)
   var lastRow = sheet.getLastRow();
   var targetRow = Math.max(lastRow + 1, 8);
 
-  // Extract Quantities (supports flavorQuantities map and/or items array)
-  var fq = Object.assign({}, order.flavorQuantities || {});
-  if (order.items && Array.isArray(order.items)) {
-    order.items.forEach(function(item) {
-      var key = item.productId || item.id;
-      if (key && !fq[key]) {
-        fq[key] = Number(item.quantity || 0);
-      }
-    });
-  }
+  var fq = order.flavorQuantities || {};
   var saltedQty = Number(fq.salted || 0);
   var unsaltedQty = Number(fq.unsalted || 0);
   var spicyQty = Number(fq.spicy || 0);
@@ -199,69 +191,30 @@ function handleAddOrder(ss, order) {
   var subtotal = Number(order.subtotal || 0);
   var paymentStatus = order.paymentStatus || order.paidStatus || 'Unpaid';
 
+  // 17-Column Standard Order Array
   var rowData = [
-    order.orderId || 'MANI-' + orderDate.replace(/-/g, '') + '-001', // A: Order ID
-    orderDate,                                                        // B: Order Date
-    orderTime,                                                        // C: Order Time
-    order.customerName || '',                                         // D: Customer Name
-    order.mobileNumber || '',                                         // E: Mobile Number
-    order.deliveryAddress || order.address || 'N/A',                  // F: Delivery Address
-    order.paymentMethod || 'Cash on Delivery',                        // G: Payment Mode
-    paymentStatus,                                                    // H: Paid Status (Paid / Unpaid)
-    saltedQty,                                                        // I: Salted Qty
-    unsaltedQty,                                                      // J: Unsalted Qty
-    spicyQty,                                                         // K: Spicy Qty
-    bbqQty,                                                           // L: BBQ Qty
-    sourCreamQty,                                                     // M: Sour Cream Qty
-    bawangOnlyQty,                                                    // N: Bawang Only Qty
-    totalPacks,                                                       // O: Total Packs
-    subtotal,                                                         // P: Total Amount (PHP)
-    order.status || 'New'                                             // Q: Order Status
+    order.orderId || 'MANI-' + orderDate.replace(/-/g, '') + '-001', // Col 1 (A): Order ID
+    orderDate,                                                        // Col 2 (B): Order Date
+    orderTime,                                                        // Col 3 (C): Order Time
+    order.customerName || '',                                         // Col 4 (D): Customer Name
+    order.mobileNumber || '',                                         // Col 5 (E): Mobile Number
+    order.paymentMethod || 'Cash on Delivery',                        // Col 6 (F): Payment Mode
+    order.deliveryAddress || order.address || 'N/A',                  // Col 7 (G): Delivery Address
+    paymentStatus,                                                    // Col 8 (H): Paid Status
+    saltedQty,                                                        // Col 9 (I): Salted Qty
+    unsaltedQty,                                                      // Col 10 (J): Unsalted Qty
+    spicyQty,                                                         // Col 11 (K): Spicy Qty
+    bbqQty,                                                           // Col 12 (L): BBQ Qty
+    sourCreamQty,                                                     // Col 13 (M): Sour Cream Qty
+    bawangOnlyQty,                                                    // Col 14 (N): Bawang Only Qty
+    totalPacks,                                                       // Col 15 (O): Total Packs
+    subtotal,                                                         // Col 16 (P): Total Amount (PHP)
+    order.status || 'New'                                             // Col 17 (Q): Order Status
   ];
 
-  // Write row
   var range = sheet.getRange(targetRow, 1, 1, rowData.length);
   range.setValues([rowData]);
-
-  // Format data row
-  range.setFontFamily('Arial');
-  range.setFontSize(10);
-  range.setVerticalAlignment('middle');
-  range.setHorizontalAlignment('center');
-
-  // Alternating row color
-  if (targetRow % 2 === 0) {
-    range.setBackground('#FDFBF7');
-  } else {
-    range.setBackground('#FFFFFF');
-  }
-
-  // Text align left for text columns (Customer, Address)
-  sheet.getRange(targetRow, 4).setHorizontalAlignment('left'); // Customer
-  sheet.getRange(targetRow, 6).setHorizontalAlignment('left'); // Address
-
-  // Currency format for Total Amount (Col 16 / P)
-  sheet.getRange(targetRow, 16).setNumberFormat('"₱"#,##0.00');
-
-  // Paid Status formatting (Column 8 / H)
-  var paidCell = sheet.getRange(targetRow, 8);
-  paidCell.setFontWeight('bold');
-  if (String(paymentStatus).toLowerCase() === 'paid') {
-    paidCell.setFontColor('#065F46').setBackground('#D1FAE5');
-  } else {
-    paidCell.setFontColor('#92400E').setBackground('#FEF3C7');
-  }
-
-  // Status color formatting (Column 17 / Q)
-  var statusCell = sheet.getRange(targetRow, 17);
-  statusCell.setFontWeight('bold');
-  var st = (order.status || 'New').toLowerCase();
-  if (st === 'new') statusCell.setFontColor('#D97706').setBackground('#FEF3C7');
-  else if (st === 'confirmed') statusCell.setFontColor('#2563EB').setBackground('#DBEAFE');
-  else if (st === 'preparing') statusCell.setFontColor('#EA580C').setBackground('#FFEDD5');
-  else if (st === 'ready') statusCell.setFontColor('#7C3AED').setBackground('#EDE9FE');
-  else if (st === 'completed') statusCell.setFontColor('#059669').setBackground('#D1FAE5');
-  else if (st === 'cancelled') statusCell.setFontColor('#DC2626').setBackground('#FEE2E2');
+  formatDataRow(sheet, targetRow, rowData);
 
   return {
     success: true,
@@ -270,6 +223,52 @@ function handleAddOrder(ss, order) {
     orderId: rowData[0],
     message: 'Order added successfully to ' + sheetName + ' tab at row ' + targetRow
   };
+}
+
+/**
+ * Format a single data row with alternating backgrounds, currencies, and status colors
+ */
+function formatDataRow(sheet, targetRow, rowData) {
+  var range = sheet.getRange(targetRow, 1, 1, rowData.length);
+  range.setFontFamily('Arial');
+  range.setFontSize(10);
+  range.setVerticalAlignment('middle');
+  range.setHorizontalAlignment('center');
+
+  // Alternating row background
+  if (targetRow % 2 === 0) {
+    range.setBackground('#FDFBF7');
+  } else {
+    range.setBackground('#FFFFFF');
+  }
+
+  // Left-align text columns: Customer Name (4) and Delivery Address (7)
+  sheet.getRange(targetRow, 4).setHorizontalAlignment('left');
+  sheet.getRange(targetRow, 7).setHorizontalAlignment('left');
+
+  // Currency format for Total Amount (Col 16 / P)
+  sheet.getRange(targetRow, 16).setNumberFormat('"₱"#,##0.00');
+
+  // Paid Status formatting (Col 8 / H)
+  var paidCell = sheet.getRange(targetRow, 8);
+  paidCell.setFontWeight('bold');
+  var pStatus = String(rowData[7] || '').toLowerCase();
+  if (pStatus === 'paid') {
+    paidCell.setFontColor('#065F46').setBackground('#D1FAE5');
+  } else {
+    paidCell.setFontColor('#92400E').setBackground('#FEF3C7');
+  }
+
+  // Order Status formatting (Col 17 / Q)
+  var statusCell = sheet.getRange(targetRow, 17);
+  statusCell.setFontWeight('bold');
+  var st = String(rowData[16] || 'New').toLowerCase();
+  if (st === 'new') statusCell.setFontColor('#D97706').setBackground('#FEF3C7');
+  else if (st === 'confirmed') statusCell.setFontColor('#2563EB').setBackground('#DBEAFE');
+  else if (st === 'preparing') statusCell.setFontColor('#EA580C').setBackground('#FFEDD5');
+  else if (st === 'ready') statusCell.setFontColor('#7C3AED').setBackground('#EDE9FE');
+  else if (st === 'completed') statusCell.setFontColor('#059669').setBackground('#D1FAE5');
+  else if (st === 'cancelled') statusCell.setFontColor('#DC2626').setBackground('#FEE2E2');
 }
 
 /**
@@ -288,7 +287,7 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
     .setVerticalAlignment('middle');
   sheet.setRowHeight(1, 35);
 
-  // Daily Order Summary Metrics Header (Row 2)
+  // Daily Order Summary Metrics Header (Row 2) - 14 metrics across A2:N2
   var summaryHeaders = [
     'Total Orders', 'Total Packs', 'Salted', 'Unsalted', 'Spicy',
     'BBQ', 'Sour Cream', 'Bawang Only', 'COD', 'GCash', 'Maribank', 'Paid Orders', 'Unpaid Orders', 'Total Sales (PHP)'
@@ -304,22 +303,22 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
   sheet.setRowHeight(2, 24);
 
   // Daily Order Summary Dynamic Formulas (Row 3)
-  // Data starts at row 8, formulas dynamically calculate from row 8 downwards
+  // Data starts at row 8, dynamically calculating downwards
   var formulas = [
-    '=COUNTA(A8:A)',                    // Total Orders
-    '=SUM(O8:O)',                       // Total Packs (Col O)
-    '=SUM(I8:I)',                       // Salted (Col I)
-    '=SUM(J8:J)',                       // Unsalted (Col J)
-    '=SUM(K8:K)',                       // Spicy (Col K)
-    '=SUM(L8:L)',                       // BBQ (Col L)
-    '=SUM(M8:M)',                       // Sour Cream (Col M)
-    '=SUM(N8:N)',                       // Bawang Only (Col N)
-    '=COUNTIF(G8:G, "*Cash*")',         // COD Orders (Col G)
-    '=COUNTIF(G8:G, "*GCash*")',        // GCash Orders (Col G)
-    '=COUNTIF(G8:G, "*Maribank*")',     // Maribank Orders (Col G)
-    '=COUNTIF(H8:H, "Paid")',           // Paid Orders (Col H)
-    '=COUNTIF(H8:H, "Unpaid")',         // Unpaid Orders (Col H)
-    '=SUM(P8:P)'                        // Total Sales (PHP) (Col P)
+    '=COUNTA(A8:A)',                    // Col A: Total Orders
+    '=SUM(O8:O)',                       // Col B: Total Packs (Col O / 15)
+    '=SUM(I8:I)',                       // Col C: Salted (Col I / 9)
+    '=SUM(J8:J)',                       // Col D: Unsalted (Col J / 10)
+    '=SUM(K8:K)',                       // Col E: Spicy (Col K / 11)
+    '=SUM(L8:L)',                       // Col F: BBQ (Col L / 12)
+    '=SUM(M8:M)',                       // Col G: Sour Cream (Col M / 13)
+    '=SUM(N8:N)',                       // Col H: Bawang Only (Col N / 14)
+    '=COUNTIF(F8:F, "*Cash*")',         // Col I: COD Orders (Col F is Payment Mode)
+    '=COUNTIF(F8:F, "*GCash*")',        // Col J: GCash Orders (Col F is Payment Mode)
+    '=COUNTIF(F8:F, "*Maribank*")',     // Col K: Maribank Orders (Col F is Payment Mode)
+    '=COUNTIF(H8:H, "Paid")',           // Col L: Paid Orders (Col H is Paid Status)
+    '=COUNTIF(H8:H, "Unpaid")',         // Col M: Unpaid Orders (Col H is Paid Status)
+    '=SUM(P8:P)'                        // Col N: Total Sales (PHP) (Col P / 16)
   ];
   sheet.getRange('A3:N3').setFormulas([formulas])
     .setFontFamily('Arial')
@@ -337,10 +336,10 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
   sheet.setRowHeight(5, 8);
   sheet.setRowHeight(6, 8);
 
-  // Column Headers (Row 7)
+  // Column Headers (Row 7) - 17 columns
   var colHeaders = [
     'Order ID', 'Order Date', 'Order Time', 'Customer Name', 'Mobile Number',
-    'Delivery Address', 'Payment Mode', 'Paid Status', 'Salted Qty', 'Unsalted Qty',
+    'Payment Mode', 'Delivery Address', 'Paid Status', 'Salted Qty', 'Unsalted Qty',
     'Spicy Qty', 'BBQ Qty', 'Sour Cream Qty', 'Bawang Only Qty', 'Total Packs',
     'Total Amount (₱)', 'Order Status'
   ];
@@ -355,17 +354,17 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
     .setVerticalAlignment('middle');
   sheet.setRowHeight(7, 28);
 
-  // Freeze top 7 rows so summary and headers stay visible while scrolling!
+  // Freeze top 7 rows
   sheet.setFrozenRows(7);
 
-  // Adjust Column Widths for readability
+  // Column Widths
   sheet.setColumnWidth(1, 150); // Order ID
   sheet.setColumnWidth(2, 95);  // Order Date
   sheet.setColumnWidth(3, 95);  // Order Time
   sheet.setColumnWidth(4, 150); // Customer Name
   sheet.setColumnWidth(5, 120); // Mobile Number
-  sheet.setColumnWidth(6, 220); // Delivery Address
-  sheet.setColumnWidth(7, 125); // Payment Mode
+  sheet.setColumnWidth(6, 125); // Payment Mode
+  sheet.setColumnWidth(7, 220); // Delivery Address
   sheet.setColumnWidth(8, 100); // Paid Status
   sheet.setColumnWidth(9, 85);  // Salted
   sheet.setColumnWidth(10, 85); // Unsalted
@@ -379,7 +378,106 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
 }
 
 /**
- * Handle Updating Order Status in Google Sheet
+ * Self-healing repair: Re-aligns existing data rows and sets proper headers
+ */
+function fixAndAlignSheet(sheet, dateStr) {
+  setupSheetHeadersAndSummary(sheet, dateStr);
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 8) return;
+
+  var lastCol = Math.max(sheet.getLastColumn(), 17);
+  var range = sheet.getRange(8, 1, lastRow - 7, lastCol);
+  var values = range.getValues();
+
+  for (var i = 0; i < values.length; i++) {
+    var r = values[i];
+    var rowNum = 8 + i;
+
+    var orderId = r[0];
+    var orderDate = r[1];
+    var orderTime = r[2];
+    var customer = r[3];
+    var mobile = r[4];
+
+    var valF = String(r[5] || '');
+    var valG = String(r[6] || '');
+    var valH = String(r[7] || '');
+
+    var paymentMode = 'Cash on Delivery';
+    var deliveryAddress = '';
+    var paidStatus = 'Unpaid';
+    var salted = 0, unsalted = 0, spicy = 0, bbq = 0, sourCream = 0, bawangOnly = 0;
+    var totalPacks = 0, totalAmount = 0, orderStatus = 'New';
+
+    // Check if Col H was numeric (Old format from earlier today where Col H was Salted Qty)
+    if (!isNaN(parseFloat(valH)) && isFinite(valH) && valH.trim() !== '') {
+      paymentMode = valF || 'Cash on Delivery';
+      deliveryAddress = valG || '';
+      paidStatus = 'Unpaid';
+      salted = Number(r[7] || 0);
+      unsalted = Number(r[8] || 0);
+      spicy = Number(r[9] || 0);
+      bbq = Number(r[10] || 0);
+      sourCream = Number(r[11] || 0);
+      bawangOnly = Number(r[12] || 0);
+      totalPacks = Number(r[13] || 0);
+      totalAmount = Number(r[14] || 0);
+      orderStatus = r[15] || 'New';
+    } 
+    // Check if Col H was "Paid" or "Unpaid" (New format where Col F got Address and Col G got Payment Mode)
+    else if (valH.toLowerCase() === 'paid' || valH.toLowerCase() === 'unpaid') {
+      paidStatus = (valH.toLowerCase() === 'paid') ? 'Paid' : 'Unpaid';
+      
+      // Separate Payment Mode from Address
+      if (valG.toLowerCase().includes('cash') || valG.toLowerCase().includes('gcash') || valG.toLowerCase().includes('maribank')) {
+        paymentMode = valG;
+        deliveryAddress = valF;
+      } else {
+        paymentMode = valF;
+        deliveryAddress = valG;
+      }
+
+      salted = Number(r[8] || 0);
+      unsalted = Number(r[9] || 0);
+      spicy = Number(r[10] || 0);
+      bbq = Number(r[11] || 0);
+      sourCream = Number(r[12] || 0);
+      bawangOnly = Number(r[13] || 0);
+      totalPacks = Number(r[14] || 0);
+      totalAmount = Number(r[15] || 0);
+      orderStatus = r[16] || 'New';
+    } else {
+      // Fallback
+      paymentMode = valF || 'Cash on Delivery';
+      deliveryAddress = valG || '';
+      paidStatus = 'Unpaid';
+      salted = Number(r[8] || 0);
+      unsalted = Number(r[9] || 0);
+      spicy = Number(r[10] || 0);
+      bbq = Number(r[11] || 0);
+      sourCream = Number(r[12] || 0);
+      bawangOnly = Number(r[13] || 0);
+      totalPacks = Number(r[14] || 0);
+      totalAmount = Number(r[15] || 0);
+      orderStatus = r[16] || 'New';
+    }
+
+    var cleanRow = [
+      orderId, orderDate, orderTime, customer, mobile,
+      paymentMode, deliveryAddress, paidStatus,
+      salted, unsalted, spicy, bbq, sourCream, bawangOnly,
+      totalPacks, totalAmount, orderStatus
+    ];
+
+    var rowRange = sheet.getRange(rowNum, 1, 1, 17);
+    rowRange.setValues([cleanRow]);
+    formatDataRow(sheet, rowNum, cleanRow);
+  }
+}
+
+/**
+ * Handle Updating Order Status in Google Sheet (Col 17 / Q)
  */
 function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
   if (!orderId) return { success: false, error: 'Missing orderId' };
@@ -397,18 +495,15 @@ function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
     }
   }
 
-  if (!sheet) {
-    return { success: false, error: 'Sheet tab not found for date: ' + targetDate };
-  }
+  if (!sheet) return { success: false, error: 'Sheet tab not found for date: ' + targetDate };
 
   var row = findOrderInSheet(sheet, orderId);
-  if (row === -1) {
-    return { success: false, error: 'Order ' + orderId + ' not found in sheet ' + sheet.getName() };
-  }
+  if (row === -1) return { success: false, error: 'Order ' + orderId + ' not found in sheet ' + sheet.getName() };
 
   // Update Status in column 17 (Q)
   var cell = sheet.getRange(row, 17);
   cell.setValue(newStatus);
+  cell.setFontWeight('bold');
   
   var st = (newStatus || '').toLowerCase();
   if (st === 'new') cell.setFontColor('#D97706').setBackground('#FEF3C7');
@@ -422,7 +517,7 @@ function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
 }
 
 /**
- * Handle Updating Paid Status in Google Sheet (Column 8 / H)
+ * Handle Updating Paid Status in Google Sheet (Col 8 / H)
  */
 function handleUpdatePaymentStatus(ss, orderId, orderDate, newPaymentStatus) {
   if (!orderId) return { success: false, error: 'Missing orderId' };
@@ -440,14 +535,10 @@ function handleUpdatePaymentStatus(ss, orderId, orderDate, newPaymentStatus) {
     }
   }
 
-  if (!sheet) {
-    return { success: false, error: 'Sheet tab not found for date: ' + targetDate };
-  }
+  if (!sheet) return { success: false, error: 'Sheet tab not found for date: ' + targetDate };
 
   var row = findOrderInSheet(sheet, orderId);
-  if (row === -1) {
-    return { success: false, error: 'Order ' + orderId + ' not found in sheet ' + sheet.getName() };
-  }
+  if (row === -1) return { success: false, error: 'Order ' + orderId + ' not found in sheet ' + sheet.getName() };
 
   // Update Paid Status in column 8 (H)
   var cell = sheet.getRange(row, 8);
