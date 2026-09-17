@@ -19,17 +19,33 @@
 var DEFAULT_SPREADSHEET_ID = '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI';
 var TIMEZONE = 'Asia/Manila';
 
+function getTargetSpreadsheet(id) {
+  try {
+    var active = SpreadsheetApp.getActiveSpreadsheet();
+    if (active) return active;
+  } catch (err) {}
+  var targetId = id || (typeof DEFAULT_SPREADSHEET_ID !== 'undefined' ? DEFAULT_SPREADSHEET_ID : '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI');
+  return SpreadsheetApp.openById(targetId);
+}
+
+function getTimezone() {
+  return (typeof TIMEZONE !== 'undefined' ? TIMEZONE : 'Asia/Manila');
+}
+
 /**
  * Handle HTTP GET (Health check, Connectivity Test, and Zero-CORS Browser Direct Orders)
  */
 function doGet(e) {
+  var tz = getTimezone();
+  var ssId = (typeof DEFAULT_SPREADSHEET_ID !== 'undefined' ? DEFAULT_SPREADSHEET_ID : '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI');
+
   // If no action or parameters, return health check
   if (!e || !e.parameter || !e.parameter.action) {
     var output = ContentService.createTextOutput(JSON.stringify({
       status: 'ok',
       app: 'Mani Orders Google Apps Script API',
-      spreadsheetId: DEFAULT_SPREADSHEET_ID,
-      serverTime: Utilities.formatDate(new Date(), TIMEZONE, "yyyy-MM-dd HH:mm:ss 'GMT'XXX")
+      spreadsheetId: ssId,
+      serverTime: Utilities.formatDate(new Date(), tz, "yyyy-MM-dd HH:mm:ss 'GMT'XXX")
     })).setMimeType(ContentService.MimeType.JSON);
     return output;
   }
@@ -47,8 +63,7 @@ function doGet(e) {
 
   try {
     var action = e.parameter.action;
-    var spreadsheetId = e.parameter.spreadsheetId || DEFAULT_SPREADSHEET_ID;
-    var ss = SpreadsheetApp.openById(spreadsheetId);
+    var ss = getTargetSpreadsheet(e.parameter.spreadsheetId);
 
     if (action === 'addOrder' && e.parameter.order) {
       var orderData = JSON.parse(decodeURIComponent(e.parameter.order));
@@ -102,8 +117,7 @@ function doPost(e) {
 
     var payload = JSON.parse(rawData);
     var action = payload.action || 'addOrder';
-    var spreadsheetId = payload.spreadsheetId || DEFAULT_SPREADSHEET_ID;
-    var ss = SpreadsheetApp.openById(spreadsheetId);
+    var ss = getTargetSpreadsheet(payload.spreadsheetId);
 
     if (action === 'addOrder') {
       var result = handleAddOrder(ss, payload.order);
@@ -138,9 +152,10 @@ function handleAddOrder(ss, order) {
     return { success: false, error: 'Missing order data' };
   }
 
+  var tz = getTimezone();
   // Determine Philippine Date (YYYY-MM-DD)
-  var orderDate = order.orderDate || Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
-  var orderTime = order.orderTime || Utilities.formatDate(new Date(), TIMEZONE, 'hh:mm:ss a');
+  var orderDate = order.orderDate || Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  var orderTime = order.orderTime || Utilities.formatDate(new Date(), tz, 'hh:mm:ss a');
 
   var sheetName = orderDate;
   var sheet = ss.getSheetByName(sheetName);
@@ -356,7 +371,7 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
 function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
   if (!orderId) return { success: false, error: 'Missing orderId' };
   
-  var targetDate = orderDate || Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
+  var targetDate = orderDate || Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
   var sheet = ss.getSheetByName(targetDate);
   if (!sheet) {
     // Try searching all sheets if date tab not found directly
