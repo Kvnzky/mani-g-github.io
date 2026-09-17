@@ -1,0 +1,10 @@
+{
+  "spreadsheetId": "1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI",
+  "appsScriptUrl": "https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec",
+  "timezone": "Asia/Manila",
+  "cutoff": {
+    "enabled": true,
+    "date": "2026-09-17",
+    "time": "23:59"
+  }
+}

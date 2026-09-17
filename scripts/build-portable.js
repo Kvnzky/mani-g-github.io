@@ -69,7 +69,7 @@ const htmlTemplate = `<!DOCTYPE html>
       { id: 'bawang-only', name: 'Bawang Only', description: 'Pure crispy golden garlic chips & whole fried cloves only!', price: 60, icon: '🧄', badge: 'Must Try', available: true }
     ];
 
-    const DEFAULT_SPREADSHEET_ID = '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI';
+    const DEFAULT_SPREADSHEET_ID = '';
     const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec';
     const DEFAULT_GCASH_QR = "___DEFAULT_GCASH_QR___";
     const DEFAULT_MARIBANK_QR = "___DEFAULT_MARIBANK_QR___";
@@ -315,13 +315,6 @@ const htmlTemplate = `<!DOCTYPE html>
                     <h2 className="text-xl font-black text-mani-900">MANI G? Seller Dashboard</h2>
                     <p className="text-xs text-mani-600">Review orders, update status, and manage payment QR codes.</p>
                   </div>
-                  <a
-                    href={\`https://docs.google.com/spreadsheets/d/\${DEFAULT_SPREADSHEET_ID}/edit\`}
-                    target="_blank"
-                    className="px-3 py-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1"
-                  >
-                    <span>Open Google Sheet</span> ↗
-                  </a>
                 </div>
 
                 {/* QR Code Upload / Configuration Card */}

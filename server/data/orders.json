@@ -1,5 +1,36 @@
 [
   {
+    "id": "ord_1789622613562_6bs3kb",
+    "orderId": "MANI-20260917-013",
+    "orderDate": "2026-09-17",
+    "orderTime": "01:23:33 PM",
+    "customerName": "Juan Dela Cruz",
+    "mobileNumber": "09171234567",
+    "deliveryAddress": "Unit 102, Manila Building",
+    "paymentMethod": "Cash on Delivery",
+    "paymentStatus": "Unpaid",
+    "items": [
+      {
+        "id": "salted",
+        "quantity": 2,
+        "price": 50
+      }
+    ],
+    "flavorQuantities": {
+      "salted": 2,
+      "unsalted": 0,
+      "spicy": 0,
+      "bbq": 0,
+      "sour-cream": 0,
+      "bawang-only": 0
+    },
+    "totalPacks": 2,
+    "subtotal": 100,
+    "status": "New",
+    "createdAt": "2026-09-17T05:23:33.562Z",
+    "syncedToGoogleSheets": true
+  },
+  {
     "id": "ord_1789611719041_zu5hhk",
     "orderId": "MANI-20260917-012",
     "orderDate": "2026-09-17",

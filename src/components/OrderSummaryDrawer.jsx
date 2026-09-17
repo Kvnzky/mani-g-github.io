@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, X, Plus, Minus, ArrowRight, Loader2, MapPin, Phone, User, CreditCard } from 'lucide-react';
+import { ShoppingBag, X, Plus, Minus, ArrowRight, Loader2, MapPin, Phone, User, CreditCard, Lock } from 'lucide-react';
 import { formatPHP } from '../config/products';
 
 export default function OrderSummaryDrawer({
@@ -13,7 +13,8 @@ export default function OrderSummaryDrawer({
   subtotal,
   onSubmitOrder,
   isSubmitting,
-  validationErrors
+  validationErrors,
+  isOrdersClosed
 }) {
   const hasItems = totalPacks > 0;
   const isFormIncomplete = Boolean(
@@ -98,78 +99,70 @@ export default function OrderSummaryDrawer({
 
         {/* Drawer Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
-          {/* Items Section */}
+          {/* Items List */}
           <div>
             <h4 className="text-xs font-extrabold uppercase tracking-wider text-mani-500 mb-2.5">
               Selected Flavors
             </h4>
-
-            {!hasItems ? (
-              <div className="text-center py-10 px-4 bg-mani-50/60 rounded-2xl border border-dashed border-mani-200">
-                <span className="text-4xl block mb-2">🥜</span>
-                <p className="text-sm font-bold text-mani-800">Your cart is empty</p>
-                <p className="text-xs text-mani-500 mt-1">
-                  Choose delicious flavors from our menu to start your order!
-                </p>
-              </div>
-            ) : (
+            {hasItems ? (
               <div className="space-y-2.5">
                 {items
-                  .filter((item) => (item.quantity || 0) > 0)
+                  .filter((item) => item.quantity > 0)
                   .map((item) => (
                     <div
                       key={item.id}
-                      className="p-3 rounded-2xl bg-mani-50/70 border border-mani-200/80 flex items-center justify-between gap-3"
+                      className="p-3 rounded-2xl bg-cream border border-mani-200/80 flex items-center justify-between gap-3"
                     >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-base">{item.icon || '🥜'}</span>
-                          <span className="font-extrabold text-sm text-mani-900 truncate">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="text-xl">{item.icon || '🥜'}</span>
+                        <div className="min-w-0">
+                          <h5 className="font-bold text-sm text-mani-900 truncate">
                             {item.name}
-                          </span>
-                        </div>
-                        <div className="text-xs text-mani-600 mt-0.5">
-                          {formatPHP(item.price)} × {item.quantity} ={' '}
-                          <span className="font-bold text-mani-900">
-                            {formatPHP(item.price * item.quantity)}
-                          </span>
+                          </h5>
+                          <p className="text-xs text-mani-500">
+                            {formatPHP(item.price)} each
+                          </p>
                         </div>
                       </div>
 
-                      {/* Stepper */}
-                      <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-mani-200 shadow-xs">
+                      <div className="flex items-center gap-2 shrink-0">
                         <button
                           type="button"
                           onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-                          className="w-6 h-6 rounded-lg text-mani-700 hover:bg-red-50 hover:text-red-600 flex items-center justify-center font-bold text-xs"
+                          className="w-7 h-7 rounded-lg bg-white border border-mani-200 hover:bg-mani-100 flex items-center justify-center text-mani-700"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="w-7 text-center font-extrabold text-xs text-mani-900">
+                        <span className="w-6 text-center font-bold text-sm text-mani-900">
                           {item.quantity}
                         </span>
                         <button
                           type="button"
                           onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-                          className="w-6 h-6 rounded-lg bg-amber-500 text-white hover:bg-amber-600 flex items-center justify-center font-bold text-xs"
+                          className="w-7 h-7 rounded-lg bg-white border border-mani-200 hover:bg-mani-100 flex items-center justify-center text-mani-700"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
                   ))}
               </div>
+            ) : (
+              <div className="text-center py-8 text-mani-500 text-xs">
+                No items in cart yet.
+              </div>
             )}
           </div>
 
-          {/* Customer Summary Preview */}
-          <div className="p-4 rounded-2xl bg-mani-50 border border-mani-200 space-y-2 text-xs">
-            <h5 className="font-extrabold uppercase tracking-wider text-mani-600 mb-2">
-              Delivery & Payment Preview
-            </h5>
+          {/* Delivery & Customer Info Summary */}
+          <div className="p-3.5 rounded-2xl bg-mani-50/70 border border-mani-200/60 space-y-2 text-xs">
+            <h4 className="font-bold text-mani-800 uppercase tracking-wider text-[11px]">
+              Delivery Details
+            </h4>
+
             <div className="flex items-center gap-2 text-mani-700">
               <User className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-              <span className="font-semibold">Name:</span>
+              <span className="font-semibold">Customer:</span>
               <span className="text-mani-900 font-medium">
                 {customerData.customerName || <span className="italic text-red-500">Required</span>}
               </span>
@@ -215,36 +208,52 @@ export default function OrderSummaryDrawer({
             </div>
           </div>
 
-          {/* Validation summary error if any */}
-          {Object.keys(validationErrors || {}).length > 0 && (
+          {/* Cutoff Closed Alert */}
+          {isOrdersClosed ? (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-bold flex items-center gap-2">
+              <Lock className="w-4 h-4 text-red-600 shrink-0" />
+              <span>Orders are now closed. The cutoff time for accepting orders has ended.</span>
+            </div>
+          ) : Object.keys(validationErrors || {}).length > 0 ? (
             <div className="p-2 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
               Please complete customer name, mobile number, delivery address, and payment method.
             </div>
-          )}
+          ) : null}
 
           {/* Place Order Button */}
-          <button
-            type="button"
-            disabled={isFormIncomplete || isSubmitting}
-            onClick={onSubmitOrder}
-            className={`w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-all duration-200 ${
-              isFormIncomplete || isSubmitting
-                ? 'bg-mani-200 text-mani-400 cursor-not-allowed shadow-none'
-                : 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white shadow-amber-900/20 active:scale-98'
-            }`}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Submitting Order...</span>
-              </>
-            ) : (
-              <>
-                <span>Place Order</span>
-                <ArrowRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
+          {isOrdersClosed ? (
+            <button
+              type="button"
+              disabled={true}
+              className="w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 bg-red-100 border border-red-300 text-red-700 cursor-not-allowed shadow-none"
+            >
+              <Lock className="w-5 h-5 text-red-600" />
+              <span>Orders Closed (Cutoff Ended)</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={isFormIncomplete || isSubmitting}
+              onClick={onSubmitOrder}
+              className={`w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-all duration-200 ${
+                isFormIncomplete || isSubmitting
+                  ? 'bg-mani-200 text-mani-400 cursor-not-allowed shadow-none'
+                  : 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white shadow-amber-900/20 active:scale-98 cursor-pointer'
+              }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Submitting Order...</span>
+                </>
+              ) : (
+                <>
+                  <span>Place Order</span>
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </>

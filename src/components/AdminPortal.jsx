@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, RefreshCw, Search, Calendar, 
-  Settings, ExternalLink, Plus, Edit2, Check, Package, DollarSign, QrCode, Upload, Copy, Phone, MapPin, CreditCard
+  Settings, ExternalLink, Plus, Edit2, Check, Package, DollarSign, QrCode, Upload, Copy, Phone, MapPin, CreditCard,
+  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, User, Power
 } from 'lucide-react';
 import { formatPHP } from '../config/products';
-import { DEFAULT_SPREADSHEET_ID, DEFAULT_APPS_SCRIPT_URL } from '../config/sheetsConfig';
 
-export default function AdminPortal({ products, onUpdateProducts, customQrs, onUpdateQrs }) {
-  const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'summary', 'products', 'qrs', 'sheets'
+export default function AdminPortal({ 
+  products, 
+  onUpdateProducts, 
+  customQrs, 
+  onUpdateQrs, 
+  adminToken, 
+  adminUser, 
+  onLogout,
+  cutoffInfo,
+  onRefreshCutoff
+}) {
+  const [activeTab, setActiveTab] = useState('cutoff'); // 'cutoff', 'orders', 'summary', 'products', 'qrs', 'sheets'
   const [orders, setOrders] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
   const [selectedDate, setSelectedDate] = useState('');
@@ -17,10 +27,26 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
 
-  const [settings, setSettings] = useState(() => ({
-    spreadsheetId: localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID,
-    appsScriptUrl: localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL
-  }));
+  // Cutoff Form State
+  const [cutoffEnabled, setCutoffEnabled] = useState(cutoffInfo?.enabled || false);
+  const [cutoffDate, setCutoffDate] = useState(cutoffInfo?.cutoffDate || '');
+  const [cutoffTime, setCutoffTime] = useState(cutoffInfo?.cutoffTime || '23:59');
+  const [isSavingCutoff, setIsSavingCutoff] = useState(false);
+  const [cutoffSaveMsg, setCutoffSaveMsg] = useState({ msg: '', type: '' });
+
+  // Sync cutoff local form when cutoffInfo prop updates
+  useEffect(() => {
+    if (cutoffInfo) {
+      setCutoffEnabled(Boolean(cutoffInfo.enabled));
+      if (cutoffInfo.cutoffDate) setCutoffDate(cutoffInfo.cutoffDate);
+      if (cutoffInfo.cutoffTime) setCutoffTime(cutoffInfo.cutoffTime);
+    }
+  }, [cutoffInfo]);
+
+  const [settings, setSettings] = useState({
+    spreadsheetId: '',
+    appsScriptUrl: ''
+  });
   const [settingsStatus, setSettingsStatus] = useState({ msg: '', type: '' });
   const [isTestingSheet, setIsTestingSheet] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -35,7 +61,6 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
   const [newFlavorName, setNewFlavorName] = useState('');
   const [newFlavorPrice, setNewFlavorPrice] = useState('50');
   const [newFlavorDesc, setNewFlavorDesc] = useState('');
-  const [newFlavorIcon, setNewFlavorIcon] = useState('🥜');
 
   const STATUS_CONFIG = {
     New: { label: 'New', color: 'bg-amber-100 text-amber-900 border-amber-300', dot: '🟡' },
@@ -44,6 +69,14 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
     Ready: { label: 'Ready', color: 'bg-purple-100 text-purple-900 border-purple-300', dot: '🟣' },
     Completed: { label: 'Completed', color: 'bg-emerald-100 text-emerald-900 border-emerald-300', dot: '🟢' },
     Cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-900 border-red-300', dot: '🔴' },
+  };
+
+  const getAuthHeaders = () => {
+    const headers = { 'Content-Type': 'application/json' };
+    if (adminToken) {
+      headers['Authorization'] = `Bearer ${adminToken}`;
+    }
+    return headers;
   };
 
   const fetchOrders = async () => {
@@ -55,7 +88,11 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
       if (statusFilter !== 'all') params.append('status', statusFilter);
       if (params.toString()) url += `?${params.toString()}`;
 
-      const res = await fetch(url);
+      const res = await fetch(url, { headers: getAuthHeaders() });
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
       const data = await res.json();
       if (data && data.orders) {
         setOrders(data.orders);
@@ -65,30 +102,9 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
         }
       }
     } catch (e) {
-      console.warn('Backend /api/orders unavailable, loading orders from localStorage:', e.message);
+      console.warn('Backend /api/orders fetch error:', e.message);
       const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
       setOrders(local);
-      const totalPacks = local.reduce((sum, o) => sum + (o.totalPacks || 0), 0);
-      const totalRevenue = local.reduce((sum, o) => sum + (o.subtotal || 0), 0);
-      const paidOrders = local.filter(o => (o.paymentStatus || '').toLowerCase() === 'paid').length;
-      const unpaidOrders = local.filter(o => (o.paymentStatus || '').toLowerCase() !== 'paid').length;
-      setDailySummary({
-        totalOrders: local.length,
-        totalPacks,
-        totalSales: totalRevenue,
-        totalRevenue,
-        newOrders: local.filter(o => o.status === 'New').length,
-        completedOrders: local.filter(o => o.status === 'Completed').length,
-        cancelledOrders: local.filter(o => o.status === 'Cancelled').length,
-        paidOrders,
-        unpaidOrders,
-        salted: local.reduce((sum, o) => sum + (o.flavorQuantities?.salted || 0), 0),
-        unsalted: local.reduce((sum, o) => sum + (o.flavorQuantities?.unsalted || 0), 0),
-        spicy: local.reduce((sum, o) => sum + (o.flavorQuantities?.spicy || 0), 0),
-        bbq: local.reduce((sum, o) => sum + (o.flavorQuantities?.bbq || 0), 0),
-        sourCream: local.reduce((sum, o) => sum + (o.flavorQuantities?.['sour-cream'] || 0), 0),
-        bawangOnly: local.reduce((sum, o) => sum + (o.flavorQuantities?.['bawang-only'] || 0), 0)
-      });
     } finally {
       setIsLoading(false);
     }
@@ -96,21 +112,19 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/api/settings');
+      const res = await fetch('/api/settings', { headers: getAuthHeaders() });
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
       const data = await res.json();
-      if (data && data.spreadsheetId) {
+      if (data) {
         setSettings({
-          spreadsheetId: data.spreadsheetId || DEFAULT_SPREADSHEET_ID,
-          appsScriptUrl: data.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL
+          spreadsheetId: data.spreadsheetId || '',
+          appsScriptUrl: data.appsScriptUrl || ''
         });
       }
-    } catch (e) {
-      // Static GitHub Pages fallback: read from localStorage
-      setSettings({
-        spreadsheetId: localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID,
-        appsScriptUrl: localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL
-      });
-    }
+    } catch (e) {}
   };
 
   useEffect(() => {
@@ -118,44 +132,78 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
     fetchSettings();
   }, [selectedDate, statusFilter]);
 
+  // Handle Cutoff Save
+  const handleSaveCutoffSettings = async (e) => {
+    e.preventDefault();
+
+    if (cutoffEnabled && (!cutoffDate || !cutoffTime)) {
+      setCutoffSaveMsg({ msg: 'Please select both a cutoff date and time.', type: 'error' });
+      return;
+    }
+
+    const confirmMsg = cutoffEnabled
+      ? `Are you sure you want to set the order cutoff to ${cutoffDate} at ${cutoffTime}? Orders will automatically close once this time is reached.`
+      : 'Are you sure you want to DISABLE the cutoff timer? Order submissions will remain open continuously.';
+
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+
+    setIsSavingCutoff(true);
+    setCutoffSaveMsg({ msg: '', type: '' });
+
+    try {
+      const res = await fetch('/api/admin/cutoff', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          enabled: cutoffEnabled,
+          date: cutoffDate,
+          time: cutoffTime
+        })
+      });
+
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update cutoff settings.');
+      }
+
+      setCutoffSaveMsg({ msg: 'Cutoff settings successfully updated and live on customer form!', type: 'success' });
+      if (onRefreshCutoff) onRefreshCutoff();
+      setTimeout(() => setCutoffSaveMsg({ msg: '', type: '' }), 4000);
+    } catch (err) {
+      setCutoffSaveMsg({ msg: err.message || 'Error updating cutoff settings.', type: 'error' });
+    } finally {
+      setIsSavingCutoff(false);
+    }
+  };
+
   const handleUpdateStatus = async (orderId, newStatus) => {
     setUpdatingOrderId(orderId);
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ status: newStatus })
       });
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
       const data = await res.json();
       if (data && data.success) {
         setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
-      } else {
-        throw new Error('Fallback to local');
       }
     } catch (e) {
-      // LocalStorage update for static GitHub Pages
       const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
       const updated = local.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
       localStorage.setItem('mani_orders', JSON.stringify(updated));
       setOrders(updated);
-
-      // Direct sync to Google Apps Script if URL configured
-      const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL).trim();
-      if (appsUrl) {
-        const targetOrder = local.find(o => o.orderId === orderId);
-        fetch(appsUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action: 'updateStatus',
-            spreadsheetId: settings.spreadsheetId || DEFAULT_SPREADSHEET_ID,
-            orderId,
-            orderDate: targetOrder?.orderDate,
-            status: newStatus
-          })
-        }).catch(err => console.warn('Direct GAS status update error:', err));
-      }
     } finally {
       setUpdatingOrderId(null);
     }
@@ -166,39 +214,22 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
     try {
       const res = await fetch(`/api/orders/${orderId}/payment-status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ paymentStatus: newPaymentStatus })
       });
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
       const data = await res.json();
       if (data && data.success) {
         setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
-      } else {
-        throw new Error('Fallback to local');
       }
     } catch (e) {
-      // LocalStorage update for static GitHub Pages
       const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
       const updated = local.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o);
       localStorage.setItem('mani_orders', JSON.stringify(updated));
       setOrders(updated);
-
-      // Direct sync to Google Apps Script if URL configured
-      const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL).trim();
-      if (appsUrl) {
-        const targetOrder = local.find(o => o.orderId === orderId);
-        fetch(appsUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action: 'updatePaymentStatus',
-            spreadsheetId: settings.spreadsheetId || DEFAULT_SPREADSHEET_ID,
-            orderId,
-            orderDate: targetOrder?.orderDate,
-            paymentStatus: newPaymentStatus
-          })
-        }).catch(err => console.warn('Direct GAS payment status update error:', err));
-      }
     } finally {
       setUpdatingPaymentId(null);
     }
@@ -207,30 +238,25 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     const cleanUrl = (settings.appsScriptUrl || '').trim();
-    const cleanId = (settings.spreadsheetId || DEFAULT_SPREADSHEET_ID).trim();
-    
-    // Always persist to localStorage for static GitHub Pages execution
-    localStorage.setItem('mani_apps_script_url', cleanUrl);
-    localStorage.setItem('mani_spreadsheet_id', cleanId);
+    const cleanId = (settings.spreadsheetId || '').trim();
 
     try {
       await fetch('/api/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ appsScriptUrl: cleanUrl, spreadsheetId: cleanId })
       });
+      setSettingsStatus({ msg: 'Integration settings saved securely on backend!', type: 'success' });
+      setTimeout(() => setSettingsStatus({ msg: '', type: '' }), 4000);
     } catch (e) {
-      // Silently handled on static GitHub Pages
+      setSettingsStatus({ msg: 'Failed to save settings.', type: 'error' });
     }
-
-    setSettingsStatus({ msg: 'Settings saved! All incoming orders will sync using this configuration.', type: 'success' });
-    setTimeout(() => setSettingsStatus({ msg: '', type: '' }), 4000);
   };
 
   const handleTestConnection = async () => {
-    const urlToTest = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL).trim();
+    const urlToTest = (settings.appsScriptUrl || '').trim();
     if (!urlToTest) {
-      setSettingsStatus({ msg: 'Please enter your Google Apps Script Web App URL first.', type: 'error' });
+      setSettingsStatus({ msg: 'Please enter a Google Apps Script Web App URL first.', type: 'error' });
       return;
     }
     setIsTestingSheet(true);
@@ -244,84 +270,55 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
         setSettingsStatus({ msg: '✅ Web App reachable! Ready to record orders.', type: 'success' });
       }
     } catch (err) {
-      if (urlToTest.includes('script.google.com/macros/s/')) {
-        setSettingsStatus({ 
-          msg: 'ℹ️ Web App endpoint registered! Tip: In Google Apps Script, confirm "Who has access" is set to "Anyone".',
-          type: 'info'
-        });
-      } else {
-        setSettingsStatus({ 
-          msg: '⚠️ Please make sure the URL begins with https://script.google.com/macros/s/.../exec',
-          type: 'error'
-        });
-      }
+      setSettingsStatus({ msg: 'ℹ️ Endpoint registered.', type: 'info' });
     } finally {
       setIsTestingSheet(false);
     }
   };
 
-  const handleSyncPendingOrders = async () => {
-    const url = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL).trim();
-    if (!url) {
-      setSettingsStatus({ msg: 'Please configure and save your Google Apps Script Web App URL first.', type: 'error' });
-      return;
-    }
-
-    setIsSyncing(true);
-    setSettingsStatus({ msg: 'Syncing pending orders to Google Sheets...', type: 'info' });
-
-    try {
-      const localOrders = JSON.parse(localStorage.getItem('mani_orders') || '[]');
-      let syncedCount = 0;
-
-      for (let i = 0; i < localOrders.length; i++) {
-        const ord = localOrders[i];
-        if (!ord.syncedToGoogleSheets) {
-          try {
-            await fetch(url, {
-              method: 'POST',
-              mode: 'no-cors',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({
-                action: 'addOrder',
-                spreadsheetId: settings.spreadsheetId || DEFAULT_SPREADSHEET_ID,
-                order: ord
-              })
-            });
-            ord.syncedToGoogleSheets = true;
-            syncedCount++;
-          } catch (err) {
-            console.warn('Failed to sync order:', ord.orderId, err);
-          }
-        }
-      }
-
-      localStorage.setItem('mani_orders', JSON.stringify(localOrders));
-      setOrders([...localOrders]);
-
-      if (syncedCount > 0) {
-        setSettingsStatus({ msg: `🎉 Successfully synced ${syncedCount} pending order(s) directly to your Google Sheet!`, type: 'success' });
-      } else {
-        setSettingsStatus({ msg: 'All current orders are already synced to Google Sheets!', type: 'success' });
-      }
-    } catch (err) {
-      setSettingsStatus({ msg: 'Error syncing orders: ' + err.message, type: 'error' });
-    } finally {
-      setIsSyncing(false);
-    }
+  const handleToggleProduct = (id) => {
+    const updated = products.map((p) =>
+      p.id === id ? { ...p, available: p.available === false ? true : false } : p
+    );
+    onUpdateProducts(updated);
   };
 
-  const handleFileUpload = (e, qrKey) => {
-    const file = e.target.files?.[0];
+  const handleSavePrice = (id) => {
+    const pVal = parseFloat(tempPrice);
+    if (isNaN(pVal) || pVal < 0) return;
+    const updated = products.map((p) => (p.id === id ? { ...p, price: pVal } : p));
+    onUpdateProducts(updated);
+    setEditingPriceId(null);
+  };
+
+  const handleAddNewFlavor = (e) => {
+    e.preventDefault();
+    if (!newFlavorName.trim()) return;
+    const newId = newFlavorName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const newProd = {
+      id: newId,
+      name: newFlavorName.trim(),
+      price: parseFloat(newFlavorPrice) || 50,
+      description: newFlavorDesc.trim() || 'New artisanal roasted flavor.',
+      icon: '🥜',
+      badge: 'New',
+      available: true
+    };
+    onUpdateProducts([...products, newProd]);
+    setNewFlavorName('');
+    setNewFlavorPrice('50');
+    setNewFlavorDesc('');
+  };
+
+  const handleFileUpload = (e, type) => {
+    const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const updated = {
-        ...customQrs,
-        [qrKey]: reader.result
-      };
+      const base64 = reader.result;
+      const updated = { ...customQrs, [type]: base64 };
       onUpdateQrs(updated);
-      setQrSaveMsg(`${qrKey === 'maribank' ? 'Maribank' : 'GCash'} QR code updated successfully!`);
+      setQrSaveMsg(`✅ ${type === 'maribank' ? 'Maribank' : 'GCash'} QR code updated successfully!`);
       setTimeout(() => setQrSaveMsg(''), 3000);
     };
     reader.readAsDataURL(file);
@@ -329,172 +326,288 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
 
   const handleSaveGcashNum = (e) => {
     e.preventDefault();
-    const updated = {
-      ...customQrs,
-      gcashNumber: localGcashNum.trim()
-    };
+    const updated = { ...customQrs, gcashNumber: localGcashNum.trim() };
     onUpdateQrs(updated);
-    setQrSaveMsg('GCash number saved successfully!');
+    setQrSaveMsg('✅ GCash contact number updated successfully!');
     setTimeout(() => setQrSaveMsg(''), 3000);
   };
 
-  const handleToggleProduct = (id) => {
-    const updated = products.map(p => p.id === id ? { ...p, available: !p.available } : p);
-    onUpdateProducts(updated);
-  };
-
-  const handleSavePrice = (id) => {
-    const val = Number(tempPrice);
-    if (!isNaN(val) && val > 0) {
-      const updated = products.map(p => p.id === id ? { ...p, price: val } : p);
-      onUpdateProducts(updated);
-    }
-    setEditingPriceId(null);
-  };
-
-  const handleAddNewFlavor = (e) => {
-    e.preventDefault();
-    if (!newFlavorName.trim()) return;
-
-    const newProd = {
-      id: newFlavorName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-      name: newFlavorName.trim(),
-      tagline: 'Specialty Flavor',
-      description: newFlavorDesc.trim() || 'Freshly roasted mani seasoned to perfection.',
-      price: Number(newFlavorPrice) || 50,
-      icon: newFlavorIcon || '🥜',
-      badge: 'New',
-      available: true,
-      sortOrder: products.length + 1,
-      accentColor: 'bg-yellow-100 text-yellow-900 border-yellow-300'
-    };
-
-    onUpdateProducts([...products, newProd]);
-    setNewFlavorName('');
-    setNewFlavorDesc('');
-    setNewFlavorPrice('50');
-    setNewFlavorIcon('🥜');
-  };
-
-  const displayOrders = orders.filter(o => {
-    if (!searchQuery) return true;
+  // Filter orders by search
+  const displayOrders = orders.filter((o) => {
+    if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
-      o.orderId.toLowerCase().includes(q) ||
-      o.customerName.toLowerCase().includes(q) ||
-      o.mobileNumber.includes(q) ||
-      (o.deliveryAddress && o.deliveryAddress.toLowerCase().includes(q))
+      (o.orderId || '').toLowerCase().includes(q) ||
+      (o.customerName || '').toLowerCase().includes(q) ||
+      (o.mobileNumber || '').toLowerCase().includes(q) ||
+      (o.deliveryAddress || '').toLowerCase().includes(q)
     );
   });
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-mani-200/90 shadow-warm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-9 h-9 rounded-xl bg-mani-800 text-amber-200 flex items-center justify-center text-sm font-bold shadow-xs">
-              <ShieldCheck className="w-5 h-5" />
-            </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-mani-900">
-              MANI G? Seller Dashboard
-            </h2>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Top Header Card */}
+      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-600 to-mani-900 text-white flex items-center justify-center text-2xl shadow-md shadow-mani-900/10">
+            <ShieldCheck className="w-6 h-6 text-amber-300" />
           </div>
-          <p className="text-xs sm:text-sm text-mani-600 mt-1">
-            Manage orders, update status, configure payment QR codes, and monitor Google Sheet sync.
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-black text-mani-950 tracking-tight">
+                Admin Portal
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300/80">
+                Authenticated
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-mani-600 font-medium">
+              Signed in as: <span className="font-bold text-mani-900">{adminUser?.username || 'kvn000'}</span> • Business Timezone: <span className="font-bold text-mani-900">Asia/Manila (UTC+8)</span>
+            </p>
+          </div>
         </div>
 
-        <a
-          href={`https://docs.google.com/spreadsheets/d/${settings.spreadsheetId}/edit`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
-        >
-          <span>Open Google Sheet</span>
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+        {/* Top Actions: Cutoff status badge & Logout */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Live Order Status Indicator */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-cream text-xs font-bold">
+            <span className="text-mani-600 font-medium">Form Status:</span>
+            {cutoffInfo?.status === 'CLOSED' ? (
+              <span className="text-red-700 bg-red-100 px-2 py-0.5 rounded-lg border border-red-300">
+                🔴 CLOSED
+              </span>
+            ) : cutoffInfo?.status === 'CUTOFF SCHEDULED' ? (
+              <span className="text-amber-800 bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-300">
+                🟡 CUTOFF SCHEDULED
+              </span>
+            ) : (
+              <span className="text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-lg border border-emerald-300">
+                🟢 OPEN
+              </span>
+            )}
+          </div>
+
+          <button
+            onClick={onLogout}
+            className="px-3.5 py-2 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </button>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-mani-200 overflow-x-auto gap-2">
-        <button
-          onClick={() => setActiveTab('orders')}
-          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-            activeTab === 'orders' ? 'border-amber-500 text-amber-900' : 'border-transparent text-mani-500 hover:text-mani-800'
-          }`}
-        >
-          <Package className="w-4 h-4" />
-          <span>Orders ({orders.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('summary')}
-          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-            activeTab === 'summary' ? 'border-amber-500 text-amber-900' : 'border-transparent text-mani-500 hover:text-mani-800'
-          }`}
-        >
-          <Calendar className="w-4 h-4" />
-          <span>Daily Summary</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('products')}
-          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-            activeTab === 'products' ? 'border-amber-500 text-amber-900' : 'border-transparent text-mani-500 hover:text-mani-800'
-          }`}
-        >
-          <DollarSign className="w-4 h-4" />
-          <span>Flavors & Pricing</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('qrs')}
-          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-            activeTab === 'qrs' ? 'border-amber-500 text-amber-900' : 'border-transparent text-mani-500 hover:text-mani-800'
-          }`}
-        >
-          <QrCode className="w-4 h-4" />
-          <span>Payment QRs</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('sheets')}
-          className={`pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-            activeTab === 'sheets' ? 'border-amber-500 text-amber-900' : 'border-transparent text-mani-500 hover:text-mani-800'
-          }`}
-        >
-          <Settings className="w-4 h-4" />
-          <span>Google Sheet Setup</span>
-        </button>
+      {/* Navigation Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none border-b border-mani-200/80">
+        {[
+          { id: 'cutoff', label: '⏰ Cutoff & Availability', icon: Clock },
+          { id: 'orders', label: '📦 Orders Manager', icon: Package },
+          { id: 'summary', label: '📊 Daily Summary', icon: DollarSign },
+          { id: 'products', label: '🥜 Products & Pricing', icon: Settings },
+          { id: 'qrs', label: '💳 Payment QRs', icon: QrCode },
+          { id: 'sheets', label: '⚙️ Integration', icon: ExternalLink }
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
+                isActive
+                  ? 'bg-mani-900 text-amber-200 shadow-sm shadow-mani-900/10'
+                  : 'text-mani-600 hover:text-mani-900 hover:bg-white/80'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* 1. ORDERS TAB */}
+      {/* ========================================================= */}
+      {/* 1. ORDER CUTOFF & AVAILABILITY TAB                        */}
+      {/* ========================================================= */}
+      {activeTab === 'cutoff' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-6">
+            <div className="border-b border-mani-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-mani-900 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-amber-600" />
+                  Order Form Availability & Cutoff Timer Settings
+                </h3>
+                <p className="text-xs sm:text-sm text-mani-600">
+                  Control whether customers can place orders and schedule automatic end times.
+                </p>
+              </div>
+
+              {/* Status Pill */}
+              <div className="self-start sm:self-auto">
+                {cutoffInfo?.status === 'CLOSED' ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-800 border border-red-300">
+                    <Lock className="w-3.5 h-3.5 text-red-600" /> CLOSED (Orders Blocked)
+                  </span>
+                ) : cutoffInfo?.status === 'CUTOFF SCHEDULED' ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800 border border-amber-300">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" /> CUTOFF SCHEDULED
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> OPEN (Accepting Orders)
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Alert Message */}
+            {cutoffSaveMsg.msg && (
+              <div className={`p-4 rounded-2xl text-xs sm:text-sm font-bold border flex items-center gap-2 ${
+                cutoffSaveMsg.type === 'success' 
+                  ? 'bg-emerald-50 text-emerald-900 border-emerald-300' 
+                  : 'bg-red-50 text-red-900 border-red-300'
+              }`}>
+                {cutoffSaveMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertTriangle className="w-4 h-4 text-red-600" />}
+                <span>{cutoffSaveMsg.msg}</span>
+              </div>
+            )}
+
+            {/* Dashboard Overview Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+              <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200">
+                <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Form Status</span>
+                <div className="text-xl sm:text-2xl font-black text-amber-950 mt-1">
+                  {cutoffInfo?.isOpen ? '🟢 OPEN' : '🔴 CLOSED'}
+                </div>
+                <p className="text-[11px] text-mani-600 mt-1 font-medium">
+                  {cutoffInfo?.isOpen ? 'Customers can currently submit orders.' : 'Submissions are blocked by server.'}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-orange-50/70 border border-orange-200">
+                <span className="text-xs font-bold text-orange-800 uppercase tracking-wider">Cutoff Timer</span>
+                <div className="text-xl sm:text-2xl font-black text-orange-950 mt-1">
+                  {cutoffEnabled ? 'ENABLED' : 'DISABLED'}
+                </div>
+                <p className="text-[11px] text-mani-600 mt-1 font-medium">
+                  {cutoffEnabled ? `Ending on ${cutoffDate} at ${cutoffTime}` : 'Form remains open continuously'}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
+                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Timezone Standard</span>
+                <div className="text-xl sm:text-2xl font-black text-emerald-950 mt-1">
+                  Asia/Manila
+                </div>
+                <p className="text-[11px] text-mani-600 mt-1 font-medium">
+                  Authoritative Philippine Standard Time (PST)
+                </p>
+              </div>
+            </div>
+
+            {/* Form Settings */}
+            <form onSubmit={handleSaveCutoffSettings} className="space-y-5 pt-2">
+              {/* Enable / Disable Switch */}
+              <div className="p-4 rounded-2xl bg-cream border border-mani-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-black text-mani-900">Enable Order-Cutoff Timer</h4>
+                  <p className="text-xs text-mani-600 font-medium">
+                    When enabled, orders automatically close and reject submissions when the cutoff time arrives.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCutoffEnabled(!cutoffEnabled)}
+                  className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    cutoffEnabled ? 'bg-amber-600' : 'bg-mani-300'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                      cutoffEnabled ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Date & Time Pickers */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-amber-600" />
+                    Cutoff Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={cutoffDate}
+                    onChange={(e) => setCutoffDate(e.target.value)}
+                    disabled={!cutoffEnabled}
+                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all disabled:opacity-50 disabled:bg-mani-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    Cutoff Time (Philippine Time) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={cutoffTime}
+                    onChange={(e) => setCutoffTime(e.target.value)}
+                    disabled={!cutoffEnabled}
+                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all disabled:opacity-50 disabled:bg-mani-50"
+                  />
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={isSavingCutoff}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-black text-xs sm:text-sm shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{isSavingCutoff ? 'Saving Cutoff Settings...' : 'Save Cutoff Settings'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 2. ORDERS MANAGER TAB                                     */}
+      {/* ========================================================= */}
       {activeTab === 'orders' && (
         <div className="space-y-4">
-          <div className="bg-white p-4 rounded-2xl border border-mani-200/90 shadow-warm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-mani-200 shadow-warm">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-mani-400 absolute left-3 top-3" />
+              <Search className="w-4 h-4 text-mani-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
+                placeholder="Search by customer, phone, order ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by order ID, name, phone, or address..."
-                className="w-full text-xs sm:text-sm pl-9 pr-3 py-2 rounded-xl border border-mani-200 focus:border-amber-500 outline-none"
+                className="w-full pl-9 pr-4 py-2 rounded-xl text-xs sm:text-sm border border-mani-200 bg-cream outline-none focus:border-amber-500"
               />
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-2">
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="text-xs px-3 py-2 rounded-xl border border-mani-200 text-mani-800 focus:border-amber-500 outline-none"
+                className="px-3 py-2 rounded-xl text-xs border border-mani-200 bg-cream outline-none cursor-pointer"
+                title="Filter by Order Date"
               />
 
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="text-xs px-3 py-2 rounded-xl border border-mani-200 text-mani-800 focus:border-amber-500 outline-none"
+                className="px-3 py-2 rounded-xl text-xs font-semibold border border-mani-200 bg-cream outline-none cursor-pointer"
               >
                 <option value="all">All Statuses</option>
                 <option value="New">🟡 New</option>
@@ -601,41 +714,43 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                         </div>
                       </div>
 
-                      {/* Delivery Address & Payment */}
+                      {/* Delivery Address */}
                       <div className="space-y-1">
                         <span className="font-bold text-mani-500 uppercase tracking-wider text-[10px]">
                           Delivery Address
                         </span>
-                        <div className="text-mani-800 leading-relaxed font-medium">
-                          {ord.deliveryAddress || <span className="text-mani-400 italic">No address provided</span>}
-                        </div>
-                        <div className="text-[11px] font-bold text-mani-600 pt-1 flex items-center gap-1">
-                          <CreditCard className="w-3 h-3 text-amber-600" />
-                          <span>Paid via: <strong className="text-mani-900">{ord.paymentMethod || 'Cash on Delivery'}</strong></span>
+                        <div className="text-mani-800 font-medium flex items-start gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <span>{ord.deliveryAddress}</span>
                         </div>
                       </div>
 
                       {/* Items & Amount */}
-                      <div className="space-y-1 bg-cream p-3 rounded-xl border border-mani-100">
-                        <div className="flex justify-between font-bold text-mani-500 uppercase tracking-wider text-[10px]">
-                          <span>Items ({ord.totalPacks} packs)</span>
-                          <span className="text-amber-800 font-extrabold text-xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-mani-500 uppercase tracking-wider text-[10px]">
+                            Total Amount
+                          </span>
+                          <span className="font-black text-amber-950 text-sm">
                             {formatPHP(ord.subtotal)}
                           </span>
                         </div>
-                        <div className="space-y-1 max-h-24 overflow-y-auto pt-1">
-                          {(ord.items || [])
-                            .filter((it) => (it.quantity || 0) > 0)
-                            .map((it, idx) => (
-                              <div key={idx} className="flex justify-between text-mani-800">
-                                <span>
-                                  {it.name} <span className="font-bold">× {it.quantity}</span>
-                                </span>
-                                <span>{formatPHP(it.price * it.quantity)}</span>
-                              </div>
-                            ))}
+                        <div className="text-[11px] text-mani-600 font-medium">
+                          {ord.totalPacks} pack{ord.totalPacks > 1 ? 's' : ''} total
                         </div>
                       </div>
+                    </div>
+
+                    {/* Flavors breakdown badges */}
+                    <div className="pt-2 border-t border-mani-100 flex flex-wrap gap-1.5 text-[11px]">
+                      {ord.items && ord.items.map((item, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 rounded-lg bg-mani-50 text-mani-800 font-semibold border border-mani-200"
+                        >
+                          {item.name} × {item.quantity}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 );
@@ -645,24 +760,26 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
         </div>
       )}
 
-      {/* 2. DAILY SUMMARY TAB */}
+      {/* ========================================================= */}
+      {/* 3. DAILY SUMMARY TAB                                      */}
+      {/* ========================================================= */}
       {activeTab === 'summary' && dailySummary && (
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-mani-200/90 shadow-warm space-y-4">
-            <div className="flex items-center justify-between border-b border-mani-100 pb-3">
+          <div className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-6">
+            <div className="border-b border-mani-100 pb-3 flex items-center justify-between">
               <div>
-                <h3 className="text-base sm:text-lg font-extrabold text-mani-900">
-                  Daily Order Summary — {dailySummary.date}
+                <h3 className="text-base sm:text-lg font-black text-mani-900">
+                  Daily Performance Summary
                 </h3>
-                <p className="text-xs text-mani-600">
-                  Live metrics matching Google Sheet daily dashboard.
+                <p className="text-xs sm:text-sm text-mani-600">
+                  Metrics for date: <span className="font-bold text-mani-900">{dailySummary.date}</span>
                 </p>
               </div>
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="text-xs px-3 py-1.5 rounded-xl border border-mani-200 text-mani-800 focus:border-amber-500 outline-none"
+                className="px-3 py-1.5 rounded-xl text-xs border border-mani-200 bg-cream outline-none"
               />
             </div>
 
@@ -697,6 +814,7 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
               </div>
             </div>
 
+            {/* Flavor breakdown count */}
             <div>
               <h4 className="text-xs font-extrabold uppercase tracking-wider text-mani-500 mb-2.5">
                 Packs by Flavor:
@@ -715,7 +833,7 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                       <span>{fl.icon}</span>
                       <span className="text-xs font-semibold text-mani-800">{fl.name}</span>
                     </div>
-                    <span className="text-sm font-black text-mani-900">{fl.qty}</span>
+                    <span className="text-sm font-black text-mani-900">{fl.qty || 0}</span>
                   </div>
                 ))}
               </div>
@@ -724,7 +842,9 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
         </div>
       )}
 
-      {/* 3. PRODUCTS TAB */}
+      {/* ========================================================= */}
+      {/* 4. PRODUCTS TAB                                           */}
+      {/* ========================================================= */}
       {activeTab === 'products' && (
         <div className="space-y-6">
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-mani-200/90 shadow-warm space-y-4">
@@ -733,7 +853,7 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                 Flavors & Pricing Manager
               </h3>
               <p className="text-xs text-mani-600">
-                Adjust prices and toggle availability in real-time.
+                Adjust prices and toggle stock availability in real-time.
               </p>
             </div>
 
@@ -771,7 +891,7 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                         <button
                           type="button"
                           onClick={() => handleSavePrice(p.id)}
-                          className="p-1 rounded bg-amber-500 text-white"
+                          className="p-1 rounded bg-amber-500 text-white cursor-pointer"
                         >
                           <Check className="w-3.5 h-3.5" />
                         </button>
@@ -787,7 +907,7 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                             setEditingPriceId(p.id);
                             setTempPrice(String(p.price));
                           }}
-                          className="p-1 text-mani-400 hover:text-mani-800"
+                          className="p-1 text-mani-400 hover:text-mani-800 cursor-pointer"
                           title="Edit price"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -798,7 +918,7 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                     <button
                       type="button"
                       onClick={() => handleToggleProduct(p.id)}
-                      className={`text-xs font-bold px-2.5 py-1 rounded-xl transition-colors ${
+                      className={`text-xs font-bold px-2.5 py-1 rounded-xl transition-colors cursor-pointer ${
                         p.available !== false
                           ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                           : 'bg-red-100 text-red-800 hover:bg-red-200'
@@ -814,7 +934,7 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
             <form onSubmit={handleAddNewFlavor} className="p-4 rounded-2xl bg-mani-50 border border-dashed border-mani-300 space-y-3 pt-4 mt-4">
               <h4 className="text-xs font-extrabold uppercase tracking-wider text-mani-700 flex items-center gap-1">
                 <Plus className="w-4 h-4 text-amber-600" />
-                Add Future Flavor (e.g. Cheese, Garlic Butter)
+                Add Future Flavor
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
                 <input
@@ -842,7 +962,7 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold transition-all"
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold transition-all cursor-pointer"
                 >
                   + Add Flavor
                 </button>
@@ -852,7 +972,9 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
         </div>
       )}
 
-      {/* 4. PAYMENT QRS TAB */}
+      {/* ========================================================= */}
+      {/* 5. PAYMENT QRS TAB                                        */}
+      {/* ========================================================= */}
       {activeTab === 'qrs' && (
         <div className="space-y-6">
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-mani-200/90 shadow-warm space-y-5">
@@ -896,9 +1018,6 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                     alt="Current Maribank QR"
                     className="max-h-56 mx-auto rounded-lg object-contain"
                   />
-                  <p className="text-[11px] text-mani-500 mt-2 font-medium">
-                    Display preview shown to customers selecting Maribank.
-                  </p>
                 </div>
               </div>
 
@@ -920,7 +1039,6 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                   </label>
                 </div>
 
-                {/* Edit GCash Number */}
                 <form onSubmit={handleSaveGcashNum} className="flex gap-2">
                   <input
                     type="text"
@@ -931,7 +1049,7 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                   />
                   <button
                     type="submit"
-                    className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold"
+                    className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer"
                   >
                     Save Number
                   </button>
@@ -943,9 +1061,6 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                     alt="Current GCash QR"
                     className="max-h-56 mx-auto rounded-lg object-contain"
                   />
-                  <p className="text-[11px] text-mani-500 mt-2 font-medium">
-                    Display preview shown to customers selecting GCash.
-                  </p>
                 </div>
               </div>
             </div>
@@ -953,16 +1068,18 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
         </div>
       )}
 
-      {/* 5. SHEETS SETUP TAB */}
+      {/* ========================================================= */}
+      {/* 6. INTERNAL INTEGRATION TAB                               */}
+      {/* ========================================================= */}
       {activeTab === 'sheets' && (
         <div className="space-y-6">
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-mani-200/90 shadow-warm space-y-5">
             <div className="border-b border-mani-100 pb-3">
               <h3 className="text-base sm:text-lg font-extrabold text-mani-900">
-                Google Sheets Integration Settings
+                Google Sheets Internal Synchronization Settings
               </h3>
               <p className="text-xs text-mani-600">
-                Configure your Google Apps Script Web App URL to record submissions automatically.
+                Manage internal server-to-sheets synchronization. Sensitive details are hidden from customers.
               </p>
             </div>
 
@@ -979,20 +1096,20 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
             <form onSubmit={handleSaveSettings} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-mani-800 mb-1">
-                  Google Spreadsheet ID
+                  Google Spreadsheet ID (Internal)
                 </label>
                 <input
                   type="text"
                   value={settings.spreadsheetId}
                   onChange={(e) => setSettings({ ...settings, spreadsheetId: e.target.value })}
-                  className="w-full text-xs sm:text-sm px-3.5 py-2 rounded-xl border border-mani-200 bg-mani-50 text-mani-700 outline-none font-mono"
-                  required
+                  placeholder="Configured via GOOGLE_SHEET_ID environment variable"
+                  className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-mani-200 bg-cream text-mani-700 outline-none font-mono"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-mani-800 mb-1">
-                  Google Apps Script Web App URL
+                  Google Apps Script Web App URL (Internal)
                 </label>
                 <input
                   type="url"
@@ -1006,47 +1123,20 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
               <div className="flex flex-wrap items-center gap-2.5 pt-2">
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-colors"
+                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer"
                 >
-                  Save Settings
+                  Save Internal Settings
                 </button>
                 <button
                   type="button"
                   onClick={handleTestConnection}
                   disabled={isTestingSheet}
-                  className="px-4 py-2.5 rounded-xl bg-cream-warm hover:bg-mani-100 border border-mani-200 text-mani-800 font-bold text-xs transition-colors"
+                  className="px-4 py-2.5 rounded-xl bg-cream-warm hover:bg-mani-100 border border-mani-200 text-mani-800 font-bold text-xs transition-colors cursor-pointer"
                 >
-                  {isTestingSheet ? 'Testing...' : 'Test Web App Connection'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSyncPendingOrders}
-                  disabled={isSyncing}
-                  className="px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition-colors"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                  <span>{isSyncing ? 'Syncing...' : `Sync Pending Orders (${orders.filter(o => !o.syncedToGoogleSheets).length})`}</span>
+                  {isTestingSheet ? 'Testing...' : 'Test Connection'}
                 </button>
               </div>
             </form>
-
-            {/* Quick 3-Step Setup Guide */}
-            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-mani-800 space-y-2.5">
-              <h4 className="font-extrabold text-amber-950 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                <span>📋</span> Quick 3-Step Setup for Google Sheets
-              </h4>
-              <ol className="list-decimal list-inside space-y-1.5 font-medium leading-relaxed">
-                <li>
-                  Open your <a href={`https://docs.google.com/spreadsheets/d/${settings.spreadsheetId}/edit`} target="_blank" rel="noopener noreferrer" className="text-amber-800 font-bold underline">Google Sheet</a> and click <strong>Extensions &gt; Apps Script</strong>.
-                </li>
-                <li>
-                  Paste the script code from <code>google-apps-script/Code.gs</code> and click <strong>Deploy &gt; New deployment</strong>.
-                </li>
-                <li>
-                  Select type: <strong>Web app</strong>, Execute as: <strong>Me</strong>, Who has access: <strong>Anyone</strong>, click <strong>Deploy</strong>, and paste the URL above!
-                </li>
-              </ol>
-            </div>
           </div>
         </div>
       )}

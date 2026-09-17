@@ -5,15 +5,30 @@ import CustomerForm from './components/CustomerForm';
 import OrderSummaryDrawer from './components/OrderSummaryDrawer';
 import OrderConfirmationModal from './components/OrderConfirmationModal';
 import AdminPortal from './components/AdminPortal';
+import AdminLoginModal from './components/AdminLoginModal';
+import OrderCutoffBanner from './components/OrderCutoffBanner';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
-import { DEFAULT_SPREADSHEET_ID, DEFAULT_APPS_SCRIPT_URL } from './config/sheetsConfig';
-import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight } from 'lucide-react';
+import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock } from 'lucide-react';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('order'); // 'order' or 'admin'
   const [products, setProducts] = useState(DEFAULT_PRODUCTS);
   
+  // Admin Authentication State
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [adminToken, setAdminToken] = useState(() => sessionStorage.getItem('mani_admin_token') || '');
+  const [adminUser, setAdminUser] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('mani_admin_user') || 'null');
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // Order Cutoff State
+  const [cutoffInfo, setCutoffInfo] = useState(null);
+
   // Flavors cart: { [productId]: quantity }
   const [quantities, setQuantities] = useState({
     salted: 0,
@@ -24,15 +39,15 @@ export default function App() {
     'bawang-only': 0
   });
 
-  // Customer Form Data (Customer Name, Mobile Number, Delivery Address, Payment Method)
+  // Customer Form Data
   const [customerData, setCustomerData] = useState({
     customerName: '',
     mobileNumber: '',
     deliveryAddress: '',
-    paymentMethod: 'Cash on Delivery' // 'Cash on Delivery', 'Maribank', 'GCash'
+    paymentMethod: 'Cash on Delivery'
   });
 
-  // Admin Configurable QR codes
+  // Configurable QR codes
   const [customQrs, setCustomQrs] = useState(() => {
     const saved = localStorage.getItem('mani_qr_config');
     if (saved) {
@@ -52,8 +67,24 @@ export default function App() {
   const [submissionError, setSubmissionError] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
-  // Load custom products from backend if available
+  // Fetch Cutoff Status from Server
+  const fetchCutoff = async () => {
+    try {
+      const res = await fetch('/api/cutoff');
+      const data = await res.json();
+      if (data) {
+        setCutoffInfo(data);
+      }
+    } catch (err) {
+      console.warn('Cutoff fetch warning:', err.message);
+    }
+  };
+
+  // Initial Data Fetching & Cutoff Polling
   useEffect(() => {
+    fetchCutoff();
+    const cutoffInterval = setInterval(fetchCutoff, 15000); // Check every 15s
+
     fetch('/api/products')
       .then((res) => res.json())
       .then((data) => {
@@ -62,13 +93,43 @@ export default function App() {
         }
       })
       .catch(() => {});
+
+    return () => clearInterval(cutoffInterval);
   }, []);
+
+  // Check auth if user tries to enter admin view
+  useEffect(() => {
+    if (currentView === 'admin' && !adminToken) {
+      setCurrentView('order');
+      setIsLoginModalOpen(true);
+    }
+  }, [currentView, adminToken]);
+
+  const handleLoginSuccess = (token, user) => {
+    setAdminToken(token);
+    setAdminUser(user);
+    setCurrentView('admin');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch (e) {}
+    sessionStorage.removeItem('mani_admin_token');
+    sessionStorage.removeItem('mani_admin_user');
+    setAdminToken('');
+    setAdminUser(null);
+    setCurrentView('order');
+  };
 
   const handleUpdateProducts = (newProducts) => {
     setProducts(newProducts);
     fetch('/api/products', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`
+      },
       body: JSON.stringify(newProducts)
     }).catch(console.error);
   };
@@ -99,6 +160,9 @@ export default function App() {
     const qty = quantities[p.id] || 0;
     return sum + qty * (p.price || 50);
   }, 0);
+
+  // Authoritative Cutoff Status
+  const isOrdersClosed = Boolean(cutoffInfo?.enabled && !cutoffInfo?.isOpen);
 
   // Validation Logic
   const validateForm = () => {
@@ -131,8 +195,13 @@ export default function App() {
     return Object.keys(errors).length === 0;
   };
 
-  // Order Submission
+  // Order Submission (Client & Server Cutoff Enforced)
   const handleSubmitOrder = async () => {
+    if (isOrdersClosed) {
+      setSubmissionError('Orders are now closed. The cutoff time for accepting orders has ended.');
+      return;
+    }
+
     if (!validateForm()) {
       setSubmissionError('Please fill out all required fields before placing your order.');
       return;
@@ -170,67 +239,19 @@ export default function App() {
 
       const data = await response.json();
 
+      if (response.status === 403 || data.code === 'ORDERS_CLOSED') {
+        fetchCutoff();
+        throw new Error(data.error || 'Orders are now closed. The cutoff time for accepting orders has ended.');
+      }
+
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Unable to submit your order via server.');
+        throw new Error(data.error || 'Unable to submit your order.');
       }
 
       setConfirmedOrder(data.order);
       setIsDrawerOpen(false);
     } catch (err) {
-      console.warn('Backend /api/orders not available (static/GitHub Pages mode). Processing client-side:', err.message);
-      
-      // Standalone/static mode fallback (works on GitHub Pages without a Node backend)
-      const now = new Date();
-      const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-      const timeStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).format(now);
-      
-      const savedOrders = JSON.parse(localStorage.getItem('mani_orders') || '[]');
-      const countToday = savedOrders.filter(o => o.orderDate === dateStr).length + 1;
-      const orderId = `MANI-${dateStr.replace(/-/g, '')}-${String(countToday).padStart(3, '0')}`;
-
-      const clientOrder = {
-        orderId,
-        orderDate: dateStr,
-        orderTime: timeStr,
-        customerName: payload.customerName,
-        mobileNumber: payload.mobileNumber,
-        deliveryAddress: payload.deliveryAddress,
-        paymentMethod: payload.paymentMethod,
-        paymentStatus: 'Unpaid',
-        items: orderedItems,
-        flavorQuantities: { ...quantities },
-        totalPacks,
-        subtotal,
-        status: 'New',
-        createdAt: now.toISOString(),
-        syncedToGoogleSheets: false
-      };
-
-      // Direct submission to Google Sheet if Google Apps Script URL configured
-      const appsScriptUrl = localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL;
-      const targetSpreadsheetId = localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID;
-
-      if (appsScriptUrl) {
-        try {
-          await fetch(appsScriptUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              action: 'addOrder',
-              spreadsheetId: targetSpreadsheetId,
-              order: clientOrder
-            })
-          });
-          clientOrder.syncedToGoogleSheets = true;
-        } catch (sheetErr) {
-          console.warn('Direct Google Sheet sync:', sheetErr);
-        }
-      }
-
-      localStorage.setItem('mani_orders', JSON.stringify([clientOrder, ...savedOrders]));
-      setConfirmedOrder(clientOrder);
-      setIsDrawerOpen(false);
+      setSubmissionError(err.message || 'Unable to submit your order. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -258,16 +279,25 @@ export default function App() {
         setCurrentView={setCurrentView}
         totalItems={totalPacks}
         onOpenCart={() => setIsDrawerOpen(true)}
+        isAdminAuthenticated={Boolean(adminToken)}
+        adminUser={adminUser}
+        onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* Main Content */}
       <main className="flex-1 pb-24 sm:pb-12">
-        {currentView === 'admin' ? (
+        {currentView === 'admin' && adminToken ? (
           <AdminPortal
             products={products}
             onUpdateProducts={handleUpdateProducts}
             customQrs={customQrs}
             onUpdateQrs={handleUpdateQrs}
+            adminToken={adminToken}
+            adminUser={adminUser}
+            onLogout={handleLogout}
+            cutoffInfo={cutoffInfo}
+            onRefreshCutoff={fetchCutoff}
           />
         ) : (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -287,9 +317,15 @@ export default function App() {
               </p>
             </div>
 
+            {/* ⏰ Order Cutoff Timer Banner Prominently Placed at the Top */}
+            <OrderCutoffBanner 
+              cutoffInfo={cutoffInfo} 
+              onRefreshCutoff={fetchCutoff} 
+            />
+
             {/* Error Banner */}
             {submissionError && (
-              <div className="p-4 rounded-2xl bg-red-50 border border-red-300 text-sm font-semibold text-red-700 flex items-center gap-2.5 shadow-xs">
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-300 text-sm font-semibold text-red-700 flex items-center gap-2.5 shadow-xs animate-fade-in">
                 <AlertCircle className="w-5 h-5 shrink-0 text-red-600" />
                 <span>{submissionError}</span>
               </div>
@@ -316,7 +352,7 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* Flavors Grid: 1 col on mobile, 2 on tablet, 2 on desktop sidebar, 3 on wide desktop */}
+                  {/* Flavors Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4">
                     {products.map((product) => (
                       <FlavorCard
@@ -355,7 +391,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={handleClearOrder}
-                        className="text-xs font-semibold text-mani-500 hover:text-red-600 transition-colors"
+                        className="text-xs font-semibold text-mani-500 hover:text-red-600 transition-colors cursor-pointer"
                       >
                         Clear All
                       </button>
@@ -395,19 +431,36 @@ export default function App() {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          disabled={isSubmitting || totalPacks === 0}
-                          onClick={handleSubmitOrder}
-                          className={`w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-all ${
-                            totalPacks === 0 || isSubmitting
-                              ? 'bg-mani-200 text-mani-400 cursor-not-allowed shadow-none'
-                              : 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white shadow-amber-900/20 active:scale-98'
-                          }`}
-                        >
-                          {isSubmitting ? 'Submitting Order...' : 'Place Order Now 🥜'}
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
+                        {/* Order Placement Button or Cutoff Alert */}
+                        {isOrdersClosed ? (
+                          <div className="space-y-2">
+                            <button
+                              type="button"
+                              disabled={true}
+                              className="w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 bg-red-100 border-2 border-red-300 text-red-800 cursor-not-allowed shadow-none"
+                            >
+                              <Lock className="w-5 h-5 text-red-600" />
+                              <span>Orders Closed (Cutoff Ended)</span>
+                            </button>
+                            <p className="text-center text-xs text-red-700 font-medium">
+                              The cutoff time for accepting orders has ended.
+                            </p>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isSubmitting || totalPacks === 0}
+                            onClick={handleSubmitOrder}
+                            className={`w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-all ${
+                              totalPacks === 0 || isSubmitting
+                                ? 'bg-mani-200 text-mani-400 cursor-not-allowed shadow-none'
+                                : 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white shadow-amber-900/20 active:scale-98 cursor-pointer'
+                            }`}
+                          >
+                            {isSubmitting ? 'Submitting Order...' : 'Place Order Now 🥜'}
+                            <ArrowRight className="w-5 h-5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -418,7 +471,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Mobile Sticky Quick-Action Bar (when items in cart, hidden on desktop) */}
+      {/* Mobile Sticky Quick-Action Bar */}
       {currentView === 'order' && totalPacks > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-cream/95 backdrop-blur-md border-t border-amber-200 px-4 py-3 shadow-2xl lg:hidden animate-fade-in flex items-center justify-between">
           <div>
@@ -429,17 +482,23 @@ export default function App() {
               {formatPHP(subtotal)}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              const el = document.getElementById('checkout-section');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-amber-900/20"
-          >
-            <span>Proceed to Checkout</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {isOrdersClosed ? (
+            <span className="px-3.5 py-2 rounded-xl bg-red-100 text-red-800 font-black text-xs border border-red-300 flex items-center gap-1">
+              <Lock className="w-3.5 h-3.5" /> Orders Closed
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('checkout-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-amber-900/20 cursor-pointer"
+            >
+              <span>Proceed to Checkout</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
         </div>
       )}
 
@@ -456,9 +515,10 @@ export default function App() {
         onSubmitOrder={handleSubmitOrder}
         isSubmitting={isSubmitting}
         validationErrors={validationErrors}
+        isOrdersClosed={isOrdersClosed}
       />
 
-      {/* Confirmation Modal */}
+      {/* Order Confirmation Modal */}
       {confirmedOrder && (
         <OrderConfirmationModal
           order={confirmedOrder}
@@ -466,14 +526,21 @@ export default function App() {
         />
       )}
 
-      {/* Footer */}
+      {/* Admin Login Modal */}
+      <AdminLoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
+      {/* Clean Footer (No Google Sheet IDs or connections displayed) */}
       <footer className="border-t border-mani-200/80 bg-white py-6 text-center text-xs text-mani-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-1">
           <p className="font-bold text-mani-700">
             🥜 MANI G? — “G ka ba sa crunch?”
           </p>
-          <p>
-            Connected to Google Sheet: <a href="https://docs.google.com/spreadsheets/d/1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI/edit" target="_blank" rel="noreferrer" className="text-amber-700 underline font-semibold">1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI</a>
+          <p className="text-mani-400 text-[11px]">
+            Freshly roasted artisanal peanuts • Hot & crispy everyday
           </p>
         </div>
       </footer>
