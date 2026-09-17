@@ -7,6 +7,7 @@ import OrderConfirmationModal from './components/OrderConfirmationModal';
 import AdminPortal from './components/AdminPortal';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
+import { DEFAULT_SPREADSHEET_ID, DEFAULT_APPS_SCRIPT_URL } from './config/sheetsConfig';
 import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight } from 'lucide-react';
 
 export default function App() {
@@ -196,6 +197,7 @@ export default function App() {
         deliveryAddress: payload.deliveryAddress,
         paymentMethod: payload.paymentMethod,
         items: orderedItems,
+        flavorQuantities: { ...quantities },
         totalPacks,
         subtotal,
         status: 'New',
@@ -204,16 +206,18 @@ export default function App() {
       };
 
       // Direct submission to Google Sheet if Google Apps Script URL configured
-      const appsScriptUrl = localStorage.getItem('mani_apps_script_url');
+      const appsScriptUrl = localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL;
+      const targetSpreadsheetId = localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID;
+
       if (appsScriptUrl) {
         try {
-          fetch(appsScriptUrl, {
+          await fetch(appsScriptUrl, {
             method: 'POST',
             mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
               action: 'addOrder',
-              spreadsheetId: '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI',
+              spreadsheetId: targetSpreadsheetId,
               order: clientOrder
             })
           });

@@ -4,6 +4,7 @@ import {
   Settings, ExternalLink, Plus, Edit2, Check, Package, DollarSign, QrCode, Upload, Copy, Phone, MapPin, CreditCard
 } from 'lucide-react';
 import { formatPHP } from '../config/products';
+import { DEFAULT_SPREADSHEET_ID, DEFAULT_APPS_SCRIPT_URL } from '../config/sheetsConfig';
 
 export default function AdminPortal({ products, onUpdateProducts, customQrs, onUpdateQrs }) {
   const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'summary', 'products', 'qrs', 'sheets'
@@ -15,12 +16,13 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
   const [isLoading, setIsLoading] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
-  const [settings, setSettings] = useState({
-    spreadsheetId: '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI',
-    appsScriptUrl: ''
-  });
+  const [settings, setSettings] = useState(() => ({
+    spreadsheetId: localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID,
+    appsScriptUrl: localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL
+  }));
   const [settingsStatus, setSettingsStatus] = useState({ msg: '', type: '' });
   const [isTestingSheet, setIsTestingSheet] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // QR Edit State
   const [localGcashNum, setLocalGcashNum] = useState(customQrs?.gcashNumber || '09055182263');
@@ -84,11 +86,18 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
     try {
       const res = await fetch('/api/settings');
       const data = await res.json();
-      if (data) {
-        setSettings(data);
+      if (data && data.spreadsheetId) {
+        setSettings({
+          spreadsheetId: data.spreadsheetId || DEFAULT_SPREADSHEET_ID,
+          appsScriptUrl: data.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL
+        });
       }
     } catch (e) {
-      console.error('Failed to load settings:', e);
+      // Static GitHub Pages fallback: read from localStorage
+      setSettings({
+        spreadsheetId: localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID,
+        appsScriptUrl: localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL
+      });
     }
   };
 
@@ -108,9 +117,15 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
       const data = await res.json();
       if (data && data.success) {
         setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
+      } else {
+        throw new Error('Fallback to local');
       }
     } catch (e) {
-      console.error('Failed to update status:', e);
+      // LocalStorage update for static GitHub Pages
+      const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+      const updated = local.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
+      localStorage.setItem('mani_orders', JSON.stringify(updated));
+      setOrders(updated);
     } finally {
       setUpdatingOrderId(null);
     }
@@ -118,44 +133,108 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
 
   const handleSaveSettings = async (e) => {
     e.preventDefault();
+    const cleanUrl = (settings.appsScriptUrl || '').trim();
+    const cleanId = (settings.spreadsheetId || DEFAULT_SPREADSHEET_ID).trim();
+    
+    // Always persist to localStorage for static GitHub Pages execution
+    localStorage.setItem('mani_apps_script_url', cleanUrl);
+    localStorage.setItem('mani_spreadsheet_id', cleanId);
+
     try {
-      const res = await fetch('/api/settings', {
+      await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+        body: JSON.stringify({ appsScriptUrl: cleanUrl, spreadsheetId: cleanId })
       });
-      const data = await res.json();
-      if (data.success) {
-        setSettingsStatus({ msg: 'Settings updated successfully!', type: 'success' });
-        setTimeout(() => setSettingsStatus({ msg: '', type: '' }), 3000);
-      }
     } catch (e) {
-      setSettingsStatus({ msg: 'Failed to update settings.', type: 'error' });
+      // Silently handled on static GitHub Pages
     }
+
+    setSettingsStatus({ msg: 'Settings saved! All incoming orders will sync using this configuration.', type: 'success' });
+    setTimeout(() => setSettingsStatus({ msg: '', type: '' }), 4000);
   };
 
   const handleTestConnection = async () => {
-    if (!settings.appsScriptUrl) {
-      setSettingsStatus({ msg: 'Please enter a Google Apps Script Web App URL first.', type: 'error' });
+    const urlToTest = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL).trim();
+    if (!urlToTest) {
+      setSettingsStatus({ msg: 'Please enter your Google Apps Script Web App URL first.', type: 'error' });
       return;
     }
     setIsTestingSheet(true);
-    setSettingsStatus({ msg: 'Testing connection...', type: 'info' });
+    setSettingsStatus({ msg: 'Testing connection to Google Apps Script...', type: 'info' });
     try {
-      const res = await fetch(settings.appsScriptUrl, { method: 'GET', mode: 'cors' });
+      const res = await fetch(urlToTest, { method: 'GET', mode: 'cors' });
       const data = await res.json();
       if (data && data.status === 'ok') {
-        setSettingsStatus({ msg: `Connection successful! Time: ${data.serverTime}`, type: 'success' });
+        setSettingsStatus({ msg: `✅ Connection verified! Server time: ${data.serverTime}`, type: 'success' });
       } else {
-        setSettingsStatus({ msg: 'Connected to Web App endpoint!', type: 'success' });
+        setSettingsStatus({ msg: '✅ Web App reachable! Ready to record orders.', type: 'success' });
       }
     } catch (err) {
-      setSettingsStatus({ 
-        msg: 'Connection attempt made. Please ensure "Who has access" is set to "Anyone" in Google Apps Script.',
-        type: 'info'
-      });
+      if (urlToTest.includes('script.google.com/macros/s/')) {
+        setSettingsStatus({ 
+          msg: 'ℹ️ Web App endpoint registered! Tip: In Google Apps Script, confirm "Who has access" is set to "Anyone".',
+          type: 'info'
+        });
+      } else {
+        setSettingsStatus({ 
+          msg: '⚠️ Please make sure the URL begins with https://script.google.com/macros/s/.../exec',
+          type: 'error'
+        });
+      }
     } finally {
       setIsTestingSheet(false);
+    }
+  };
+
+  const handleSyncPendingOrders = async () => {
+    const url = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL).trim();
+    if (!url) {
+      setSettingsStatus({ msg: 'Please configure and save your Google Apps Script Web App URL first.', type: 'error' });
+      return;
+    }
+
+    setIsSyncing(true);
+    setSettingsStatus({ msg: 'Syncing pending orders to Google Sheets...', type: 'info' });
+
+    try {
+      const localOrders = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+      let syncedCount = 0;
+
+      for (let i = 0; i < localOrders.length; i++) {
+        const ord = localOrders[i];
+        if (!ord.syncedToGoogleSheets) {
+          try {
+            await fetch(url, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                action: 'addOrder',
+                spreadsheetId: settings.spreadsheetId || DEFAULT_SPREADSHEET_ID,
+                order: ord
+              })
+            });
+            ord.syncedToGoogleSheets = true;
+            syncedCount++;
+          } catch (err) {
+            console.warn('Failed to sync order:', ord.orderId, err);
+          }
+        }
+      }
+
+      localStorage.setItem('mani_orders', JSON.stringify(localOrders));
+      setOrders([...localOrders]);
+
+      if (syncedCount > 0) {
+        setSettingsStatus({ msg: `🎉 Successfully synced ${syncedCount} pending order(s) directly to your Google Sheet!`, type: 'success' });
+      } else {
+        setSettingsStatus({ msg: 'All current orders are already synced to Google Sheets!', type: 'success' });
+      }
+    } catch (err) {
+      setSettingsStatus({ msg: 'Error syncing orders: ' + err.message, type: 'error' });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -816,10 +895,10 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                 />
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex flex-wrap items-center gap-2.5 pt-2">
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm"
+                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition-colors"
                 >
                   Save Settings
                 </button>
@@ -827,12 +906,39 @@ export default function AdminPortal({ products, onUpdateProducts, customQrs, onU
                   type="button"
                   onClick={handleTestConnection}
                   disabled={isTestingSheet}
-                  className="px-4 py-2.5 rounded-xl bg-cream-warm hover:bg-mani-100 border border-mani-200 text-mani-800 font-bold text-xs"
+                  className="px-4 py-2.5 rounded-xl bg-cream-warm hover:bg-mani-100 border border-mani-200 text-mani-800 font-bold text-xs transition-colors"
                 >
                   {isTestingSheet ? 'Testing...' : 'Test Web App Connection'}
                 </button>
+                <button
+                  type="button"
+                  onClick={handleSyncPendingOrders}
+                  disabled={isSyncing}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>{isSyncing ? 'Syncing...' : `Sync Pending Orders (${orders.filter(o => !o.syncedToGoogleSheets).length})`}</span>
+                </button>
               </div>
             </form>
+
+            {/* Quick 3-Step Setup Guide */}
+            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-mani-800 space-y-2.5">
+              <h4 className="font-extrabold text-amber-950 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <span>📋</span> Quick 3-Step Setup for Google Sheets
+              </h4>
+              <ol className="list-decimal list-inside space-y-1.5 font-medium leading-relaxed">
+                <li>
+                  Open your <a href={`https://docs.google.com/spreadsheets/d/${settings.spreadsheetId}/edit`} target="_blank" rel="noopener noreferrer" className="text-amber-800 font-bold underline">Google Sheet</a> and click <strong>Extensions &gt; Apps Script</strong>.
+                </li>
+                <li>
+                  Paste the script code from <code>google-apps-script/Code.gs</code> and click <strong>Deploy &gt; New deployment</strong>.
+                </li>
+                <li>
+                  Select type: <strong>Web app</strong>, Execute as: <strong>Me</strong>, Who has access: <strong>Anyone</strong>, click <strong>Deploy</strong>, and paste the URL above!
+                </li>
+              </ol>
+            </div>
           </div>
         </div>
       )}

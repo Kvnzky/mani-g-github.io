@@ -156,8 +156,16 @@ function handleAddOrder(ss, order) {
   var lastRow = sheet.getLastRow();
   var targetRow = Math.max(lastRow + 1, 8);
 
-  // Extract Quantities
-  var fq = order.flavorQuantities || {};
+  // Extract Quantities (supports flavorQuantities map and/or items array)
+  var fq = Object.assign({}, order.flavorQuantities || {});
+  if (order.items && Array.isArray(order.items)) {
+    order.items.forEach(function(item) {
+      var key = item.productId || item.id;
+      if (key && !fq[key]) {
+        fq[key] = Number(item.quantity || 0);
+      }
+    });
+  }
   var saltedQty = Number(fq.salted || 0);
   var unsaltedQty = Number(fq.unsalted || 0);
   var spicyQty = Number(fq.spicy || 0);
@@ -255,7 +263,7 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
   // Daily Order Summary Metrics Header (Row 2)
   var summaryHeaders = [
     'Total Orders', 'Total Packs', 'Salted', 'Unsalted', 'Spicy',
-    'BBQ', 'Sour Cream', 'Bawang Only', 'Special Order', 'Pickup', 'Delivery', 'Total Sales (PHP)'
+    'BBQ', 'Sour Cream', 'Bawang Only', 'COD', 'GCash', 'Maribank', 'Total Sales (PHP)'
   ];
   sheet.getRange('A2:L2').setValues([summaryHeaders])
     .setFontFamily('Arial')
@@ -268,7 +276,7 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
   sheet.setRowHeight(2, 24);
 
   // Daily Order Summary Dynamic Formulas (Row 3)
-  // Data starts at row 8, formulas dynamically calculate from row 8 to row 500
+  // Data starts at row 8, formulas dynamically calculate from row 8 downwards
   var formulas = [
     '=COUNTA(A8:A)',                    // Total Orders
     '=SUM(P8:P)',                       // Total Packs
@@ -278,9 +286,9 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
     '=SUM(K8:K)',                       // BBQ
     '=SUM(L8:L)',                       // Sour Cream
     '=SUM(M8:M)',                       // Bawang Only
-    '=SUM(O8:O)',                       // Special Order Total
-    '=COUNTIF(F8:F, "Pickup")',         // Pickup Orders
-    '=COUNTIF(F8:F, "Delivery")',       // Delivery Orders
+    '=COUNTIF(F8:F, "*Cash*")',         // COD Orders
+    '=COUNTIF(F8:F, "*GCash*")',        // GCash Orders
+    '=COUNTIF(F8:F, "*Maribank*")',     // Maribank Orders
     '=SUM(Q8:Q)'                        // Total Sales (PHP)
   ];
   sheet.getRange('A3:L3').setFormulas([formulas])
