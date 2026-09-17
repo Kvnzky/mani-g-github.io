@@ -609,7 +609,7 @@ export default function App() {
         />
       )}
 
-      {/* Admin Login Modal */}
+      {/* Login Modal */}
       <AdminLoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}

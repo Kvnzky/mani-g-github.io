@@ -108,7 +108,7 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-mani-900">Admin Login</h2>
+              <h2 className="text-lg font-black text-mani-900">Login</h2>
               <p className="text-xs text-mani-500 font-medium">Secure Portal Access</p>
             </div>
           </div>

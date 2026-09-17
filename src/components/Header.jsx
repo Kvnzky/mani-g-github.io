@@ -67,14 +67,14 @@ export default function Header({
                 </button>
               </div>
             ) : (
-              /* If Not Authenticated: Show Admin Login Button */
+              /* If Not Authenticated: Show Login Button */
               <button
                 onClick={onOpenLoginModal}
                 className="px-3 py-1.5 rounded-xl text-xs font-bold text-mani-700 bg-cream-warm hover:bg-mani-100 border border-mani-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                title="Admin Login"
+                title="Login"
               >
                 <Lock className="w-3.5 h-3.5 text-amber-600" />
-                <span>Admin Login</span>
+                <span>Login</span>
               </button>
             )}
 
