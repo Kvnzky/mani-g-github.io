@@ -55,7 +55,7 @@ async function runTests() {
     const res = await fetch(`${BASE_URL}/api/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'kvn000', password: 'Briar7.Heftiness.Geek' })
+      body: JSON.stringify({ username: 'kvn000', password: 'Bunny_016' })
     });
     const data = await res.json();
     assert(res.status === 200 && data.success === true && Boolean(data.token), 'Correct credentials log in successfully and return JWT token');

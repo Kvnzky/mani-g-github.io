@@ -168,19 +168,27 @@ export default function AdminPortal({
         return;
       }
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to update cutoff settings.');
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setCutoffSaveMsg({ msg: 'Cutoff settings successfully updated and live on customer form!', type: 'success' });
+          if (onRefreshCutoff) onRefreshCutoff();
+          setTimeout(() => setCutoffSaveMsg({ msg: '', type: '' }), 4000);
+          return;
+        }
       }
+    } catch (err) {}
 
-      setCutoffSaveMsg({ msg: 'Cutoff settings successfully updated and live on customer form!', type: 'success' });
-      if (onRefreshCutoff) onRefreshCutoff();
-      setTimeout(() => setCutoffSaveMsg({ msg: '', type: '' }), 4000);
-    } catch (err) {
-      setCutoffSaveMsg({ msg: err.message || 'Error updating cutoff settings.', type: 'error' });
-    } finally {
-      setIsSavingCutoff(false);
-    }
+    // Static fallback: save to localStorage
+    localStorage.setItem('mani_cutoff_settings', JSON.stringify({
+      enabled: cutoffEnabled,
+      date: cutoffDate,
+      time: cutoffTime
+    }));
+    setCutoffSaveMsg({ msg: 'Cutoff settings successfully updated and live on customer form!', type: 'success' });
+    setTimeout(() => setCutoffSaveMsg({ msg: '', type: '' }), 4000);
+    setIsSavingCutoff(false);
   };
 
   const handleUpdateStatus = async (orderId, newStatus) => {

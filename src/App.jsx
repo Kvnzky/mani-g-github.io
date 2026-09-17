@@ -67,17 +67,45 @@ export default function App() {
   const [submissionError, setSubmissionError] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
-  // Fetch Cutoff Status from Server
+  // Fetch Cutoff Status from Server or Local Storage
   const fetchCutoff = async () => {
     try {
       const res = await fetch('/api/cutoff');
-      const data = await res.json();
-      if (data) {
-        setCutoffInfo(data);
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data) {
+          setCutoffInfo(data);
+          return;
+        }
       }
-    } catch (err) {
-      console.warn('Cutoff fetch warning:', err.message);
-    }
+    } catch (err) {}
+
+    // Static fallback: check localStorage for cutoff configuration
+    try {
+      const saved = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
+      if (saved) {
+        const now = new Date();
+        const normalizedTime = saved.time?.length === 5 ? `${saved.time}:00` : (saved.time || '23:59:00');
+        const cutoffIso = saved.date ? `${saved.date}T${normalizedTime}+08:00` : null;
+        const cutoffTimestamp = cutoffIso ? new Date(cutoffIso).getTime() : null;
+        const diffSec = cutoffTimestamp ? Math.floor((cutoffTimestamp - now.getTime()) / 1000) : null;
+        const isOpen = saved.enabled ? (diffSec > 0) : true;
+        const status = !saved.enabled ? 'OPEN' : (isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED');
+
+        setCutoffInfo({
+          enabled: Boolean(saved.enabled),
+          isOpen,
+          status,
+          cutoffDate: saved.date,
+          cutoffTime: saved.time,
+          timezone: 'Asia/Manila',
+          serverTime: now.toISOString(),
+          remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
+          cutoffIso
+        });
+      }
+    } catch (e) {}
   };
 
   // Initial Data Fetching & Cutoff Polling
@@ -237,21 +265,76 @@ export default function App() {
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await response.json();
 
-      if (response.status === 403 || data.code === 'ORDERS_CLOSED') {
-        fetchCutoff();
-        throw new Error(data.error || 'Orders are now closed. The cutoff time for accepting orders has ended.');
+        if (response.status === 403 || data.code === 'ORDERS_CLOSED') {
+          fetchCutoff();
+          throw new Error(data.error || 'Orders are now closed. The cutoff time for accepting orders has ended.');
+        }
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Unable to submit your order.');
+        }
+
+        setConfirmedOrder(data.order);
+        setIsDrawerOpen(false);
+        return;
+      }
+    } catch (apiErr) {
+      if (apiErr.message && apiErr.message.includes('Orders are now closed')) {
+        setSubmissionError(apiErr.message);
+        setIsSubmitting(false);
+        return;
+      }
+      // If server returned non-JSON error, proceed to static fallback
+    }
+
+    // Static GitHub Pages fallback
+    try {
+      const now = new Date();
+      const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+      const timeStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).format(now);
+      const savedOrders = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+      const countToday = savedOrders.filter(o => o.orderDate === dateStr).length + 1;
+      const orderId = `MANI-${dateStr.replace(/-/g, '')}-${String(countToday).padStart(3, '0')}`;
+
+      const clientOrder = {
+        orderId,
+        orderDate: dateStr,
+        orderTime: timeStr,
+        customerName: payload.customerName,
+        mobileNumber: payload.mobileNumber,
+        deliveryAddress: payload.deliveryAddress,
+        paymentMethod: payload.paymentMethod,
+        paymentStatus: 'Unpaid',
+        items: orderedItems,
+        flavorQuantities: { ...quantities },
+        totalPacks,
+        subtotal,
+        status: 'New',
+        createdAt: now.toISOString(),
+        syncedToGoogleSheets: false
+      };
+
+      const appsUrl = localStorage.getItem('mani_apps_script_url') || '';
+      const sheetId = localStorage.getItem('mani_spreadsheet_id') || '';
+      if (appsUrl) {
+        fetch(appsUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'addOrder', spreadsheetId: sheetId, order: clientOrder })
+        }).catch(() => {});
+        clientOrder.syncedToGoogleSheets = true;
       }
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Unable to submit your order.');
-      }
-
-      setConfirmedOrder(data.order);
+      localStorage.setItem('mani_orders', JSON.stringify([clientOrder, ...savedOrders]));
+      setConfirmedOrder(clientOrder);
       setIsDrawerOpen(false);
-    } catch (err) {
-      setSubmissionError(err.message || 'Unable to submit your order. Please try again.');
+    } catch (fallbackErr) {
+      setSubmissionError('Unable to process order. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

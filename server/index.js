@@ -20,8 +20,8 @@ const PORT = process.env.PORT || 3001;
 // Security Configuration
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_mani_g_app_change_in_env';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'kvn000';
-// Default bcrypt hash for 'Briar7.Heftiness.Geek' (salt rounds = 12)
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '$2b$12$Ixrfw9ET7VnACOwVu72La.8Xgf/9gEDgU9DbcDmH3Av8wJi7sojq2';
+// Default bcrypt hash for 'Bunny_016' (salt rounds = 12)
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '$2b$12$/yWLHw1NSRnst8YZLzVU0O0Blof2feJIuETFu.U0xIUFCqm8XstkO';
 const TIMEZONE = process.env.TIMEZONE || 'Asia/Manila';
 
 // 1. Security Headers via Helmet
