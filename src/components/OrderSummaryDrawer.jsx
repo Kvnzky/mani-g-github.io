@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, X, Plus, Minus, ArrowRight, Loader2, MapPin, Phone, User, CreditCard, Lock } from 'lucide-react';
+import { ShoppingBag, X, Plus, Minus, ArrowRight, Loader2, MapPin, Phone, User, CreditCard, Lock, Clock } from 'lucide-react';
 import { formatPHP } from '../config/products';
 
 export default function OrderSummaryDrawer({
@@ -14,7 +14,8 @@ export default function OrderSummaryDrawer({
   onSubmitOrder,
   isSubmitting,
   validationErrors,
-  isOrdersClosed
+  isOrdersClosed,
+  cutoffInfo
 }) {
   const hasItems = totalPacks > 0;
   const isFormIncomplete = Boolean(
@@ -98,7 +99,39 @@ export default function OrderSummaryDrawer({
         </div>
 
         {/* Drawer Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+          {/* Live Cutoff Notice */}
+          {cutoffInfo && (
+            <div className={`p-3 rounded-2xl border text-xs flex items-center justify-between gap-2 shadow-2xs ${
+              isOrdersClosed
+                ? 'bg-red-50 text-red-900 border-red-200'
+                : cutoffInfo.enabled
+                ? 'bg-amber-50 text-amber-950 border-amber-300'
+                : 'bg-emerald-50 text-emerald-950 border-emerald-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                {isOrdersClosed ? (
+                  <Lock className="w-4 h-4 text-red-600 shrink-0" />
+                ) : cutoffInfo.enabled ? (
+                  <Clock className="w-4 h-4 text-amber-600 shrink-0 animate-pulse" />
+                ) : (
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                )}
+                <div>
+                  <span className="font-extrabold block">
+                    {isOrdersClosed ? 'Orders Closed' : cutoffInfo.enabled ? '⏰ Order Cutoff' : 'Orders Open'}
+                  </span>
+                  <span className="text-[11px] opacity-85">
+                    {isOrdersClosed
+                      ? 'Submissions closed for this batch.'
+                      : cutoffInfo.enabled
+                      ? `Deadline: ${cutoffInfo.cutoffDate} at ${cutoffInfo.cutoffTime} PST`
+                      : 'Fresh batch available today'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Items List */}
           <div>
             <h4 className="text-xs font-extrabold uppercase tracking-wider text-mani-500 mb-2.5">

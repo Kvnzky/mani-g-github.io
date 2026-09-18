@@ -7,10 +7,11 @@ import OrderConfirmationModal from './components/OrderConfirmationModal';
 import AdminPortal from './components/AdminPortal';
 import AdminLoginModal from './components/AdminLoginModal';
 import OrderCutoffBanner from './components/OrderCutoffBanner';
+import TopCutoffAlertBar from './components/TopCutoffAlertBar';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
-import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock } from 'lucide-react';
+import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock, Clock } from 'lucide-react';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('order'); // 'order' or 'admin'
@@ -27,8 +28,38 @@ export default function App() {
     }
   });
 
-  // Order Cutoff State
-  const [cutoffInfo, setCutoffInfo] = useState(null);
+  // Order Cutoff State - Initialized immediately from cache or PST defaults so timer is ALWAYS visible to everyone without delay
+  const [cutoffInfo, setCutoffInfo] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
+      const now = new Date();
+      const manilaDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(now);
+      const conf = saved || {
+        enabled: true,
+        date: manilaDateStr,
+        time: '23:59'
+      };
+      const normalizedTime = conf.time?.length === 5 ? `${conf.time}:00` : (conf.time || '23:59:00');
+      const cutoffIso = conf.date ? `${conf.date}T${normalizedTime}+08:00` : null;
+      const cutoffTimestamp = cutoffIso ? new Date(cutoffIso).getTime() : null;
+      const diffSec = cutoffTimestamp ? Math.floor((cutoffTimestamp - now.getTime()) / 1000) : null;
+      const isOpen = conf.enabled ? (diffSec > 0) : true;
+      const status = !conf.enabled ? 'OPEN' : (isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED');
+      return {
+        enabled: Boolean(conf.enabled),
+        isOpen,
+        status,
+        cutoffDate: conf.date,
+        cutoffTime: conf.time,
+        timezone: 'Asia/Manila',
+        serverTime: now.toISOString(),
+        remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
+        cutoffIso
+      };
+    } catch (e) {
+      return null;
+    }
+  });
 
   // Flavors cart: { [productId]: quantity }
   const [quantities, setQuantities] = useState({
@@ -496,6 +527,13 @@ export default function App() {
         adminUser={adminUser}
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
+        cutoffInfo={cutoffInfo}
+      />
+
+      {/* Top Persistent Cutoff Announcement Bar - Visible to EVERYONE */}
+      <TopCutoffAlertBar
+        cutoffInfo={cutoffInfo}
+        onRefreshCutoff={fetchCutoff}
       />
 
       {/* Main Content */}
@@ -600,22 +638,41 @@ export default function App() {
 
                 {/* Live Order Summary & Checkout Card */}
                 <section className="bg-cream rounded-3xl p-5 sm:p-7 border border-mani-200 shadow-warm space-y-4">
-                  <div className="flex items-center justify-between border-b border-mani-100 pb-3">
+                  <div className="flex items-center justify-between border-b border-mani-100 pb-3 flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">🛒</span>
                       <h3 className="text-base sm:text-lg font-black text-mani-900">
                         Order Summary
                       </h3>
                     </div>
-                    {totalPacks > 0 && (
-                      <button
-                        type="button"
-                        onClick={handleClearOrder}
-                        className="text-xs font-semibold text-mani-500 hover:text-red-600 transition-colors cursor-pointer"
-                      >
-                        Clear All
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {cutoffInfo && (
+                        <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${
+                          !cutoffInfo.isOpen
+                            ? 'bg-red-100 text-red-800 border-red-300'
+                            : cutoffInfo.enabled
+                            ? 'bg-amber-100 text-amber-900 border-amber-300'
+                            : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                        }`}>
+                          {!cutoffInfo.isOpen ? (
+                            <><Lock className="w-3 h-3 text-red-600" /> Closed</>
+                          ) : cutoffInfo.enabled ? (
+                            <><Clock className="w-3 h-3 text-amber-600 animate-pulse" /> Cutoff {cutoffInfo.cutoffTime || '23:59'}</>
+                          ) : (
+                            <><span>🟢</span> Open</>
+                          )}
+                        </span>
+                      )}
+                      {totalPacks > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleClearOrder}
+                          className="text-xs font-semibold text-mani-500 hover:text-red-600 transition-colors cursor-pointer"
+                        >
+                          Clear All
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {totalPacks === 0 ? (
@@ -695,8 +752,13 @@ export default function App() {
       {currentView === 'order' && totalPacks > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-cream/95 backdrop-blur-md border-t border-amber-200 px-4 py-3 shadow-2xl lg:hidden animate-fade-in flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-bold text-mani-600">
-              {totalPacks} pack{totalPacks > 1 ? 's' : ''} in cart
+            <div className="text-[11px] font-bold text-mani-600 flex items-center gap-1.5">
+              <span>{totalPacks} pack{totalPacks > 1 ? 's' : ''} in cart</span>
+              {cutoffInfo?.isOpen && cutoffInfo?.enabled && (
+                <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
+                  ⏰ Cutoff {cutoffInfo.cutoffTime || '23:59'}
+                </span>
+              )}
             </div>
             <div className="text-base font-black text-amber-900">
               {formatPHP(subtotal)}
@@ -736,6 +798,7 @@ export default function App() {
         isSubmitting={isSubmitting}
         validationErrors={validationErrors}
         isOrdersClosed={isOrdersClosed}
+        cutoffInfo={cutoffInfo}
       />
 
       {/* Order Confirmation Modal */}
