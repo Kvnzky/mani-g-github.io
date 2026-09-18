@@ -409,12 +409,24 @@ export default function App() {
         icon: p.icon
       }));
 
+    let defaultPaymentStatus = 'Pending – Cash on Delivery';
+    if (customerData.paymentMethod === 'GCash') {
+      defaultPaymentStatus = 'Pending – Awaiting GCash Payment';
+    } else if (customerData.paymentMethod === 'Maribank') {
+      defaultPaymentStatus = 'Pending – Awaiting Maribank Payment';
+    }
+
     const payload = {
       customerName: customerData.customerName.trim(),
       mobileNumber: customerData.mobileNumber.trim(),
       deliveryAddress: customerData.deliveryAddress.trim(),
       paymentMethod: customerData.paymentMethod,
-      items: orderedItems
+      paymentStatus: defaultPaymentStatus,
+      items: orderedItems,
+      subtotal,
+      deliveryFee: 0,
+      discount: 0,
+      totalAmount: subtotal
     };
 
     try {
@@ -467,11 +479,14 @@ export default function App() {
         mobileNumber: payload.mobileNumber,
         deliveryAddress: payload.deliveryAddress,
         paymentMethod: payload.paymentMethod,
-        paymentStatus: payload.paymentMethod === 'Cash on Delivery' ? 'Unpaid' : 'Paid',
+        paymentStatus: defaultPaymentStatus,
         items: orderedItems,
         flavorQuantities: { ...quantities },
         totalPacks,
         subtotal,
+        deliveryFee: 0,
+        discount: 0,
+        totalAmount: subtotal,
         status: 'New',
         createdAt: now.toISOString(),
         syncedToGoogleSheets: false

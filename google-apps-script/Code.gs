@@ -44,6 +44,7 @@
  */
 
 var DEFAULT_SPREADSHEET_ID = '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI';
+var DEFAULT_NOTIFICATION_EMAIL = 'rkevinramirez@gmail.com';
 var TIMEZONE = 'Asia/Manila';
 
 /**
@@ -55,8 +56,15 @@ function onOpen() {
     ui.createMenu('🥜 Mani Wandering')
       .addItem('🧹 Clean Test Orders & Fix Calculations', 'menuCleanAndRepair')
       .addItem('📐 Refresh Summary Dashboard & Formulas', 'menuFixLayout')
+      .addItem('📧 Send Test Order Notification Email', 'menuSendTestEmail')
       .addToUi();
   } catch (e) {}
+}
+
+function menuSendTestEmail() {
+  var res = handleSendTestEmail();
+  var msg = res.sent ? ('Notification email successfully sent to ' + res.recipient) : ('Failed to send email: ' + (res.error || res.reason));
+  SpreadsheetApp.getUi().alert('Order Email Notification Test', msg, SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function menuCleanAndRepair() {
@@ -108,6 +116,13 @@ function doGet(e) {
       cutoff: { enabled: enabled, date: date, time: time }
     });
     return formatResponse(saveCutoffRes, e);
+  }
+
+  // Fast test email verification endpoint
+  if (action === 'testEmail' || action === 'sendTestEmail') {
+    var targetRecipient = e.parameter ? e.parameter.to : null;
+    var testEmailRes = handleSendTestEmail(targetRecipient);
+    return formatResponse(testEmailRes, e);
   }
 
   if (!action) {
@@ -211,6 +226,9 @@ function doPost(e) {
     } else if (action === 'fixSheet' || action === 'repairLayout') {
       var result = handleFixAllSheets(ss);
       return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'testEmail' || action === 'sendTestEmail') {
+      var emailRes = handleSendTestEmail(payload.to);
+      return ContentService.createTextOutput(JSON.stringify(emailRes)).setMimeType(ContentService.MimeType.JSON);
     } else {
       return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'Unknown action: ' + action }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -624,11 +642,21 @@ function handleAddOrder(ss, order) {
   range.setValues([rowData]);
   formatDataRow(sheet, targetRow, rowData);
 
+  // Send immediate Order Notification Email to store owner
+  var emailStatus = { sent: false };
+  try {
+    emailStatus = sendOrderNotificationEmail(order, rowData);
+  } catch (mailErr) {
+    console.error('Email notification error:', mailErr.toString());
+    emailStatus = { sent: false, error: mailErr.toString() };
+  }
+
   return {
     success: true,
     tabName: sheetName,
     row: targetRow,
     orderId: rowData[0],
+    emailStatus: emailStatus,
     message: 'Order added successfully to ' + sheetName + ' tab at row ' + targetRow
   };
 }
@@ -1010,3 +1038,331 @@ function findOrderInSheet(sheet, orderId) {
   }
   return -1;
 }
+
+/**
+ * -------------------------------------------------------------
+ * Order Notification Email Service
+ * Automatically sends immediate, professional, mobile-friendly
+ * HTML email notifications whenever an order is successfully created.
+ * Default recipient: rkevinramirez@gmail.com
+ * -------------------------------------------------------------
+ */
+function sendOrderNotificationEmail(order, rowData, forceSend) {
+  if (!order) return { sent: false, error: 'No order data provided' };
+
+  var tz = getTimezone();
+  var props = PropertiesService.getScriptProperties();
+  var recipientEmail = (props.getProperty('NOTIFICATION_EMAIL') || DEFAULT_NOTIFICATION_EMAIL || 'rkevinramirez@gmail.com').trim();
+
+  var customerName = (order.customerName || order.name || (rowData && rowData[3]) || 'Valued Customer').trim();
+  var orderId = (order.orderId || (rowData && rowData[0]) || ('MANI-' + Utilities.formatDate(new Date(), tz, 'yyyyMMdd-HHmmss'))).trim();
+
+  // 1. Guard against test orders (unless explicitly forced)
+  var customerLower = customerName.toLowerCase();
+  var isTest = order.isTest === true || 
+               customerLower.includes('test juan dela cruz') ||
+               orderId.toLowerCase().includes('bypass');
+  if (isTest && !forceSend) {
+    return { sent: false, skipped: true, reason: 'Test order notification skipped to prevent inbox spam.' };
+  }
+
+  // 2. Prevent accidental duplicate notifications (Idempotency check via Cache)
+  var cache = CacheService.getScriptCache();
+  var cacheKey = 'notif_sent_' + orderId.replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!forceSend && cache.get(cacheKey)) {
+    return { sent: false, skipped: true, reason: 'Duplicate notification prevented for order ' + orderId };
+  }
+
+  // 3. Format Date & Time in Philippine Standard Time
+  var now = new Date();
+  var formattedDateTime = Utilities.formatDate(now, tz, 'MMMM d, yyyy – h:mm a');
+
+  var mobileNumber = (order.mobileNumber || order.mobile || (rowData && rowData[4]) || 'N/A').trim();
+  var deliveryAddress = (order.deliveryAddress || order.address || (rowData && rowData[6]) || 'N/A').trim();
+  var paymentMethod = (order.paymentMethod || order.paymentMode || (rowData && rowData[5]) || 'Cash on Delivery').trim();
+
+  // 4. Determine Payment Status Text and Styling
+  var paymentStatusText = '';
+  var statusBadgeBg = '#FEF3C7';
+  var statusBadgeColor = '#92400E';
+  var statusBadgeBorder = '#FCD34D';
+
+  var methodLower = paymentMethod.toLowerCase();
+  var explicitStatus = (order.paymentStatus || (rowData && rowData[7]) || '').trim();
+
+  if (methodLower.includes('cash')) {
+    paymentStatusText = 'Pending – Cash on Delivery';
+    statusBadgeBg = '#FEF3C7';
+    statusBadgeColor = '#92400E';
+    statusBadgeBorder = '#FCD34D';
+  } else if (methodLower.includes('gcash')) {
+    if (explicitStatus.toLowerCase() === 'paid') {
+      paymentStatusText = 'Paid – GCash';
+      statusBadgeBg = '#D1FAE5';
+      statusBadgeColor = '#065F46';
+      statusBadgeBorder = '#6EE7B7';
+    } else {
+      paymentStatusText = 'Pending – Awaiting GCash Payment';
+      statusBadgeBg = '#DBEAFE';
+      statusBadgeColor = '#1E40AF';
+      statusBadgeBorder = '#93C5FD';
+    }
+  } else if (methodLower.includes('maribank')) {
+    if (explicitStatus.toLowerCase() === 'paid') {
+      paymentStatusText = 'Paid – Maribank';
+      statusBadgeBg = '#D1FAE5';
+      statusBadgeColor = '#065F46';
+      statusBadgeBorder = '#6EE7B7';
+    } else {
+      paymentStatusText = 'Pending – Awaiting Maribank Payment';
+      statusBadgeBg = '#FFEDD5';
+      statusBadgeColor = '#9A3412';
+      statusBadgeBorder = '#FDBA74';
+    }
+  } else {
+    paymentStatusText = explicitStatus || ('Pending – ' + paymentMethod);
+  }
+
+  // 5. Build Ordered Items List & Computations
+  var itemsList = [];
+  if (Array.isArray(order.items) && order.items.length > 0) {
+    order.items.forEach(function(it) {
+      var q = Number(it.quantity || 0);
+      if (q > 0) {
+        var p = Number(it.price || 50);
+        itemsList.push({
+          name: it.name || it.productId || it.id || 'Mani Pack',
+          quantity: q,
+          price: p,
+          subtotal: q * p
+        });
+      }
+    });
+  }
+
+  // Fallback to flavorQuantities if items array wasn't provided
+  if (itemsList.length === 0) {
+    var fq = order.flavorQuantities || {};
+    var flavorCatalog = [
+      { key: 'salted', name: 'Salted Mani', price: 50 },
+      { key: 'unsalted', name: 'Unsalted Mani', price: 50 },
+      { key: 'spicy', name: 'Spicy Mani', price: 50 },
+      { key: 'bbq', name: 'BBQ Mani', price: 50 },
+      { key: 'sour-cream', name: 'Sour Cream Mani', price: 50 },
+      { key: 'bawang-only', name: 'Bawang Only', price: 60 }
+    ];
+    flavorCatalog.forEach(function(flv) {
+      var q = Number(fq[flv.key] || 0);
+      if (q > 0) {
+        itemsList.push({
+          name: flv.name,
+          quantity: q,
+          price: flv.price,
+          subtotal: q * flv.price
+        });
+      }
+    });
+  }
+
+  var totalPacks = itemsList.reduce(function(acc, it) { return acc + it.quantity; }, 0);
+  var subtotal = itemsList.reduce(function(acc, it) { return acc + it.subtotal; }, 0);
+  if (order.subtotal && order.subtotal > 0) {
+    subtotal = Number(order.subtotal);
+  }
+  var deliveryFee = Number(order.deliveryFee || 0);
+  var discount = Number(order.discount || 0);
+  var totalAmount = (subtotal + deliveryFee) - discount;
+
+  // 6. Build HTML Table Rows
+  var productRowsHtml = '';
+  var textProductList = '';
+
+  itemsList.forEach(function(it, idx) {
+    var rowBg = (idx % 2 === 0) ? '#FFFFFF' : '#FDFBF7';
+    productRowsHtml += '<tr style="background-color: ' + rowBg + '; border-bottom: 1px solid #EDE4D8;">' +
+      '<td style="padding: 10px 14px; font-weight: 700; color: #2B1810;">' + it.name + '</td>' +
+      '<td align="center" style="padding: 10px 14px; font-weight: 800; color: #7C552E;">' + it.quantity + '</td>' +
+      '<td align="right" style="padding: 10px 14px; color: #5D4037;">₱' + it.price.toFixed(2) + '</td>' +
+      '<td align="right" style="padding: 10px 14px; font-weight: 800; color: #2B1810;">₱' + it.subtotal.toFixed(2) + '</td>' +
+      '</tr>';
+
+    textProductList += '- ' + it.name + ' x ' + it.quantity + ' (₱' + it.price.toFixed(2) + ' each) = ₱' + it.subtotal.toFixed(2) + '\n';
+  });
+
+  if (itemsList.length === 0) {
+    productRowsHtml = '<tr><td colspan="4" style="padding: 14px; text-align: center; color: #8C6A48;">No items specified.</td></tr>';
+    textProductList = 'No items specified.\n';
+  }
+
+  // 7. Compose Mobile-Friendly HTML Email
+  var subject = '🛒 New Order Received – ' + customerName;
+  var statusBadgeStyle = 'background-color: ' + statusBadgeBg + '; color: ' + statusBadgeColor + '; border: 1px solid ' + statusBadgeBorder + ';';
+
+  var htmlBody = '<!DOCTYPE html>' +
+    '<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<title>New Order Received</title></head>' +
+    '<body style="margin: 0; padding: 20px 10px; background-color: #FDFBF7; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #2B1810;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #EADBCE; box-shadow: 0 4px 20px rgba(124, 85, 46, 0.08);">' +
+    
+    // Header Banner
+    '<tr><td style="background: linear-gradient(135deg, #7C552E 0%, #A36832 50%, #D97706 100%); padding: 32px 24px; text-align: center;">' +
+    '<div style="font-size: 32px; line-height: 1; margin-bottom: 8px;">🥜</div>' +
+    '<div style="font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #FEF3C7; margin-bottom: 6px;">Mani Wandering</div>' +
+    '<h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">NEW ORDER RECEIVED</h1>' +
+    '<div style="margin-top: 14px;">' +
+    '<span style="display: inline-block; background-color: rgba(255, 255, 255, 0.22); color: #ffffff; padding: 6px 16px; border-radius: 9999px; font-weight: 800; font-size: 15px; border: 1px solid rgba(255, 255, 255, 0.35); letter-spacing: 0.5px;">Order ID: ' + orderId + '</span>' +
+    '</div>' +
+    '<div style="margin-top: 10px; font-size: 13px; color: #FEF3C7; font-weight: 600;">📅 ' + formattedDateTime + '</div>' +
+    '</td></tr>' +
+
+    // Body Content
+    '<tr><td style="padding: 28px 24px;">' +
+
+    // Customer Information Card
+    '<div style="background-color: #FFFDF8; border-radius: 14px; border: 1px solid #F3E8DB; padding: 18px 20px; margin-bottom: 24px;">' +
+    '<h2 style="margin: 0 0 14px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #7C552E; border-bottom: 1px solid #F3E8DB; padding-bottom: 8px;">👤 Customer Information</h2>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 14px; line-height: 1.6;">' +
+    '<tr><td style="padding: 5px 0; color: #8C6A48; width: 150px; font-weight: 600;">Customer Name:</td><td style="padding: 5px 0; color: #1E120D; font-weight: 800;">' + customerName + '</td></tr>' +
+    '<tr><td style="padding: 5px 0; color: #8C6A48; font-weight: 600;">Mobile Number:</td><td style="padding: 5px 0; color: #1E120D; font-weight: 700;"><a href="tel:' + mobileNumber + '" style="color: #D97706; text-decoration: none;">' + mobileNumber + '</a></td></tr>' +
+    '<tr><td style="padding: 5px 0; color: #8C6A48; font-weight: 600; vertical-align: top;">Address / Delivery:</td><td style="padding: 5px 0; color: #1E120D; font-weight: 600;">' + deliveryAddress + '</td></tr>' +
+    '<tr><td style="padding: 5px 0; color: #8C6A48; font-weight: 600;">Mode of Payment:</td><td style="padding: 5px 0; color: #1E120D; font-weight: 700;">' + paymentMethod + '</td></tr>' +
+    '</table></div>' +
+
+    // Order Details Table
+    '<div style="margin-bottom: 24px;">' +
+    '<h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #7C552E;">📦 Order Details</h2>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; font-size: 14px; border: 1px solid #EDE4D8; border-radius: 12px; overflow: hidden;">' +
+    '<thead><tr style="background-color: #F8F4EE;">' +
+    '<th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #EDE4D8;">Product</th>' +
+    '<th align="center" style="padding: 12px 14px; font-weight: 800; color: #664322; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #EDE4D8; width: 70px;">Quantity</th>' +
+    '<th align="right" style="padding: 12px 14px; font-weight: 800; color: #664322; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #EDE4D8; width: 80px;">Price</th>' +
+    '<th align="right" style="padding: 12px 14px; font-weight: 800; color: #664322; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #EDE4D8; width: 90px;">Subtotal</th>' +
+    '</tr></thead>' +
+    '<tbody>' + productRowsHtml + '</tbody></table></div>' +
+
+    // Order Summary
+    '<div style="background-color: #FDFBF7; border-radius: 14px; border: 1px solid #EFE6DA; padding: 16px 20px; margin-bottom: 24px;">' +
+    '<h2 style="margin: 0 0 10px 0; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #7C552E;">💰 Order Summary</h2>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 14px; line-height: 1.8;">' +
+    '<tr><td style="color: #6B5645;">Subtotal (' + totalPacks + ' ' + (totalPacks === 1 ? 'pack' : 'packs') + '):</td><td align="right" style="color: #1E120D; font-weight: 700;">₱' + subtotal.toFixed(2) + '</td></tr>' +
+    '<tr><td style="color: #6B5645;">Delivery Fee:</td><td align="right" style="color: #059669; font-weight: 700;">' + (deliveryFee > 0 ? ('₱' + deliveryFee.toFixed(2)) : '₱0.00 (Standard)') + '</td></tr>' +
+    '<tr><td style="color: #6B5645;">Discount:</td><td align="right" style="color: #6B5645; font-weight: 600;">' + (discount > 0 ? ('-₱' + discount.toFixed(2)) : '₱0.00') + '</td></tr>' +
+    '<tr style="border-top: 2px dashed #DEC8B0;">' +
+    '<td style="padding-top: 8px; font-size: 16px; font-weight: 900; color: #7C552E;">Total Amount:</td>' +
+    '<td align="right" style="padding-top: 8px; font-size: 18px; font-weight: 900; color: #B45309;">₱' + totalAmount.toFixed(2) + '</td></tr>' +
+    '</table></div>' +
+
+    // Payment Information
+    '<div style="background-color: #FFFDF8; border-radius: 14px; border: 1px solid #F3E8DB; padding: 16px 20px; margin-bottom: 24px;">' +
+    '<h2 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #7C552E;">💳 Payment Information</h2>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 14px;">' +
+    '<tr><td style="color: #8C6A48; font-weight: 600; width: 140px; padding: 4px 0;">Mode of Payment:</td><td style="color: #1E120D; font-weight: 800; padding: 4px 0;">' + paymentMethod + '</td></tr>' +
+    '<tr><td style="color: #8C6A48; font-weight: 600; padding: 4px 0;">Payment Status:</td><td style="padding: 4px 0;">' +
+    '<span style="display: inline-block; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; ' + statusBadgeStyle + '">' + paymentStatusText + '</span>' +
+    '</td></tr></table></div>' +
+
+    // View Sheet Button
+    '<div style="text-align: center; margin-top: 10px;">' +
+    '<a href="https://docs.google.com/spreadsheets/d/1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI/edit" target="_blank" style="display: inline-block; background-color: #7C552E; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 12px; font-size: 14px; font-weight: 800; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(124, 85, 46, 0.2);">📊 Open Orders in Google Sheets</a>' +
+    '</div>' +
+
+    '</td></tr>' +
+
+    // Footer
+    '<tr><td style="background-color: #F8F5EE; padding: 20px 24px; text-align: center; font-size: 12px; color: #8C6A48; border-top: 1px solid #EADBCE;">' +
+    '<p style="margin: 0 0 4px 0; font-weight: 700; color: #5D3B1C;">🥜 Mani Wandering Ordering System</p>' +
+    '<p style="margin: 0; color: #A88B6E;">Automated order notification sent immediately to ' + recipientEmail + '</p>' +
+    '</td></tr>' +
+
+    '</table></td></tr></table></body></html>';
+
+  // 8. Plain Text Fallback
+  var plainTextBody = 'NEW ORDER RECEIVED\n' +
+    '🥜 Mani Wandering\n\n' +
+    'Order ID: ' + orderId + '\n' +
+    'Order Date: ' + formattedDateTime + '\n\n' +
+    '----------------------------------------\n' +
+    'CUSTOMER INFORMATION\n' +
+    '----------------------------------------\n' +
+    'Customer Name: ' + customerName + '\n' +
+    'Mobile Number: ' + mobileNumber + '\n' +
+    'Address / To Be Delivered To: ' + deliveryAddress + '\n' +
+    'Mode of Payment: ' + paymentMethod + '\n\n' +
+    '----------------------------------------\n' +
+    'ORDER DETAILS\n' +
+    '----------------------------------------\n' +
+    textProductList + '\n' +
+    '----------------------------------------\n' +
+    'ORDER SUMMARY\n' +
+    '----------------------------------------\n' +
+    'Subtotal: ₱' + subtotal.toFixed(2) + ' (' + totalPacks + ' packs)\n' +
+    'Delivery Fee: ₱' + deliveryFee.toFixed(2) + '\n' +
+    'Discount: ₱' + discount.toFixed(2) + '\n' +
+    'Total Amount: ₱' + totalAmount.toFixed(2) + '\n\n' +
+    '----------------------------------------\n' +
+    'PAYMENT INFORMATION\n' +
+    '----------------------------------------\n' +
+    'Mode of Payment: ' + paymentMethod + '\n' +
+    'Payment Status: ' + paymentStatusText + '\n\n' +
+    'View in Google Sheets: https://docs.google.com/spreadsheets/d/1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI/edit\n';
+
+  // 9. Dispatch via MailApp
+  try {
+    MailApp.sendEmail({
+      to: recipientEmail,
+      subject: subject,
+      body: plainTextBody,
+      htmlBody: htmlBody,
+      name: 'Mani Wandering Orders'
+    });
+
+    // Mark cache to prevent double sending (15-minute TTL)
+    cache.put(cacheKey, '1', 900);
+
+    return {
+      sent: true,
+      recipient: recipientEmail,
+      subject: subject,
+      orderId: orderId
+    };
+  } catch (err) {
+    console.error('MailApp send error:', err.toString());
+    return {
+      sent: false,
+      error: err.toString(),
+      recipient: recipientEmail,
+      orderId: orderId
+    };
+  }
+}
+
+/**
+ * Test helper for email delivery
+ */
+function handleSendTestEmail(toEmail) {
+  var tz = getTimezone();
+  var testOrder = {
+    orderId: 'MANI-TEST-' + Utilities.formatDate(new Date(), tz, 'HHmmss'),
+    customerName: 'Kevin Ramirez (Test Order)',
+    mobileNumber: '0917 123 4567',
+    deliveryAddress: 'Unit 102, Manila, Philippines',
+    paymentMethod: 'GCash',
+    paymentStatus: 'Pending – Awaiting GCash Payment',
+    items: [
+      { name: 'Original Crispy Salted', quantity: 2, price: 50 },
+      { name: 'Spicy Kick Mani', quantity: 1, price: 50 },
+      { name: 'Garlic Bawang Only', quantity: 3, price: 60 }
+    ],
+    subtotal: 330,
+    totalAmount: 330
+  };
+
+  if (toEmail) {
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty('NOTIFICATION_EMAIL', toEmail);
+  }
+
+  return sendOrderNotificationEmail(testOrder, null, true);
+}
+

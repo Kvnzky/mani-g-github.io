@@ -186,11 +186,11 @@ async function runTests() {
     assert(false, `Cutoff rejection error: ${e.message}`);
   }
 
-  // Reset cutoff for normal use
+  // Reset cutoff to open so subsequent order tests succeed
   await fetch(`${BASE_URL}/api/admin/cutoff`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
-    body: JSON.stringify({ enabled: true, date: '2026-09-17', time: '23:59' })
+    body: JSON.stringify({ enabled: false, date: '2026-09-17', time: '23:59' })
   });
 
   // -------------------------------------------------------------
@@ -223,6 +223,60 @@ async function runTests() {
   const nosniff = healthRes.headers.get('x-content-type-options');
   const frameOptions = healthRes.headers.get('x-frame-options');
   assert(nosniff === 'nosniff' && frameOptions === 'SAMEORIGIN', 'Server responses include secure HTTP headers (X-Content-Type-Options: nosniff, X-Frame-Options: SAMEORIGIN)');
+
+  // -------------------------------------------------------------
+  // 4. ORDER NOTIFICATION EMAIL INTEGRITY TESTS
+  // -------------------------------------------------------------
+  console.log('\n--- 4. ORDER NOTIFICATION EMAIL INTEGRITY TESTS ---');
+
+  // Test 4.1: Order created with GCash reflects Pending - Awaiting GCash Payment and totalAmount
+  try {
+    const orderRes = await fetch(`${BASE_URL}/api/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-test-suite': 'true' },
+      body: JSON.stringify({
+        customerName: 'Test Juan Dela Cruz',
+        mobileNumber: '09171234567',
+        deliveryAddress: 'Test Unit 102, Manila',
+        paymentMethod: 'GCash',
+        isTest: true,
+        items: [
+          { id: 'salted', name: 'Salted Mani', quantity: 2, price: 50 },
+          { id: 'spicy', name: 'Spicy Mani', quantity: 1, price: 50 }
+        ]
+      })
+    });
+    const orderData = await orderRes.json();
+    assert(
+      orderRes.status === 201 &&
+      orderData.order.paymentStatus === 'Pending – Awaiting GCash Payment' &&
+      orderData.order.totalAmount === 150 &&
+      orderData.order.items.length === 2,
+      'Order with GCash assigns "Pending – Awaiting GCash Payment" and computes totalAmount ₱150'
+    );
+  } catch (e) {
+    assert(false, `Order email integration error: ${e.message}`);
+  }
+
+  // Test 4.2: Verify no SMTP passwords or email credentials in frontend src/
+  let smtpFoundInSrc = false;
+  for (const f of srcFiles) {
+    const content = fs.readFileSync(path.join('src', f), 'utf8');
+    if (content.includes('SMTP_PASS') || content.includes('smtp.gmail.com') || content.includes('app_password')) {
+      smtpFoundInSrc = true;
+      break;
+    }
+  }
+  assert(!smtpFoundInSrc, 'Email SMTP credentials and passwords strictly absent from client src/ files');
+
+  // Test 4.3: Verify Google Apps Script contains sendOrderNotificationEmail and recipient
+  const codeGs = fs.readFileSync('google-apps-script/Code.gs', 'utf8');
+  assert(
+    codeGs.includes('sendOrderNotificationEmail') &&
+    codeGs.includes('rkevinramirez@gmail.com') &&
+    codeGs.includes('MailApp.sendEmail'),
+    'Google Apps Script backend includes production MailApp.sendEmail targeted to rkevinramirez@gmail.com'
+  );
 
   console.log(`\n========================================`);
   console.log(`TEST SUMMARY: ${passed} PASSED, ${failed} FAILED`);

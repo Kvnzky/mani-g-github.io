@@ -27,19 +27,38 @@ In the Apps Script editor:
 1. At the top right of Apps Script, click the blue **Deploy** button > **Manage deployments**.
 2. Click the **✏️ (Edit / Pencil)** icon next to the active deployment.
 3. In the **Version** dropdown, select **New version**.
-4. (Optional) Description: `Aligned 17 columns, dynamic price formulas, and test filter`.
+4. Description: `Added immediate Order Notification Email to rkevinramirez@gmail.com`.
 5. Click **Deploy**.
 6. The Web App URL remains the same:
    `https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec`
 
 ---
 
+## 📧 Order Notification Email Feature
+Whenever a customer places an order on the website:
+- **Recipient**: `rkevinramirez@gmail.com`
+- **Subject**: `🛒 New Order Received – [Customer Name]`
+- **Content**:
+  - Prominent **Order ID** & Philippine Standard Time (PST) timestamp.
+  - **Customer Information**: Full Name, Click-to-call Mobile Number, Delivery Address, and Payment Mode.
+  - **Order Details Table**: Every ordered flavor and corresponding quantity with unit prices and subtotals.
+  - **Order Summary**: Subtotal, Delivery Fee (Standard Free), Discount, and Total Amount.
+  - **Payment Status**:
+    - Cash on Delivery: `Pending – Cash on Delivery`
+    - GCash: `Pending – Awaiting GCash Payment` (or `Paid`)
+    - Maribank: `Pending – Awaiting Maribank Payment` (or `Paid`)
+  - **Direct Sheet Link**: One-click button to view the orders spreadsheet.
+- **Anti-Duplicate Protection**: Built-in cache deduplication prevents duplicate emails if the customer submits repeatedly.
+
+---
+
 ## 🥜 Google Sheet In-App Menu
 
-When you refresh the Google Sheet, you will see a new menu in the top menu bar:
+When you refresh the Google Sheet, you will see the custom menu in the top menu bar:
 - **`🥜 Mani Wandering`**
   - **`🧹 Clean Test Orders & Fix Calculations`**: Automatically purges test orders and recalibrates all pricing and summary formulas.
   - **`📐 Refresh Summary Dashboard & Formulas`**: Realigns the 17-column header cards and recomputes all metrics.
+  - **`📧 Send Test Order Notification Email`**: Sends a live test email directly to `rkevinramirez@gmail.com` to verify email delivery.
 
 ---
 

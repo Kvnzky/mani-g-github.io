@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -23,6 +24,16 @@ const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'kvn000';
 // Default bcrypt hash for 'Bunny_016' (salt rounds = 12)
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '$2b$12$/yWLHw1NSRnst8YZLzVU0O0Blof2feJIuETFu.U0xIUFCqm8XstkO';
 const TIMEZONE = process.env.TIMEZONE || 'Asia/Manila';
+
+// Email Notification Configuration (Secure Server-Side)
+const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'rkevinramirez@gmail.com';
+const SMTP_HOST = process.env.SMTP_HOST || '';
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+const SMTP_USER = process.env.SMTP_USER || '';
+const SMTP_PASS = process.env.SMTP_PASS || '';
+
+// Deduplication cache for order notification emails
+const sentOrderEmailIds = new Set();
 
 // 1. Security Headers via Helmet
 app.use(helmet({
@@ -337,6 +348,128 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Server-Side Email Dispatcher (Node.js fallback for standalone server)
+const sendNodeOrderEmail = async (order) => {
+  if (!order || !NOTIFICATION_EMAIL) return { sent: false, skipped: true };
+  if (sentOrderEmailIds.has(order.orderId)) {
+    return { sent: false, skipped: true, reason: 'Duplicate order notification prevented' };
+  }
+
+  const customerName = (order.customerName || 'Valued Customer').trim();
+  const orderId = order.orderId;
+  const paymentMethod = order.paymentMethod || 'Cash on Delivery';
+  const paymentStatus = order.paymentStatus || (paymentMethod === 'Cash on Delivery' ? 'Pending – Cash on Delivery' : `Pending – Awaiting ${paymentMethod} Payment`);
+  const subtotal = Number(order.subtotal || 0);
+  const deliveryFee = Number(order.deliveryFee || 0);
+  const discount = Number(order.discount || 0);
+  const totalAmount = Number(order.totalAmount || (subtotal + deliveryFee - discount));
+  const itemsList = Array.isArray(order.items) ? order.items : [];
+
+  // If SMTP credentials not provided in .env, record notice and avoid throwing
+  if (!SMTP_HOST || !SMTP_USER) {
+    console.log(`[Order Email Notification] Standalone Mode: Order #${orderId} from ${customerName} logged for ${NOTIFICATION_EMAIL}`);
+    sentOrderEmailIds.add(orderId);
+    return { sent: false, logged: true, recipient: NOTIFICATION_EMAIL };
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_PORT === 465,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS
+      }
+    });
+
+    const subject = `🛒 New Order Received – ${customerName}`;
+
+    let productRowsHtml = '';
+    let textProductList = '';
+
+    itemsList.forEach((it, idx) => {
+      const q = Number(it.quantity || 0);
+      const p = Number(it.price || 50);
+      const rowSub = q * p;
+      const rowBg = idx % 2 === 0 ? '#FFFFFF' : '#FDFBF7';
+      productRowsHtml += `<tr style="background-color: ${rowBg}; border-bottom: 1px solid #EDE4D8;">
+        <td style="padding: 10px 14px; font-weight: 700; color: #2B1810;">${it.name}</td>
+        <td align="center" style="padding: 10px 14px; font-weight: 800; color: #7C552E;">${q}</td>
+        <td align="right" style="padding: 10px 14px; color: #5D4037;">₱${p.toFixed(2)}</td>
+        <td align="right" style="padding: 10px 14px; font-weight: 800; color: #2B1810;">₱${rowSub.toFixed(2)}</td>
+      </tr>`;
+      textProductList += `- ${it.name} x ${q} (₱${p.toFixed(2)}) = ₱${rowSub.toFixed(2)}\n`;
+    });
+
+    const htmlBody = `<!DOCTYPE html>
+    <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+    <body style="margin: 0; padding: 20px 10px; background-color: #FDFBF7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #2B1810;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #EADBCE; box-shadow: 0 4px 20px rgba(124, 85, 46, 0.08);">
+          <tr><td style="background: linear-gradient(135deg, #7C552E 0%, #D97706 100%); padding: 32px 24px; text-align: center; color: #ffffff;">
+            <div style="font-size: 32px;">🥜</div>
+            <div style="font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #FEF3C7; margin-bottom: 6px;">Mani Wandering</div>
+            <h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ffffff;">NEW ORDER RECEIVED</h1>
+            <div style="margin-top: 14px;"><span style="background-color: rgba(255, 255, 255, 0.25); color: #ffffff; padding: 6px 16px; border-radius: 9999px; font-weight: 800; font-size: 15px;">Order ID: ${orderId}</span></div>
+            <div style="margin-top: 8px; font-size: 13px; color: #FEF3C7;">📅 ${order.orderDate} – ${order.orderTime}</div>
+          </td></tr>
+          <tr><td style="padding: 24px;">
+            <div style="background-color: #FFFDF8; border-radius: 14px; border: 1px solid #F3E8DB; padding: 18px 20px; margin-bottom: 24px;">
+              <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #7C552E;">👤 Customer Information</h2>
+              <table style="font-size: 14px; line-height: 1.6; width: 100%;">
+                <tr><td style="color: #8C6A48; font-weight: 600; width: 150px;">Customer Name:</td><td style="color: #1E120D; font-weight: 800;">${order.customerName}</td></tr>
+                <tr><td style="color: #8C6A48; font-weight: 600;">Mobile Number:</td><td style="color: #1E120D; font-weight: 700;">${order.mobileNumber}</td></tr>
+                <tr><td style="color: #8C6A48; font-weight: 600;">Address:</td><td style="color: #1E120D; font-weight: 600;">${order.deliveryAddress}</td></tr>
+                <tr><td style="color: #8C6A48; font-weight: 600;">Mode of Payment:</td><td style="color: #1E120D; font-weight: 700;">${paymentMethod}</td></tr>
+              </table>
+            </div>
+            <div style="margin-bottom: 24px;">
+              <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #7C552E;">📦 Order Details</h2>
+              <table style="border-collapse: collapse; font-size: 14px; border: 1px solid #EDE4D8; width: 100%; border-radius: 12px; overflow: hidden;">
+                <thead><tr style="background-color: #F8F4EE;"><th align="left" style="padding: 12px 14px; color: #664322;">Product</th><th align="center" style="padding: 12px 14px; color: #664322;">Quantity</th><th align="right" style="padding: 12px 14px; color: #664322;">Price</th><th align="right" style="padding: 12px 14px; color: #664322;">Subtotal</th></tr></thead>
+                <tbody>${productRowsHtml}</tbody>
+              </table>
+            </div>
+            <div style="background-color: #FDFBF7; border-radius: 14px; border: 1px solid #EFE6DA; padding: 16px 20px; margin-bottom: 24px;">
+              <h2 style="margin: 0 0 10px 0; font-size: 13px; font-weight: 800; text-transform: uppercase; color: #7C552E;">💰 Order Summary</h2>
+              <table style="font-size: 14px; line-height: 1.8; width: 100%;">
+                <tr><td style="color: #6B5645;">Subtotal:</td><td align="right" style="color: #1E120D; font-weight: 700;">₱${subtotal.toFixed(2)}</td></tr>
+                <tr><td style="color: #6B5645;">Delivery Fee:</td><td align="right" style="color: #059669; font-weight: 700;">₱0.00 (Standard)</td></tr>
+                <tr style="border-top: 2px dashed #DEC8B0;"><td style="padding-top: 8px; font-size: 16px; font-weight: 900; color: #7C552E;">Total Amount:</td><td align="right" style="padding-top: 8px; font-size: 18px; font-weight: 900; color: #B45309;">₱${totalAmount.toFixed(2)}</td></tr>
+              </table>
+            </div>
+            <div style="background-color: #FFFDF8; border-radius: 14px; border: 1px solid #F3E8DB; padding: 16px 20px;">
+              <h2 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 800; text-transform: uppercase; color: #7C552E;">💳 Payment Information</h2>
+              <p style="margin: 0; font-size: 14px;"><strong>Method:</strong> ${paymentMethod}</p>
+              <p style="margin: 4px 0 0 0; font-size: 14px;"><strong>Payment Status:</strong> ${paymentStatus}</p>
+            </div>
+          </td></tr>
+          <tr><td style="background-color: #F8F5EE; padding: 20px; text-align: center; font-size: 12px; color: #8C6A48; border-top: 1px solid #EADBCE;">
+            🥜 Mani Wandering Ordering System — Notification sent to ${NOTIFICATION_EMAIL}
+          </td></tr>
+        </table>
+      </td></tr></table>
+    </body></html>`;
+
+    const plainText = `NEW ORDER RECEIVED\nOrder ID: ${orderId}\nCustomer: ${customerName}\nMobile: ${order.mobileNumber}\nAddress: ${order.deliveryAddress}\nPayment Method: ${paymentMethod}\nPayment Status: ${paymentStatus}\n\nProducts:\n${textProductList}\nTotal: ₱${totalAmount.toFixed(2)}`;
+
+    await transporter.sendMail({
+      from: `"Mani Wandering" <${SMTP_USER}>`,
+      to: NOTIFICATION_EMAIL,
+      subject,
+      text: plainText,
+      html: htmlBody
+    });
+
+    sentOrderEmailIds.add(orderId);
+    return { sent: true, recipient: NOTIFICATION_EMAIL };
+  } catch (err) {
+    console.error('Node email sending error:', err.message);
+    return { sent: false, error: err.message };
+  }
+};
+
 // Public: Submit Order (Enforces Server-Side Cutoff + Validation)
 app.post('/api/orders', orderLimiter, async (req, res) => {
   try {
@@ -402,6 +535,14 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
       }
     });
 
+    const defaultPaymentStatus = chosenPayment === 'Cash on Delivery' 
+      ? 'Pending – Cash on Delivery' 
+      : (chosenPayment === 'GCash' ? 'Pending – Awaiting GCash Payment' : 'Pending – Awaiting Maribank Payment');
+
+    const deliveryFee = Number(req.body.deliveryFee || 0);
+    const discount = Number(req.body.discount || 0);
+    const totalAmount = (subtotal + deliveryFee) - discount;
+
     const newOrder = {
       id: `ord_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       orderId,
@@ -411,11 +552,14 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
       mobileNumber: formatPhilippineMobile(mobileNumber),
       deliveryAddress: deliveryAddress.trim().slice(0, 300),
       paymentMethod: chosenPayment,
-      paymentStatus: req.body.paymentStatus || (chosenPayment === 'Cash on Delivery' ? 'Unpaid' : 'Paid'),
+      paymentStatus: req.body.paymentStatus || defaultPaymentStatus,
       items,
       flavorQuantities: flavorQtyMap,
       totalPacks,
       subtotal,
+      deliveryFee,
+      discount,
+      totalAmount,
       status: 'New',
       createdAt: new Date().toISOString(),
       syncedToGoogleSheets: false
@@ -425,7 +569,7 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
     let syncError = null;
     const isTestOrder = req.headers['x-test-suite'] === 'true' ||
                         req.body.isTest === true ||
-                        customerName.trim().toLowerCase() === 'juan dela cruz';
+                        customerName.trim().toLowerCase() === 'test juan dela cruz';
 
     if (settings.appsScriptUrl && !isTestOrder) {
       try {
@@ -443,12 +587,22 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
         const gasData = await gasResponse.json();
         if (gasData && gasData.success) {
           newOrder.syncedToGoogleSheets = true;
+          // Google Apps Script also sent the notification email!
         } else {
           syncError = gasData ? gasData.error : 'Failed to receive success from Google Apps Script';
         }
       } catch (err) {
         console.error('Google Apps Script forward error:', err.message);
         syncError = err.message;
+      }
+    }
+
+    // 5. Fallback server-side email dispatch if Google Apps Script did not send it
+    if (!newOrder.syncedToGoogleSheets && !isTestOrder) {
+      try {
+        await sendNodeOrderEmail(newOrder);
+      } catch (emailErr) {
+        console.error('Node fallback email error:', emailErr.message);
       }
     }
 
