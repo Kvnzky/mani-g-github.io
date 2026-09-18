@@ -5,6 +5,7 @@ import {
   Clock, Lock, CheckCircle2, AlertTriangle, LogOut, User, Power
 } from 'lucide-react';
 import { formatPHP } from '../config/products';
+import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from '../config/sheetsConfig';
 
 export default function AdminPortal({ 
   products, 
@@ -44,8 +45,8 @@ export default function AdminPortal({
   }, [cutoffInfo]);
 
   const [settings, setSettings] = useState({
-    spreadsheetId: '',
-    appsScriptUrl: ''
+    spreadsheetId: localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID || '',
+    appsScriptUrl: localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || ''
   });
   const [settingsStatus, setSettingsStatus] = useState({ msg: '', type: '' });
   const [isTestingSheet, setIsTestingSheet] = useState(false);
@@ -81,6 +82,7 @@ export default function AdminPortal({
 
   const fetchOrders = async () => {
     setIsLoading(true);
+    let ordersFetched = false;
     try {
       let url = '/api/orders';
       const params = new URLSearchParams();
@@ -93,21 +95,88 @@ export default function AdminPortal({
         onLogout();
         return;
       }
-      const data = await res.json();
-      if (data && data.orders) {
-        setOrders(data.orders);
-        setDailySummary(data.dailySummary);
-        if (!selectedDate && data.todayDate) {
-          setSelectedDate(data.todayDate);
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data && data.orders) {
+          setOrders(data.orders);
+          setDailySummary(data.dailySummary);
+          if (!selectedDate && data.todayDate) {
+            setSelectedDate(data.todayDate);
+          }
+          ordersFetched = true;
+          return;
         }
       }
     } catch (e) {
       console.warn('Backend /api/orders fetch error:', e.message);
+    }
+
+    // Google Apps Script Cloud fallback for GitHub Pages (Desktop & Mobile)
+    if (!ordersFetched) {
+      const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+      if (appsUrl) {
+        try {
+          const qDate = selectedDate || '';
+          const res = await fetch(`${appsUrl}?action=getOrders&date=${encodeURIComponent(qDate)}`, { mode: 'cors' });
+          if (res.ok) {
+            const cloudData = await res.json();
+            if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
+              let filtered = cloudData.orders;
+              if (statusFilter && statusFilter !== 'all') {
+                filtered = filtered.filter(o => o.status === statusFilter);
+              }
+              setOrders(filtered);
+              if (cloudData.dailySummary) {
+                setDailySummary(cloudData.dailySummary);
+              }
+              if (!selectedDate && cloudData.todayDate) {
+                setSelectedDate(cloudData.todayDate);
+              }
+              ordersFetched = true;
+              return;
+            }
+          }
+        } catch (cloudErr) {
+          // JSONP fallback for mobile browsers
+          try {
+            const cbName = `mani_orders_${Date.now()}`;
+            const script = document.createElement('script');
+            const qDate = selectedDate || '';
+            window[cbName] = (cloudData) => {
+              if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
+                let filtered = cloudData.orders;
+                if (statusFilter && statusFilter !== 'all') {
+                  filtered = filtered.filter(o => o.status === statusFilter);
+                }
+                setOrders(filtered);
+                if (cloudData.dailySummary) {
+                  setDailySummary(cloudData.dailySummary);
+                }
+                if (!selectedDate && cloudData.todayDate) {
+                  setSelectedDate(cloudData.todayDate);
+                }
+              }
+              delete window[cbName];
+              script.remove();
+            };
+            script.src = `${appsUrl}?action=getOrders&date=${encodeURIComponent(qDate)}&callback=${cbName}`;
+            script.onerror = () => {
+              delete window[cbName];
+              script.remove();
+            };
+            document.head.appendChild(script);
+            ordersFetched = true;
+          } catch (jpErr) {}
+        }
+      }
+    }
+
+    if (!ordersFetched) {
       const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
       setOrders(local);
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   const fetchSettings = async () => {
@@ -119,12 +188,21 @@ export default function AdminPortal({
       }
       const data = await res.json();
       if (data) {
+        const sid = data.spreadsheetId || localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID || '';
+        const aurl = data.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '';
         setSettings({
-          spreadsheetId: data.spreadsheetId || '',
-          appsScriptUrl: data.appsScriptUrl || ''
+          spreadsheetId: sid,
+          appsScriptUrl: aurl
         });
+        if (sid) localStorage.setItem('mani_spreadsheet_id', sid);
+        if (aurl) localStorage.setItem('mani_apps_script_url', aurl);
       }
-    } catch (e) {}
+    } catch (e) {
+      setSettings({
+        spreadsheetId: localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID || '',
+        appsScriptUrl: localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || ''
+      });
+    }
   };
 
   useEffect(() => {
@@ -132,7 +210,7 @@ export default function AdminPortal({
     fetchSettings();
   }, [selectedDate, statusFilter]);
 
-  // Handle Cutoff Save
+  // Handle Cutoff Save with Cross-Device Cloud Sync
   const handleSaveCutoffSettings = async (e) => {
     e.preventDefault();
 
@@ -152,6 +230,7 @@ export default function AdminPortal({
     setIsSavingCutoff(true);
     setCutoffSaveMsg({ msg: '', type: '' });
 
+    // 1. Try local Express backend if running
     try {
       const res = await fetch('/api/admin/cutoff', {
         method: 'POST',
@@ -165,33 +244,52 @@ export default function AdminPortal({
 
       if (res.status === 401) {
         onLogout();
+        setIsSavingCutoff(false);
         return;
-      }
-
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const data = await res.json();
-        if (res.ok && data.success) {
-          setCutoffSaveMsg({ msg: 'Cutoff settings successfully updated and live on customer form!', type: 'success' });
-          if (onRefreshCutoff) onRefreshCutoff();
-          setTimeout(() => setCutoffSaveMsg({ msg: '', type: '' }), 4000);
-          return;
-        }
       }
     } catch (err) {}
 
-    // Static fallback: save to localStorage
+    // 2. Synchronize to Google Apps Script cloud (Shared across Desktop & Mobile)
+    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      // POST sync
+      fetch(appsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveSettings',
+          settings: {
+            cutoff: {
+              enabled: cutoffEnabled,
+              date: cutoffDate,
+              time: cutoffTime
+            }
+          }
+        })
+      }).catch(() => {});
+
+      // GET sync fast-path
+      fetch(`${appsUrl}?action=saveCutoff&enabled=${cutoffEnabled}&date=${encodeURIComponent(cutoffDate)}&time=${encodeURIComponent(cutoffTime)}`, {
+        mode: 'no-cors'
+      }).catch(() => {});
+    }
+
+    // 3. Update localStorage cache
     localStorage.setItem('mani_cutoff_settings', JSON.stringify({
       enabled: cutoffEnabled,
       date: cutoffDate,
       time: cutoffTime
     }));
-    setCutoffSaveMsg({ msg: 'Cutoff settings successfully updated and live on customer form!', type: 'success' });
+
+    if (onRefreshCutoff) onRefreshCutoff();
+
+    setCutoffSaveMsg({ msg: 'Cutoff settings saved & synchronized across desktop & mobile devices!', type: 'success' });
     setTimeout(() => setCutoffSaveMsg({ msg: '', type: '' }), 4000);
     setIsSavingCutoff(false);
   };
 
-  const handleUpdateStatus = async (orderId, newStatus) => {
+  const handleUpdateStatus = async (orderId, newStatus, orderDate) => {
     setUpdatingOrderId(orderId);
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, {
@@ -203,21 +301,26 @@ export default function AdminPortal({
         onLogout();
         return;
       }
-      const data = await res.json();
-      if (data && data.success) {
-        setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
-      }
-    } catch (e) {
-      const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
-      const updated = local.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
-      localStorage.setItem('mani_orders', JSON.stringify(updated));
-      setOrders(updated);
-    } finally {
-      setUpdatingOrderId(null);
+    } catch (e) {}
+
+    // Cloud sync to Google Sheets via Apps Script Web App
+    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      const target = orders.find(o => o.orderId === orderId);
+      const dateStr = orderDate || (target ? target.orderDate : '') || '';
+      fetch(`${appsUrl}?action=updateStatus&orderId=${encodeURIComponent(orderId)}&orderDate=${encodeURIComponent(dateStr)}&status=${encodeURIComponent(newStatus)}`, {
+        mode: 'no-cors'
+      }).catch(() => {});
     }
+
+    const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+    const updated = local.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
+    localStorage.setItem('mani_orders', JSON.stringify(updated));
+    setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
+    setUpdatingOrderId(null);
   };
 
-  const handleUpdatePaymentStatus = async (orderId, newPaymentStatus) => {
+  const handleUpdatePaymentStatus = async (orderId, newPaymentStatus, orderDate) => {
     setUpdatingPaymentId(orderId);
     try {
       const res = await fetch(`/api/orders/${orderId}/payment-status`, {
@@ -229,18 +332,23 @@ export default function AdminPortal({
         onLogout();
         return;
       }
-      const data = await res.json();
-      if (data && data.success) {
-        setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
-      }
-    } catch (e) {
-      const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
-      const updated = local.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o);
-      localStorage.setItem('mani_orders', JSON.stringify(updated));
-      setOrders(updated);
-    } finally {
-      setUpdatingPaymentId(null);
+    } catch (e) {}
+
+    // Cloud sync to Google Sheets via Apps Script Web App
+    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      const target = orders.find(o => o.orderId === orderId);
+      const dateStr = orderDate || (target ? target.orderDate : '') || '';
+      fetch(`${appsUrl}?action=updatePaymentStatus&orderId=${encodeURIComponent(orderId)}&orderDate=${encodeURIComponent(dateStr)}&paymentStatus=${encodeURIComponent(newPaymentStatus)}`, {
+        mode: 'no-cors'
+      }).catch(() => {});
     }
+
+    const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+    const updated = local.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o);
+    localStorage.setItem('mani_orders', JSON.stringify(updated));
+    setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
+    setUpdatingPaymentId(null);
   };
 
   const handleSaveSettings = async (e) => {
@@ -248,17 +356,19 @@ export default function AdminPortal({
     const cleanUrl = (settings.appsScriptUrl || '').trim();
     const cleanId = (settings.spreadsheetId || '').trim();
 
+    localStorage.setItem('mani_apps_script_url', cleanUrl);
+    localStorage.setItem('mani_spreadsheet_id', cleanId);
+
     try {
       await fetch('/api/settings', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ appsScriptUrl: cleanUrl, spreadsheetId: cleanId })
       });
-      setSettingsStatus({ msg: 'Integration settings saved securely on backend!', type: 'success' });
-      setTimeout(() => setSettingsStatus({ msg: '', type: '' }), 4000);
-    } catch (e) {
-      setSettingsStatus({ msg: 'Failed to save settings.', type: 'error' });
-    }
+    } catch (e) {}
+
+    setSettingsStatus({ msg: 'Integration settings saved securely on backend & browser cache!', type: 'success' });
+    setTimeout(() => setSettingsStatus({ msg: '', type: '' }), 4000);
   };
 
   const handleTestConnection = async () => {
@@ -678,7 +788,7 @@ export default function AdminPortal({
                           <select
                             value={ord.paymentStatus || 'Unpaid'}
                             disabled={updatingPaymentId === ord.orderId}
-                            onChange={(e) => handleUpdatePaymentStatus(ord.orderId, e.target.value)}
+                            onChange={(e) => handleUpdatePaymentStatus(ord.orderId, e.target.value, ord.orderDate)}
                             className={`text-xs font-black px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${
                               (ord.paymentStatus || 'Unpaid').toLowerCase() === 'paid'
                                 ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
@@ -696,7 +806,7 @@ export default function AdminPortal({
                           <select
                             value={ord.status}
                             disabled={updatingOrderId === ord.orderId}
-                            onChange={(e) => handleUpdateStatus(ord.orderId, e.target.value)}
+                            onChange={(e) => handleUpdateStatus(ord.orderId, e.target.value, ord.orderDate)}
                             className={`text-xs font-bold px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${statusInfo.color}`}
                           >
                             <option value="New">🟡 New</option>

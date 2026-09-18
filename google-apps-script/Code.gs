@@ -1,5 +1,5 @@
 /**
- * 🥜 MANI WANDERING ORDERING APP - GOOGLE APPS SCRIPT BACKEND
+ * 🥜 MANI WANDERING ORDERING APP - GOOGLE APPS SCRIPT BACKEND & REAL-TIME SYNC ENGINE
  * 
  * Target Google Sheet: https://docs.google.com/spreadsheets/d/1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI/edit
  * Default Spreadsheet ID: 1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI
@@ -85,57 +85,84 @@ function getTimezone() {
 }
 
 /**
- * Handle HTTP GET (Health check, Self-healing layout trigger, Cleanup, and Status queries)
+ * Handle HTTP GET (Health check, Real-time Cloud Settings Sync, Cleanups, and Order queries)
  */
 function doGet(e) {
   var tz = getTimezone();
   var ssId = (typeof DEFAULT_SPREADSHEET_ID !== 'undefined' ? DEFAULT_SPREADSHEET_ID : '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI');
 
-  if (!e || !e.parameter || !e.parameter.action) {
-    return ContentService.createTextOutput(JSON.stringify({
+  var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : '';
+
+  // Fast path for Cloud Settings retrieval (bypasses sheet lock for instant speed)
+  if (action === 'getSettings') {
+    var settingsRes = handleGetSettings();
+    return formatResponse(settingsRes, e);
+  }
+
+  // Fast path for Cutoff update via GET (instant sync from mobile/desktop)
+  if (action === 'saveCutoff') {
+    var enabled = e.parameter.enabled === 'true';
+    var date = e.parameter.date || Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+    var time = e.parameter.time || '23:59';
+    var saveCutoffRes = handleSaveSettings({
+      cutoff: { enabled: enabled, date: date, time: time }
+    });
+    return formatResponse(saveCutoffRes, e);
+  }
+
+  if (!action) {
+    return formatResponse({
       status: 'ok',
       app: 'Mani Wandering Google Apps Script Backend',
       spreadsheetId: ssId,
       serverTime: Utilities.formatDate(new Date(), tz, "yyyy-MM-dd HH:mm:ss 'GMT'XXX")
-    })).setMimeType(ContentService.MimeType.JSON);
+    }, e);
   }
 
   var lock = LockService.getScriptLock();
   var hasLock = lock.tryLock(30000);
   if (!hasLock) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'System busy. Please retry.' }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return formatResponse({ success: false, error: 'System busy. Please retry.' }, e);
   }
 
   try {
-    var action = e.parameter.action;
     var ss = getTargetSpreadsheet(e.parameter.spreadsheetId);
+    var result = { status: 'ok' };
 
-    if (action === 'cleanSheet' || action === 'cleanup' || action === 'cleanTestOrders') {
-      var result = handleCleanAllSheets(ss);
-      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    if (action === 'getOrders') {
+      result = handleGetOrders(ss, e.parameter.date);
+    } else if (action === 'cleanSheet' || action === 'cleanup' || action === 'cleanTestOrders') {
+      result = handleCleanAllSheets(ss);
     } else if (action === 'fixSheet' || action === 'repairLayout') {
-      var result = handleFixAllSheets(ss);
-      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+      result = handleFixAllSheets(ss);
     } else if (action === 'updateStatus') {
-      var result = handleUpdateStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.status);
-      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+      result = handleUpdateStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.status);
     } else if (action === 'updatePaymentStatus') {
-      var result = handleUpdatePaymentStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.paymentStatus);
-      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+      result = handleUpdatePaymentStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.paymentStatus);
     }
 
-    return ContentService.createTextOutput(JSON.stringify({ status: 'ok' })).setMimeType(ContentService.MimeType.JSON);
+    return formatResponse(result, e);
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return formatResponse({ success: false, error: err.toString() }, e);
   } finally {
     lock.releaseLock();
   }
 }
 
 /**
- * Handle HTTP POST (Order Submissions, Layout Fixes, Cleanups & Status Updates)
+ * Helper to format response supporting both JSON and JSONP for mobile browsers
+ */
+function formatResponse(data, e) {
+  var json = JSON.stringify(data);
+  if (e && e.parameter && e.parameter.callback) {
+    return ContentService.createTextOutput(e.parameter.callback + '(' + json + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Handle HTTP POST (Order Submissions, Layout Fixes, Settings Updates & Status Updates)
  */
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -154,11 +181,24 @@ function doPost(e) {
 
     var payload = JSON.parse(rawData);
     var action = payload.action || 'addOrder';
+
+    // Settings sync actions
+    if (action === 'saveSettings') {
+      var saveRes = handleSaveSettings(payload.settings);
+      return ContentService.createTextOutput(JSON.stringify(saveRes)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'getSettings') {
+      var getRes = handleGetSettings();
+      return ContentService.createTextOutput(JSON.stringify(getRes)).setMimeType(ContentService.MimeType.JSON);
+    }
+
     var ss = getTargetSpreadsheet(payload.spreadsheetId);
 
     if (action === 'addOrder') {
       var result = handleAddOrder(ss, payload.order);
       return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'getOrders') {
+      var ordRes = handleGetOrders(ss, payload.date);
+      return ContentService.createTextOutput(JSON.stringify(ordRes)).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'cleanSheet' || action === 'cleanup' || action === 'cleanTestOrders') {
       var result = handleCleanAllSheets(ss);
       return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
@@ -181,6 +221,141 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * Get Cloud Settings (Shared persistently across desktop & mobile)
+ */
+function handleGetSettings() {
+  var props = PropertiesService.getScriptProperties();
+  var raw = props.getProperty('MANI_SETTINGS');
+  var settings = {};
+  if (raw) {
+    try {
+      settings = JSON.parse(raw);
+    } catch (e) {}
+  }
+
+  // Fallback defaults
+  if (!settings.cutoff) {
+    settings.cutoff = {
+      enabled: true,
+      date: Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd'),
+      time: '23:59'
+    };
+  }
+
+  return {
+    success: true,
+    settings: settings,
+    serverTime: Utilities.formatDate(new Date(), getTimezone(), "yyyy-MM-dd'T'HH:mm:ssXXX")
+  };
+}
+
+/**
+ * Save Cloud Settings (Instantly syncs to mobile and desktop)
+ */
+function handleSaveSettings(newSettings) {
+  if (!newSettings) return { success: false, error: 'Missing settings payload' };
+  var payload = (newSettings.settings && typeof newSettings.settings === 'object') ? newSettings.settings : newSettings;
+  var props = PropertiesService.getScriptProperties();
+  var raw = props.getProperty('MANI_SETTINGS');
+  var existing = {};
+  if (raw) {
+    try {
+      existing = JSON.parse(raw);
+    } catch (e) {}
+  }
+
+  if (payload.cutoff) existing.cutoff = payload.cutoff;
+  if (payload.products) existing.products = payload.products;
+  if (payload.qrs) existing.qrs = payload.qrs;
+
+  props.setProperty('MANI_SETTINGS', JSON.stringify(existing));
+
+  return {
+    success: true,
+    settings: existing,
+    message: 'Settings successfully synchronized across all devices.'
+  };
+}
+
+/**
+ * Fetch all orders from Google Sheet for the Admin Portal across devices
+ */
+function handleGetOrders(ss, dateFilter) {
+  var targetDate = dateFilter || Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
+  var sheet = ss.getSheetByName(targetDate);
+  if (!sheet) {
+    var sheets = ss.getSheets();
+    for (var i = 0; i < sheets.length; i++) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(sheets[i].getName())) {
+        sheet = sheets[i];
+        break;
+      }
+    }
+  }
+
+  if (!sheet) return { success: true, orders: [], todayDate: targetDate };
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 8) return { success: true, orders: [], todayDate: sheet.getName() };
+
+  var values = sheet.getRange(8, 1, lastRow - 7, 17).getValues();
+  var orders = [];
+
+  for (var i = values.length - 1; i >= 0; i--) {
+    var r = values[i];
+    var ordId = String(r[0] || '').trim();
+    if (!ordId) continue;
+
+    // Normalizing dates and times
+    var rawDate = r[1];
+    var oDate = sheet.getName();
+    if (rawDate instanceof Date) {
+      oDate = Utilities.formatDate(rawDate, getTimezone(), 'yyyy-MM-dd');
+    } else if (rawDate) {
+      var sDate = String(rawDate).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(sDate)) oDate = sDate;
+    }
+
+    var rawTime = r[2];
+    var oTime = '10:00:00 AM';
+    if (rawTime instanceof Date) {
+      oTime = Utilities.formatDate(rawTime, getTimezone(), 'hh:mm:ss a');
+    } else if (rawTime) {
+      var sTime = String(rawTime).trim();
+      if (!sTime.includes('GMT')) oTime = sTime;
+    }
+
+    orders.push({
+      orderId: ordId,
+      orderDate: oDate,
+      orderTime: oTime,
+      customerName: String(r[3] || ''),
+      mobileNumber: String(r[4] || ''),
+      paymentMethod: String(r[5] || 'Cash on Delivery'),
+      deliveryAddress: String(r[6] || ''),
+      paymentStatus: String(r[7] || 'Unpaid'),
+      flavorQuantities: {
+        salted: Number(r[8] || 0),
+        unsalted: Number(r[9] || 0),
+        spicy: Number(r[10] || 0),
+        bbq: Number(r[11] || 0),
+        'sour-cream': Number(r[12] || 0),
+        'bawang-only': Number(r[13] || 0)
+      },
+      totalPacks: Number(r[14] || 0),
+      subtotal: Number(r[15] || 0),
+      status: String(r[16] || 'New')
+    });
+  }
+
+  return {
+    success: true,
+    orders: orders,
+    todayDate: sheet.getName()
+  };
 }
 
 /**
@@ -400,7 +575,6 @@ function handleAddOrder(ss, order) {
   var targetRow = Math.max(lastRow + 1, 8);
 
   var fq = order.flavorQuantities || {};
-  // If flavorQuantities was omitted but items array was provided, extract quantities
   if ((!order.flavorQuantities || Object.keys(order.flavorQuantities).length === 0) && Array.isArray(order.items)) {
     fq = { salted: 0, unsalted: 0, spicy: 0, bbq: 0, 'sour-cream': 0, 'bawang-only': 0 };
     order.items.forEach(function(it) {
@@ -469,7 +643,6 @@ function formatDataRow(sheet, targetRow, rowData) {
   range.setVerticalAlignment('middle');
   range.setHorizontalAlignment('center');
 
-  // Alternating row background
   if (targetRow % 2 === 0) {
     range.setBackground('#FDFBF7');
   } else {
@@ -632,7 +805,6 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
     .setVerticalAlignment('middle');
   sheet.setRowHeight(7, 28);
 
-  // Freeze top 7 rows
   sheet.setFrozenRows(7);
 
   // Column Widths

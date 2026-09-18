@@ -68,21 +68,51 @@ export default function App() {
   const [submissionError, setSubmissionError] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
-  // Fetch Cutoff Status from Server or Local Storage
-  const fetchCutoff = async () => {
-    try {
-      const res = await fetch('/api/cutoff');
-      const contentType = res.headers.get('content-type') || '';
-      if (res.ok && contentType.includes('application/json')) {
-        const data = await res.json();
-        if (data) {
-          setCutoffInfo(data);
-          return;
-        }
-      }
-    } catch (err) {}
+  // Apply cloud settings payload to React states & local cache
+  const applyCloudSettings = (settings, serverTimeStr) => {
+    if (!settings) return;
 
-    // Static fallback: check localStorage for cutoff configuration
+    // 1. Synchronize Cutoff Settings
+    if (settings.cutoff) {
+      const saved = settings.cutoff;
+      const now = serverTimeStr ? new Date(serverTimeStr) : new Date();
+      const normalizedTime = saved.time?.length === 5 ? `${saved.time}:00` : (saved.time || '23:59:00');
+      const cutoffIso = saved.date ? `${saved.date}T${normalizedTime}+08:00` : null;
+      const cutoffTimestamp = cutoffIso ? new Date(cutoffIso).getTime() : null;
+      const diffSec = cutoffTimestamp ? Math.floor((cutoffTimestamp - now.getTime()) / 1000) : null;
+      const isOpen = saved.enabled ? (diffSec > 0) : true;
+      const status = !saved.enabled ? 'OPEN' : (isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED');
+
+      setCutoffInfo({
+        enabled: Boolean(saved.enabled),
+        isOpen,
+        status,
+        cutoffDate: saved.date,
+        cutoffTime: saved.time,
+        timezone: 'Asia/Manila',
+        serverTime: now.toISOString(),
+        remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
+        cutoffIso
+      });
+
+      localStorage.setItem('mani_cutoff_settings', JSON.stringify(saved));
+    }
+
+    // 2. Synchronize Products & Pricing
+    if (Array.isArray(settings.products) && settings.products.length > 0) {
+      setProducts(settings.products);
+      localStorage.setItem('mani_products', JSON.stringify(settings.products));
+    }
+
+    // 3. Synchronize Payment QR Codes & GCash Number
+    if (settings.qrs && typeof settings.qrs === 'object') {
+      setCustomQrs((prev) => ({ ...prev, ...settings.qrs }));
+      localStorage.setItem('mani_qr_config_v2', JSON.stringify(settings.qrs));
+    }
+  };
+
+  // Fallback to local storage cache if completely offline
+  const applyLocalStorageFallback = () => {
     try {
       const saved = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
       if (saved) {
@@ -109,10 +139,72 @@ export default function App() {
     } catch (e) {}
   };
 
-  // Initial Data Fetching & Cutoff Polling
+  // Real-time Cloud Settings Synchronization (Desktop <-> Mobile)
+  const fetchCutoff = async () => {
+    // 1. Try local Express backend if running (development mode)
+    try {
+      const res = await fetch('/api/cutoff');
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data && data.status) {
+          setCutoffInfo(data);
+          return;
+        }
+      }
+    } catch (err) {}
+
+    // 2. Fetch from Google Apps Script Web App (production cloud shared across desktop & mobile)
+    const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      try {
+        const cloudRes = await fetch(`${appsUrl}?action=getSettings`, { mode: 'cors' });
+        if (cloudRes.ok) {
+          const cloudData = await cloudRes.json();
+          if (cloudData && cloudData.success && cloudData.settings) {
+            applyCloudSettings(cloudData.settings, cloudData.serverTime);
+            return;
+          }
+        }
+      } catch (cloudErr) {
+        // Fallback: JSONP for strict mobile browsers
+        try {
+          const cbName = `mani_sync_${Date.now()}`;
+          const script = document.createElement('script');
+          window[cbName] = (data) => {
+            if (data && data.success && data.settings) {
+              applyCloudSettings(data.settings, data.serverTime);
+            }
+            delete window[cbName];
+            script.remove();
+          };
+          script.src = `${appsUrl}?action=getSettings&callback=${cbName}`;
+          script.onerror = () => {
+            delete window[cbName];
+            script.remove();
+          };
+          document.head.appendChild(script);
+        } catch (jpErr) {}
+      }
+    }
+
+    // 3. Offline fallback
+    applyLocalStorageFallback();
+  };
+
+  // Initial Data Fetching & Real-Time Sync Polling
   useEffect(() => {
     fetchCutoff();
-    const cutoffInterval = setInterval(fetchCutoff, 15000); // Check every 15s
+    const syncInterval = setInterval(fetchCutoff, 10000); // Check cloud every 10s
+
+    // Real-time mobile wakeup: refresh settings immediately when user switches tabs or unlocks phone
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchCutoff();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchCutoff);
 
     fetch('/api/products')
       .then((res) => res.json())
@@ -123,7 +215,11 @@ export default function App() {
       })
       .catch(() => {});
 
-    return () => clearInterval(cutoffInterval);
+    return () => {
+      clearInterval(syncInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchCutoff);
+    };
   }, []);
 
   // Check auth if user tries to enter admin view
@@ -153,6 +249,9 @@ export default function App() {
 
   const handleUpdateProducts = (newProducts) => {
     setProducts(newProducts);
+    localStorage.setItem('mani_products', JSON.stringify(newProducts));
+
+    // 1. Sync to local backend if available
     fetch('/api/products', {
       method: 'PUT',
       headers: { 
@@ -160,12 +259,40 @@ export default function App() {
         'Authorization': `Bearer ${adminToken}`
       },
       body: JSON.stringify(newProducts)
-    }).catch(console.error);
+    }).catch(() => {});
+
+    // 2. Sync to Google Apps Script Cloud so mobile immediately receives updated products & pricing
+    const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      fetch(appsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveSettings',
+          settings: { products: newProducts }
+        })
+      }).catch(() => {});
+    }
   };
 
   const handleUpdateQrs = (newQrs) => {
     setCustomQrs(newQrs);
     localStorage.setItem('mani_qr_config_v2', JSON.stringify(newQrs));
+
+    // Sync to Google Apps Script Cloud so mobile immediately receives updated QR codes
+    const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      fetch(appsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveSettings',
+          settings: { qrs: newQrs }
+        })
+      }).catch(() => {});
+    }
   };
 
   const handleQuantityChange = (productId, newQty) => {
