@@ -61,9 +61,6 @@ export default function Header({
                   Freshly Roasted
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-mani-600 font-extrabold italic leading-tight">
-                “Wondering where your money went? We know.” 👀🥜
-              </p>
             </div>
           </div>
 
