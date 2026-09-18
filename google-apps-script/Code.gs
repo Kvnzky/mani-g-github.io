@@ -1332,13 +1332,30 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
       orderId: orderId
     };
   } catch (err) {
-    console.error('MailApp send error:', err.toString());
-    return {
-      sent: false,
-      error: err.toString(),
-      recipient: recipientEmail,
-      orderId: orderId
-    };
+    console.warn('MailApp send attempt failed, trying GmailApp fallback:', err.toString());
+    try {
+      GmailApp.sendEmail(recipientEmail, subject, plainTextBody, {
+        htmlBody: htmlBody,
+        name: 'Mani Wandering Orders'
+      });
+      cache.put(cacheKey, '1', 900);
+      return {
+        sent: true,
+        recipient: recipientEmail,
+        subject: subject,
+        orderId: orderId,
+        via: 'GmailApp'
+      };
+    } catch (gErr) {
+      console.error('MailApp & GmailApp send error:', err.toString(), gErr.toString());
+      return {
+        sent: false,
+        error: err.toString(),
+        gmailError: gErr.toString(),
+        recipient: recipientEmail,
+        orderId: orderId
+      };
+    }
   }
 }
 
