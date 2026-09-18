@@ -25,7 +25,7 @@
  * 
  * 17-Column Aligned Summary Dashboard (Rows 2 & 3, aligned 1:1 with Data Columns):
  * A: Total Orders               [=COUNTA(A8:A)]
- * B: Log Date                   [{dateStr}]
+ * B: Log Date                   [="YYYY-MM-DD"]
  * C: COD Orders                 [=COUNTIF(F8:F, "*Cash*")]
  * D: GCash Orders               [=COUNTIF(F8:F, "*GCash*")]
  * E: Maribank Orders            [=COUNTIF(F8:F, "*Maribank*")]
@@ -40,7 +40,7 @@
  * N: Bawang Only (₱60)          [=SUM(N8:N)]
  * O: Total Packs                [=SUM(O8:O)]
  * P: Total Revenue (₱)          [=SUM(P8:P)]
- * Q: Active Orders              [=COUNTIF(Q8:Q, "<>Completed") & " active"]
+ * Q: Active Orders              [=COUNTIFS(A8:A, "<>", Q8:Q, "<>Completed") & " active"]
  */
 
 var DEFAULT_SPREADSHEET_ID = '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI';
@@ -256,11 +256,32 @@ function cleanAndRepairDateSheet(sheet, dateStr) {
       continue; // Drop test row
     }
 
-    // Process genuine orders (e.g. Mermer)
     var isMermer = customerLower.includes('mermer');
 
-    var orderDate = String(r[1] || dateStr);
-    var orderTime = String(r[2] || '10:00:00 AM');
+    // Parse and normalize orderDate
+    var rawDate = r[1];
+    var orderDate = dateStr;
+    if (rawDate instanceof Date) {
+      orderDate = Utilities.formatDate(rawDate, getTimezone(), 'yyyy-MM-dd');
+    } else if (rawDate) {
+      var sDate = String(rawDate).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(sDate)) {
+        orderDate = sDate;
+      }
+    }
+
+    // Parse and normalize orderTime
+    var rawTime = r[2];
+    var orderTime = '10:29:32 AM';
+    if (rawTime instanceof Date) {
+      orderTime = Utilities.formatDate(rawTime, getTimezone(), 'hh:mm:ss a');
+    } else if (rawTime) {
+      var sTime = String(rawTime).trim();
+      if (!sTime.includes('GMT') && sTime.length < 20) {
+        orderTime = sTime;
+      }
+    }
+
     var mobile = String(r[4] || '');
     var paymentMode = String(r[5] || 'GCash');
     var address = String(r[6] || '');
@@ -459,11 +480,14 @@ function formatDataRow(sheet, targetRow, rowData) {
   sheet.getRange(targetRow, 4).setHorizontalAlignment('left');
   sheet.getRange(targetRow, 7).setHorizontalAlignment('left');
 
-  // Currency format for Total Amount (Col 16 / P)
-  sheet.getRange(targetRow, 16).setNumberFormat('"₱"#,##0.00');
+  // Plain text format for dates/times to prevent long GMT strings
+  sheet.getRange(targetRow, 2).setNumberFormat('@');
+  sheet.getRange(targetRow, 3).setNumberFormat('@');
+  sheet.getRange(targetRow, 5).setNumberFormat('@');
 
   // Number format for pack counts (Cols 9-15)
   sheet.getRange(targetRow, 9, 1, 7).setNumberFormat('#,##0');
+  // Currency format for Total Amount (Col 16 / P)
   sheet.getRange(targetRow, 16).setNumberFormat('"₱"#,##0.00');
 
   // Paid Status formatting (Col 8 / H)
@@ -493,6 +517,7 @@ function formatDataRow(sheet, targetRow, rowData) {
  */
 function setupSheetHeadersAndSummary(sheet, dateStr) {
   // Title Bar (Row 1)
+  sheet.getRange('A1:Q1').breakApart();
   sheet.getRange('A1:Q1').merge()
     .setValue('🥜 MANI WANDERING ORDERS — DAILY LOG & SUMMARY (' + dateStr + ')')
     .setFontFamily('Arial')
@@ -525,6 +550,7 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
     'Pending / Active'   // Col Q (17)
   ];
 
+  sheet.getRange('A2:Q2').breakApart();
   sheet.getRange('A2:Q2').setValues([summaryHeaders])
     .setFontFamily('Arial')
     .setFontSize(9)
@@ -537,26 +563,27 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
 
   // Daily Order Summary Dynamic Formulas (Row 3) - Exactly 17 columns aligned 1:1 with columns A-Q
   var formulas = [
-    '=COUNTA(A8:A)',                                          // Col A: Total Orders
-    dateStr,                                                  // Col B: Log Date
-    '=COUNTIF(F8:F, "*Cash*")',                               // Col C: COD Orders
-    '=COUNTIF(F8:F, "*GCash*")',                              // Col D: GCash Orders
-    '=COUNTIF(F8:F, "*Maribank*")',                           // Col E: Maribank Orders
-    '=COUNTIF(H8:H, "Paid")',                                 // Col F: Paid Orders
-    '=COUNTIF(H8:H, "Unpaid")',                               // Col G: Unpaid Orders
-    '="Paid: " & COUNTIF(H8:H, "Paid") & " / " & COUNTA(A8:A)', // Col H: Payment Ratio
-    '=SUM(I8:I)',                                             // Col I: Salted Qty Sum
-    '=SUM(J8:J)',                                             // Col J: Unsalted Qty Sum
-    '=SUM(K8:K)',                                             // Col K: Spicy Qty Sum
-    '=SUM(L8:L)',                                             // Col L: BBQ Qty Sum
-    '=SUM(M8:M)',                                             // Col M: Sour Cream Qty Sum
-    '=SUM(N8:N)',                                             // Col N: Bawang Only Qty Sum
-    '=SUM(O8:O)',                                             // Col O: Total Packs Sum
-    '=SUM(P8:P)',                                             // Col P: Total Revenue Sum
-    '=COUNTIF(Q8:Q, "<>Completed") & " active"'               // Col Q: Active Orders
+    '=COUNTA(A8:A)',                                                      // Col A: Total Orders
+    '="' + dateStr + '"',                                                 // Col B: Log Date
+    '=COUNTIF(F8:F, "*Cash*")',                                           // Col C: COD Orders
+    '=COUNTIF(F8:F, "*GCash*")',                                          // Col D: GCash Orders
+    '=COUNTIF(F8:F, "*Maribank*")',                                       // Col E: Maribank Orders
+    '=COUNTIF(H8:H, "Paid")',                                             // Col F: Paid Orders
+    '=COUNTIF(H8:H, "Unpaid")',                                           // Col G: Unpaid Orders
+    '="Paid: " & COUNTIF(H8:H, "Paid") & " / " & COUNTA(A8:A)',           // Col H: Payment Ratio
+    '=SUM(I8:I)',                                                         // Col I: Salted Qty Sum
+    '=SUM(J8:J)',                                                         // Col J: Unsalted Qty Sum
+    '=SUM(K8:K)',                                                         // Col K: Spicy Qty Sum
+    '=SUM(L8:L)',                                                         // Col L: BBQ Qty Sum
+    '=SUM(M8:M)',                                                         // Col M: Sour Cream Qty Sum
+    '=SUM(N8:N)',                                                         // Col N: Bawang Only Qty Sum
+    '=SUM(O8:O)',                                                         // Col O: Total Packs Sum
+    '=SUM(P8:P)',                                                         // Col P: Total Revenue Sum
+    '=COUNTIFS(A8:A, "<>", Q8:Q, "<>Completed") & " active"'              // Col Q: Active Orders
   ];
 
-  sheet.getRange('A3:Q3').setValues([formulas])
+  sheet.getRange('A3:Q3').breakApart();
+  sheet.getRange('A3:Q3').setFormulas([formulas])
     .setFontFamily('Arial')
     .setFontSize(11)
     .setFontWeight('bold')
@@ -593,7 +620,9 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
     'Order Status'       // Col 17 (Q)
   ];
 
-  sheet.getRange(7, 1, 1, colHeaders.length).setValues([colHeaders])
+  var hRange = sheet.getRange(7, 1, 1, colHeaders.length);
+  hRange.breakApart();
+  hRange.setValues([colHeaders])
     .setFontFamily('Arial')
     .setFontSize(10)
     .setFontWeight('bold')
@@ -644,8 +673,25 @@ function fixAndAlignSheet(sheet, dateStr) {
     var rowNum = 8 + i;
 
     var orderId = r[0];
-    var orderDate = r[1] || dateStr;
-    var orderTime = r[2] || '';
+    var rawDate = r[1];
+    var orderDate = dateStr;
+    if (rawDate instanceof Date) {
+      orderDate = Utilities.formatDate(rawDate, getTimezone(), 'yyyy-MM-dd');
+    } else if (rawDate) {
+      var sDate = String(rawDate).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(sDate)) orderDate = sDate;
+    }
+
+    var rawTime = r[2];
+    var orderTime = '';
+    if (rawTime instanceof Date) {
+      orderTime = Utilities.formatDate(rawTime, getTimezone(), 'hh:mm:ss a');
+    } else if (rawTime) {
+      var sTime = String(rawTime).trim();
+      if (!sTime.includes('GMT')) orderTime = sTime;
+      else orderTime = '10:00:00 AM';
+    }
+
     var customer = r[3] || '';
     var mobile = r[4] || '';
 
