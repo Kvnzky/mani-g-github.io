@@ -11,7 +11,7 @@ const htmlTemplate = `<!DOCTYPE html>
   <link rel="icon" type="image/png" href="./favicon.png" />
   <link rel="shortcut icon" href="./favicon.ico" />
   <meta name="theme-color" content="#7C552E" />
-  <title>🥜 Mani Wandering — “Wondering where your money went? We know.” 👀🥜</title>
+  <title>Mani Wandering</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
