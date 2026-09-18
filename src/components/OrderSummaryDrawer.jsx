@@ -125,7 +125,7 @@ export default function OrderSummaryDrawer({
                     {isOrdersClosed
                       ? 'Submissions closed for this batch.'
                       : cutoffInfo.enabled
-                      ? `Deadline: ${cutoffInfo.cutoffDate} at ${cutoffInfo.cutoffTime} PST`
+                      ? `Deadline: ${cutoffInfo.cutoffDate} at ${cutoffInfo.cutoffTime} PHT`
                       : 'Fresh batch available today'}
                   </span>
                 </div>

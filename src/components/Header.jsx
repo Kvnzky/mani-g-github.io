@@ -86,7 +86,7 @@ export default function Header({
                 }`}
                 title={
                   cutoffInfo.enabled
-                    ? `Order Cutoff: ${cutoffInfo.cutoffDate} at ${cutoffInfo.cutoffTime} PST`
+                    ? `Order Cutoff: ${cutoffInfo.cutoffDate} at ${cutoffInfo.cutoffTime} PHT`
                     : cutoffInfo.isOpen ? 'Orders Open' : 'Orders Closed'
                 }
               >

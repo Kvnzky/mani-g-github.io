@@ -21,14 +21,14 @@ In the Apps Script editor:
 1. Select **`handleSendTestEmail`** in the function dropdown at the top toolbar.
 2. Click **▶ Run**.
 3. Google will prompt: **"Authorization Required"** (this is Google's standard security prompt when an Apps Script gains email-sending capabilities).
-4. Click **Review permissions** > Choose your Google account (`rkevinramirez@gmail.com`) > Click **Advanced** > Click **Go to Mani Wandering (unsafe)** > Click **Allow**.
+4. Click **Review permissions** > Choose your Google account (`engrkevinramirez@gmail.com`) > Click **Advanced** > Click **Go to Mani Wandering (unsafe)** > Click **Allow**.
 5. Check your Gmail inbox! A live test email will arrive immediately, confirming your script now has permanent permission to send order emails.
 
 ### Step 4: Deploy the New Version (Takes 30 seconds)
 1. At the top right of Apps Script, click the blue **Deploy** button > **Manage deployments**.
 2. Click the **✏️ (Edit / Pencil)** icon next to the active deployment.
 3. In the **Version** dropdown, select **New version**.
-4. Description: `Added immediate Order Notification Email to rkevinramirez@gmail.com`.
+4. Description: `Added immediate Order Notification Email to engrkevinramirez@gmail.com`.
 5. Click **Deploy**.
 6. The Web App URL remains the same:
    `https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec`
@@ -37,10 +37,10 @@ In the Apps Script editor:
 
 ## 📧 Order Notification Email Feature
 Whenever a customer places an order on the website:
-- **Recipient**: `rkevinramirez@gmail.com`
+- **Recipient**: `engrkevinramirez@gmail.com`
 - **Subject**: `🛒 New Order Received – [Customer Name]`
 - **Content**:
-  - Prominent **Order ID** & Philippine Standard Time (PST) timestamp.
+  - Prominent **Order ID** & Philippine Time (PHT) timestamp.
   - **Customer Information**: Full Name, Click-to-call Mobile Number, Delivery Address, and Payment Mode.
   - **Order Details Table**: Every ordered flavor and corresponding quantity with unit prices and subtotals.
   - **Order Summary**: Subtotal, Delivery Fee (Standard Free), Discount, and Total Amount.
@@ -59,7 +59,7 @@ When you refresh the Google Sheet, you will see the custom menu in the top menu 
 - **`🥜 Mani Wandering`**
   - **`🧹 Clean Test Orders & Fix Calculations`**: Automatically purges test orders and recalibrates all pricing and summary formulas.
   - **`📐 Refresh Summary Dashboard & Formulas`**: Realigns the 17-column header cards and recomputes all metrics.
-  - **`📧 Send Test Order Notification Email`**: Sends a live test email directly to `rkevinramirez@gmail.com` to verify email delivery.
+  - **`📧 Send Test Order Notification Email`**: Sends a live test email directly to `engrkevinramirez@gmail.com` to verify email delivery.
 
 ---
 

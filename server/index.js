@@ -26,7 +26,7 @@ const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '$2b$12$/yWLHw1NS
 const TIMEZONE = process.env.TIMEZONE || 'Asia/Manila';
 
 // Email Notification Configuration (Secure Server-Side)
-const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'rkevinramirez@gmail.com';
+const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'engrkevinramirez@gmail.com';
 const SMTP_HOST = process.env.SMTP_HOST || '';
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
 const SMTP_USER = process.env.SMTP_USER || '';

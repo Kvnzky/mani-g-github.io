@@ -273,9 +273,9 @@ async function runTests() {
   const codeGs = fs.readFileSync('google-apps-script/Code.gs', 'utf8');
   assert(
     codeGs.includes('sendOrderNotificationEmail') &&
-    codeGs.includes('rkevinramirez@gmail.com') &&
+    codeGs.includes('engrkevinramirez@gmail.com') &&
     codeGs.includes('MailApp.sendEmail'),
-    'Google Apps Script backend includes production MailApp.sendEmail targeted to rkevinramirez@gmail.com'
+    'Google Apps Script backend includes production MailApp.sendEmail targeted to engrkevinramirez@gmail.com'
   );
 
   console.log(`\n========================================`);

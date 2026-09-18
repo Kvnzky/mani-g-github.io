@@ -11,7 +11,29 @@ const htmlTemplate = `<!DOCTYPE html>
   <link rel="icon" type="image/png" href="./favicon.png" />
   <link rel="shortcut icon" href="./favicon.ico" />
   <meta name="theme-color" content="#7C552E" />
+  <meta name="description" content="Mani Wandering — “Wondering where your money went? We know.” 👀🥜 Order fresh, crunchy, delicious Mani (peanuts) in your favorite flavors!" />
   <title>Mani Wandering</title>
+  
+  <!-- SEO & Social Graph Meta Tags (Open Graph / Facebook / Messenger / Viber) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Mani Wandering" />
+  <meta property="og:title" content="Mani Wandering" />
+  <meta property="og:description" content="Mani Wandering — “Wondering where your money went? We know.” 👀🥜 Order fresh, crunchy, delicious Mani (peanuts) in your favorite flavors!" />
+  <meta property="og:url" content="https://kvnzky.github.io/mani-g-github.io/" />
+  <meta property="og:image" content="https://kvnzky.github.io/mani-g-github.io/images/logo.png" />
+  <meta property="og:image:secure_url" content="https://kvnzky.github.io/mani-g-github.io/images/logo.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:alt" content="Mani Wandering Peanut Mascot Logo" />
+
+  <!-- Twitter / X Card Meta Tags -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Mani Wandering" />
+  <meta name="twitter:description" content="Mani Wandering — “Wondering where your money went? We know.” 👀🥜 Order fresh, crunchy, delicious Mani in your favorite flavors!" />
+  <meta name="twitter:image" content="https://kvnzky.github.io/mani-g-github.io/images/logo.png" />
+  <meta name="twitter:image:alt" content="Mani Wandering Peanut Mascot Logo" />
+
+  <!-- Fallback Search Engine & Browser Image -->
+  <link rel="image_src" href="./images/logo.png" />
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>

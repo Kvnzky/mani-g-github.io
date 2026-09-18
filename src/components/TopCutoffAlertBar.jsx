@@ -106,7 +106,7 @@ export default function TopCutoffAlertBar({ cutoffInfo, onRefreshCutoff }) {
               ⏰ Order Cutoff:
             </span>
             <span className="text-white font-semibold">
-              Orders close on <span className="underline decoration-amber-300 font-bold">{cutoffInfo.cutoffDate}</span> at <span className="underline decoration-amber-300 font-bold">{format12Hour(cutoffInfo.cutoffTime)}</span> (PST)
+              Orders close on <span className="underline decoration-amber-300 font-bold">{cutoffInfo.cutoffDate}</span> at <span className="underline decoration-amber-300 font-bold">{format12Hour(cutoffInfo.cutoffTime)}</span> (PHT)
             </span>
           </div>
 

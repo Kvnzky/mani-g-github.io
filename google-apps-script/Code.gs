@@ -44,7 +44,7 @@
  */
 
 var DEFAULT_SPREADSHEET_ID = '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI';
-var DEFAULT_NOTIFICATION_EMAIL = 'rkevinramirez@gmail.com';
+var DEFAULT_NOTIFICATION_EMAIL = 'engrkevinramirez@gmail.com';
 var TIMEZONE = 'Asia/Manila';
 
 /**
@@ -1044,7 +1044,7 @@ function findOrderInSheet(sheet, orderId) {
  * Order Notification Email Service
  * Automatically sends immediate, professional, mobile-friendly
  * HTML email notifications whenever an order is successfully created.
- * Default recipient: rkevinramirez@gmail.com
+ * Default recipient: engrkevinramirez@gmail.com
  * -------------------------------------------------------------
  */
 function sendOrderNotificationEmail(order, rowData, forceSend) {
@@ -1052,7 +1052,12 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
 
   var tz = getTimezone();
   var props = PropertiesService.getScriptProperties();
-  var recipientEmail = (props.getProperty('NOTIFICATION_EMAIL') || DEFAULT_NOTIFICATION_EMAIL || 'rkevinramirez@gmail.com').trim();
+  var storedEmail = props.getProperty('NOTIFICATION_EMAIL');
+  if (!storedEmail || storedEmail === 'rkevinramirez@gmail.com') {
+    storedEmail = 'engrkevinramirez@gmail.com';
+    try { props.setProperty('NOTIFICATION_EMAIL', storedEmail); } catch (e) {}
+  }
+  var recipientEmail = (storedEmail || DEFAULT_NOTIFICATION_EMAIL || 'engrkevinramirez@gmail.com').trim();
 
   var customerName = (order.customerName || order.name || (rowData && rowData[3]) || 'Valued Customer').trim();
   var orderId = (order.orderId || (rowData && rowData[0]) || ('MANI-' + Utilities.formatDate(new Date(), tz, 'yyyyMMdd-HHmmss'))).trim();

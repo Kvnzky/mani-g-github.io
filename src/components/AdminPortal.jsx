@@ -619,7 +619,7 @@ export default function AdminPortal({
                   Asia/Manila
                 </div>
                 <p className="text-[11px] text-mani-600 mt-1 font-medium">
-                  Authoritative Philippine Standard Time (PST)
+                  Authoritative Philippine Time (PHT)
                 </p>
               </div>
             </div>

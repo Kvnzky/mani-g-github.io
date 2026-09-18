@@ -28,7 +28,7 @@ export default function App() {
     }
   });
 
-  // Order Cutoff State - Initialized immediately from cache or PST defaults so timer is ALWAYS visible to everyone without delay
+  // Order Cutoff State - Initialized immediately from cache or PHT defaults so timer is ALWAYS visible to everyone without delay
   const [cutoffInfo, setCutoffInfo] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');

@@ -155,7 +155,7 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
               </span>
               <span className="flex items-center gap-1 bg-white/70 px-2.5 py-1 rounded-xl border border-amber-200/80">
                 <Clock className="w-3.5 h-3.5 text-amber-600" />
-                <strong className="text-mani-900">{formatNormalTime(cutoffInfo?.cutoffTime)} PST</strong>
+                <strong className="text-mani-900">{formatNormalTime(cutoffInfo?.cutoffTime)} PHT</strong>
               </span>
             </div>
           </div>
