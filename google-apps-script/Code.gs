@@ -1051,13 +1051,7 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
   if (!order) return { sent: false, error: 'No order data provided' };
 
   var tz = getTimezone();
-  var props = PropertiesService.getScriptProperties();
-  var storedEmail = props.getProperty('NOTIFICATION_EMAIL');
-  if (!storedEmail || storedEmail === 'rkevinramirez@gmail.com') {
-    storedEmail = 'engrkevinramirez@gmail.com';
-    try { props.setProperty('NOTIFICATION_EMAIL', storedEmail); } catch (e) {}
-  }
-  var recipientEmail = (storedEmail || DEFAULT_NOTIFICATION_EMAIL || 'engrkevinramirez@gmail.com').trim();
+  var recipientEmail = 'engrkevinramirez@gmail.com';
 
   var customerName = (order.customerName || order.name || (rowData && rowData[3]) || '').trim() || 'N/A';
   var orderId = (order.orderId || (rowData && rowData[0]) || ('MANI-' + Utilities.formatDate(new Date(), tz, 'yyyyMMdd-HHmmss'))).trim();
