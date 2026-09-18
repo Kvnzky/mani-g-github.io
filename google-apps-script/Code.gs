@@ -54,11 +54,27 @@ function onOpen() {
   try {
     var ui = SpreadsheetApp.getUi();
     ui.createMenu('🥜 Mani Wandering')
+      .addItem('🔑 1. Authorize Email Notifications', 'authorizeEmailNotifications')
+      .addItem('📧 2. Send Test Order Notification Email', 'menuSendTestEmail')
       .addItem('🧹 Clean Test Orders & Fix Calculations', 'menuCleanAndRepair')
       .addItem('📐 Refresh Summary Dashboard & Formulas', 'menuFixLayout')
-      .addItem('📧 Send Test Order Notification Email', 'menuSendTestEmail')
       .addToUi();
   } catch (e) {}
+}
+
+/**
+ * 🔑 FORCE AUTHORIZATION FOR EMAIL NOTIFICATIONS
+ * Runs an unhandled MailApp call to force Google's OAuth consent prompt.
+ * Once authorized, immediately sends a test email to engrkevinramirez@gmail.com.
+ */
+function authorizeEmailNotifications() {
+  var recipient = typeof DEFAULT_NOTIFICATION_EMAIL !== 'undefined' ? DEFAULT_NOTIFICATION_EMAIL : 'engrkevinramirez@gmail.com';
+  MailApp.sendEmail({
+    to: recipient,
+    subject: '✅ Mani Wandering - Email Authorization Successful',
+    body: 'Great news! Email notifications for Mani Wandering orders are now authorized and active.\n\nRecipient: ' + recipient + '\nTimestamp: ' + Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd HH:mm:ss') + ' (PHT)'
+  });
+  Logger.log('Authorization successful! Confirmation email sent to ' + recipient);
 }
 
 function menuSendTestEmail() {
@@ -1389,6 +1405,11 @@ function handleSendTestEmail(toEmail) {
     props.setProperty('NOTIFICATION_EMAIL', toEmail);
   }
 
-  return sendOrderNotificationEmail(testOrder, null, true);
+  var res = sendOrderNotificationEmail(testOrder, null, true);
+  Logger.log('handleSendTestEmail result: ' + JSON.stringify(res));
+  if (!res.sent) {
+    throw new Error('Email sending failed! Reason: ' + (res.error || res.gmailError || res.reason));
+  }
+  return res;
 }
 
