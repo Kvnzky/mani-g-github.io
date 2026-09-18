@@ -355,20 +355,28 @@ const sendNodeOrderEmail = async (order) => {
     return { sent: false, skipped: true, reason: 'Duplicate order notification prevented' };
   }
 
-  const customerName = (order.customerName || 'Valued Customer').trim();
-  const orderId = order.orderId;
-  const paymentMethod = order.paymentMethod || 'Cash on Delivery';
-  const paymentStatus = order.paymentStatus || (paymentMethod === 'Cash on Delivery' ? 'Pending – Cash on Delivery' : `Pending – Awaiting ${paymentMethod} Payment`);
+  const customerName = (order.customerName || '').trim() || 'N/A';
+  const orderId = order.orderId || `MANI-${Date.now()}`;
+  const mobileNumber = (order.mobileNumber || '').trim() || 'N/A';
+  const deliveryAddress = (order.deliveryAddress || '').trim() || 'N/A';
+  const paymentMethod = (order.paymentMethod || '').trim() || 'Cash on Delivery';
+  const paymentStatus = (order.paymentStatus || (paymentMethod === 'Cash on Delivery' ? 'Pending – Cash on Delivery' : `Pending – Awaiting ${paymentMethod} Payment`)).trim();
+  
   const subtotal = Number(order.subtotal || 0);
-  const deliveryFee = Number(order.deliveryFee || 0);
+  const deliveryFeeVal = order.deliveryFee !== undefined && order.deliveryFee !== null
+    ? (Number(order.deliveryFee) > 0 ? `₱${Number(order.deliveryFee).toFixed(2)}` : '₱0.00 (Standard)')
+    : 'N/A';
   const discount = Number(order.discount || 0);
-  const totalAmount = Number(order.totalAmount || (subtotal + deliveryFee - discount));
+  const totalAmount = Number(order.totalAmount || (subtotal + (Number(order.deliveryFee) || 0) - discount));
+  const subtotalDisplay = subtotal > 0 ? `₱${subtotal.toFixed(2)}` : 'N/A';
+  const totalAmountDisplay = totalAmount > 0 ? `₱${totalAmount.toFixed(2)}` : 'N/A';
+
   const itemsList = Array.isArray(order.items) ? order.items : [];
 
   // If SMTP credentials not provided in .env, record notice and avoid throwing
   if (!SMTP_HOST || !SMTP_USER) {
     console.log(`[Order Email Notification] Standalone Mode: Order #${orderId} from ${customerName} logged for ${NOTIFICATION_EMAIL}`);
-    sentOrderEmailIds.add(orderId);
+    sentOrderEmailIds.add(order.orderId);
     return { sent: false, logged: true, recipient: NOTIFICATION_EMAIL };
   }
 
@@ -383,10 +391,10 @@ const sendNodeOrderEmail = async (order) => {
       }
     });
 
-    const subject = `🛒 New Order Received – ${customerName}`;
+    const subject = `New Order Received - ${customerName}`;
 
     let productRowsHtml = '';
-    let textProductList = '';
+    let plainTextOrderSummary = '';
 
     itemsList.forEach((it, idx) => {
       const q = Number(it.quantity || 0);
@@ -399,11 +407,17 @@ const sendNodeOrderEmail = async (order) => {
         <td align="right" style="padding: 10px 14px; color: #5D4037;">₱${p.toFixed(2)}</td>
         <td align="right" style="padding: 10px 14px; font-weight: 800; color: #2B1810;">₱${rowSub.toFixed(2)}</td>
       </tr>`;
-      textProductList += `- ${it.name} x ${q} (₱${p.toFixed(2)}) = ₱${rowSub.toFixed(2)}\n`;
+      plainTextOrderSummary += `${it.name} x ${q} - ₱${rowSub.toFixed(2)}\n`;
     });
 
+    if (itemsList.length === 0) {
+      productRowsHtml = `<tr><td colspan="4" style="padding: 14px; text-align: center; color: #8C6A48;">N/A</td></tr>`;
+      plainTextOrderSummary = 'N/A\n';
+    }
+
     const htmlBody = `<!DOCTYPE html>
-    <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+    <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Order Received - ${customerName}</title></head>
     <body style="margin: 0; padding: 20px 10px; background-color: #FDFBF7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #2B1810;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #EADBCE; box-shadow: 0 4px 20px rgba(124, 85, 46, 0.08);">
@@ -412,37 +426,35 @@ const sendNodeOrderEmail = async (order) => {
             <div style="font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #FEF3C7; margin-bottom: 6px;">Mani Wandering</div>
             <h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ffffff;">NEW ORDER RECEIVED</h1>
             <div style="margin-top: 14px;"><span style="background-color: rgba(255, 255, 255, 0.25); color: #ffffff; padding: 6px 16px; border-radius: 9999px; font-weight: 800; font-size: 15px;">Order ID: ${orderId}</span></div>
-            <div style="margin-top: 8px; font-size: 13px; color: #FEF3C7;">📅 ${order.orderDate} – ${order.orderTime}</div>
+            <div style="margin-top: 8px; font-size: 13px; color: #FEF3C7;">📅 ${order.orderDate || ''} – ${order.orderTime || ''}</div>
           </td></tr>
           <tr><td style="padding: 24px;">
             <div style="background-color: #FFFDF8; border-radius: 14px; border: 1px solid #F3E8DB; padding: 18px 20px; margin-bottom: 24px;">
-              <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #7C552E;">👤 Customer Information</h2>
-              <table style="font-size: 14px; line-height: 1.6; width: 100%;">
-                <tr><td style="color: #8C6A48; font-weight: 600; width: 150px;">Customer Name:</td><td style="color: #1E120D; font-weight: 800;">${order.customerName}</td></tr>
-                <tr><td style="color: #8C6A48; font-weight: 600;">Mobile Number:</td><td style="color: #1E120D; font-weight: 700;">${order.mobileNumber}</td></tr>
-                <tr><td style="color: #8C6A48; font-weight: 600;">Address:</td><td style="color: #1E120D; font-weight: 600;">${order.deliveryAddress}</td></tr>
+              <h2 style="margin: 0 0 14px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #7C552E; border-bottom: 1px solid #F3E8DB; padding-bottom: 8px;">👤 Customer Information</h2>
+              <table style="font-size: 14px; line-height: 1.8; width: 100%;">
+                <tr><td style="color: #8C6A48; font-weight: 600; width: 190px;">Customer Name:</td><td style="color: #1E120D; font-weight: 800;">${customerName}</td></tr>
+                <tr><td style="color: #8C6A48; font-weight: 600;">Mobile Number:</td><td style="color: #1E120D; font-weight: 700;">${mobileNumber}</td></tr>
+                <tr><td style="color: #8C6A48; font-weight: 600; vertical-align: top;">Address / To Be Delivered To:</td><td style="color: #1E120D; font-weight: 600;">${deliveryAddress}</td></tr>
                 <tr><td style="color: #8C6A48; font-weight: 600;">Mode of Payment:</td><td style="color: #1E120D; font-weight: 700;">${paymentMethod}</td></tr>
+                <tr><td style="color: #8C6A48; font-weight: 600;">Payment Status:</td><td style="color: #1E120D; font-weight: 700;">${paymentStatus}</td></tr>
               </table>
             </div>
             <div style="margin-bottom: 24px;">
-              <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #7C552E;">📦 Order Details</h2>
-              <table style="border-collapse: collapse; font-size: 14px; border: 1px solid #EDE4D8; width: 100%; border-radius: 12px; overflow: hidden;">
-                <thead><tr style="background-color: #F8F4EE;"><th align="left" style="padding: 12px 14px; color: #664322;">Product</th><th align="center" style="padding: 12px 14px; color: #664322;">Quantity</th><th align="right" style="padding: 12px 14px; color: #664322;">Price</th><th align="right" style="padding: 12px 14px; color: #664322;">Subtotal</th></tr></thead>
+              <h2 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #7C552E;">📦 Order Summary</h2>
+              <table style="border-collapse: collapse; font-size: 14px; border: 1px solid #EDE4D8; width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
+                <thead><tr style="background-color: #F8F4EE;"><th align="left" style="padding: 12px 14px; color: #664322;">Item</th><th align="center" style="padding: 12px 14px; color: #664322;">Quantity</th><th align="right" style="padding: 12px 14px; color: #664322;">Price</th><th align="right" style="padding: 12px 14px; color: #664322;">Total</th></tr></thead>
                 <tbody>${productRowsHtml}</tbody>
               </table>
+              <div style="background-color: #FDFBF7; border-radius: 14px; border: 1px solid #EFE6DA; padding: 16px 20px;">
+                <table style="font-size: 14px; line-height: 1.8; width: 100%;">
+                  <tr><td style="color: #6B5645; font-weight: 600;">Subtotal:</td><td align="right" style="color: #1E120D; font-weight: 700;">${subtotalDisplay}</td></tr>
+                  <tr><td style="color: #6B5645; font-weight: 600;">Delivery Fee:</td><td align="right" style="color: #059669; font-weight: 700;">${deliveryFeeVal}</td></tr>
+                  <tr style="border-top: 2px dashed #DEC8B0;"><td style="padding-top: 10px; font-size: 16px; font-weight: 900; color: #7C552E;">Total Amount:</td><td align="right" style="padding-top: 10px; font-size: 18px; font-weight: 900; color: #B45309;">${totalAmountDisplay}</td></tr>
+                </table>
+              </div>
             </div>
-            <div style="background-color: #FDFBF7; border-radius: 14px; border: 1px solid #EFE6DA; padding: 16px 20px; margin-bottom: 24px;">
-              <h2 style="margin: 0 0 10px 0; font-size: 13px; font-weight: 800; text-transform: uppercase; color: #7C552E;">💰 Order Summary</h2>
-              <table style="font-size: 14px; line-height: 1.8; width: 100%;">
-                <tr><td style="color: #6B5645;">Subtotal:</td><td align="right" style="color: #1E120D; font-weight: 700;">₱${subtotal.toFixed(2)}</td></tr>
-                <tr><td style="color: #6B5645;">Delivery Fee:</td><td align="right" style="color: #059669; font-weight: 700;">₱0.00 (Standard)</td></tr>
-                <tr style="border-top: 2px dashed #DEC8B0;"><td style="padding-top: 8px; font-size: 16px; font-weight: 900; color: #7C552E;">Total Amount:</td><td align="right" style="padding-top: 8px; font-size: 18px; font-weight: 900; color: #B45309;">₱${totalAmount.toFixed(2)}</td></tr>
-              </table>
-            </div>
-            <div style="background-color: #FFFDF8; border-radius: 14px; border: 1px solid #F3E8DB; padding: 16px 20px;">
-              <h2 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 800; text-transform: uppercase; color: #7C552E;">💳 Payment Information</h2>
-              <p style="margin: 0; font-size: 14px;"><strong>Method:</strong> ${paymentMethod}</p>
-              <p style="margin: 4px 0 0 0; font-size: 14px;"><strong>Payment Status:</strong> ${paymentStatus}</p>
+            <div style="text-align: center; margin-top: 14px;">
+              <a href="https://docs.google.com/spreadsheets/d/1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI/edit" target="_blank" style="display: inline-block; background-color: #7C552E; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 12px; font-size: 14px; font-weight: 800;">📊 View Orders in Google Sheets</a>
             </div>
           </td></tr>
           <tr><td style="background-color: #F8F5EE; padding: 20px; text-align: center; font-size: 12px; color: #8C6A48; border-top: 1px solid #EADBCE;">
@@ -452,7 +464,19 @@ const sendNodeOrderEmail = async (order) => {
       </td></tr></table>
     </body></html>`;
 
-    const plainText = `NEW ORDER RECEIVED\nOrder ID: ${orderId}\nCustomer: ${customerName}\nMobile: ${order.mobileNumber}\nAddress: ${order.deliveryAddress}\nPayment Method: ${paymentMethod}\nPayment Status: ${paymentStatus}\n\nProducts:\n${textProductList}\nTotal: ₱${totalAmount.toFixed(2)}`;
+    const plainText = `New Order Received - ${customerName}\n\n` +
+      `Customer Name: ${customerName}\n` +
+      `Mobile Number: ${mobileNumber}\n` +
+      `Address / To Be Delivered To: ${deliveryAddress}\n` +
+      `Mode of Payment: ${paymentMethod}\n` +
+      `Payment Status: ${paymentStatus}\n\n` +
+      `Order Summary:\n` +
+      plainTextOrderSummary +
+      `Subtotal: ${subtotalDisplay}\n` +
+      `Delivery Fee: ${deliveryFeeVal}\n` +
+      `Total Amount: ${totalAmountDisplay}\n\n` +
+      `Order ID: ${orderId}\n` +
+      `Timestamp: ${order.orderDate || ''} ${order.orderTime || ''}\n`;
 
     await transporter.sendMail({
       from: `"Mani Wandering" <${SMTP_USER}>`,

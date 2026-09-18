@@ -497,6 +497,7 @@ export default function App() {
         fetch(appsUrl, {
           method: 'POST',
           mode: 'no-cors',
+          keepalive: true,
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'addOrder', spreadsheetId: sheetId, order: clientOrder })
         }).catch((syncErr) => {
