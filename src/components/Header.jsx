@@ -20,8 +20,8 @@ export default function Header({
             onClick={() => setCurrentView('order')}
             className="cursor-pointer flex items-center gap-2.5 sm:gap-3 group"
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-xl sm:text-2xl shadow-md shadow-amber-900/10 group-hover:scale-105 transition-transform duration-200 border border-amber-200">
-              🥜
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-50/90 flex items-center justify-center p-0.5 shadow-md shadow-amber-900/10 group-hover:scale-105 transition-transform duration-200 border border-amber-200 overflow-hidden shrink-0">
+              <img src="./images/logo.png" alt="MANI WONDERING Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">

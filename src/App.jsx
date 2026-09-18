@@ -386,6 +386,13 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
             {/* Friendly Hero Banner */}
             <div className="text-center space-y-2 py-5 sm:py-7 bg-gradient-to-b from-amber-100/60 to-transparent rounded-3xl p-4 sm:p-8 border border-amber-200/50 shadow-xs">
+              <div className="flex justify-center mb-1">
+                <img 
+                  src="./images/logo.png" 
+                  alt="MANI WONDERING" 
+                  className="w-24 sm:w-28 md:w-32 h-auto drop-shadow-md hover:scale-105 transition-transform duration-200" 
+                />
+              </div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
                 <span>🇵🇭</span> Crispy na, Crunchy pa.
               </div>
