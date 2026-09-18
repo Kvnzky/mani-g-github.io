@@ -21,12 +21,12 @@ export default function Header({
             className="cursor-pointer flex items-center gap-2.5 sm:gap-3 group"
           >
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-50/90 flex items-center justify-center p-0.5 shadow-md shadow-amber-900/10 group-hover:scale-105 transition-transform duration-200 border border-amber-200 overflow-hidden shrink-0">
-              <img src="./images/logo.png" alt="MANI WONDERING Logo" className="w-full h-full object-contain" />
+              <img src="./images/logo.png" alt="Mani Wandering Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg sm:text-2xl font-black tracking-tight text-mani-900 flex items-center gap-1.5">
-                  MANI WONDERING
+                  Mani Wandering
                 </h1>
                 <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300/60">
                   <Sparkles className="w-3 h-3 text-amber-700" />

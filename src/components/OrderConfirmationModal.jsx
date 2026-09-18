@@ -9,7 +9,7 @@ export default function OrderConfirmationModal({ order, onReset }) {
 
   if (!order) return null;
 
-  const orderSummaryText = `🥜 *MANI WONDERING ORDER CONFIRMATION* 🥜
+  const orderSummaryText = `🥜 *Mani Wandering ORDER CONFIRMATION* 🥜
 “Wondering where your money went? We know.” 👀🥜
 Order #: ${order.orderId}
 Date: ${order.orderDate} ${order.orderTime}
@@ -28,7 +28,7 @@ ${(order.items || [])
 *Total Amount:* ${formatPHP(order.subtotal)}
 Status: ${order.status || 'New'}
 
-Salamat sa pag-order sa MANI WONDERING! 🥜✨`;
+Salamat sa pag-order sa Mani Wandering! 🥜✨`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(orderSummaryText);
@@ -62,7 +62,7 @@ Salamat sa pag-order sa MANI WONDERING! 🥜✨`;
             🎉 Order Received!
           </h2>
           <p className="text-sm text-mani-600 font-medium">
-            Thank you, <span className="font-bold text-mani-900">{order.customerName}</span>! Your MANI WONDERING order has been placed.
+            Thank you, <span className="font-bold text-mani-900">{order.customerName}</span>! Your Mani Wandering order has been placed.
           </p>
         </div>
 

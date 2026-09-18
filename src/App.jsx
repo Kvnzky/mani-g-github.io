@@ -389,7 +389,7 @@ export default function App() {
               <div className="flex justify-center mb-1">
                 <img 
                   src="./images/logo.png" 
-                  alt="MANI WONDERING" 
+                  alt="Mani Wandering" 
                   className="w-24 sm:w-28 md:w-32 h-auto drop-shadow-md hover:scale-105 transition-transform duration-200" 
                 />
               </div>
@@ -397,7 +397,7 @@ export default function App() {
                 <span>🇵🇭</span> Crispy na, Crunchy pa.
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-mani-950 tracking-tight">
-                MANI WONDERING
+                Mani Wandering
               </h2>
               <p className="text-base sm:text-lg text-amber-800 font-extrabold italic tracking-tight">
                 “Wondering where your money went? We know.” 👀🥜
@@ -627,7 +627,7 @@ export default function App() {
       <footer className="border-t border-mani-200/80 bg-white py-6 text-center text-xs text-mani-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-1">
           <p className="font-bold text-mani-700">
-            🥜 MANI WONDERING — “Wondering where your money went? We know.” 👀🥜
+            🥜 Mani Wandering — “Wondering where your money went? We know.” 👀🥜
           </p>
           <p className="text-mani-400 text-[11px]">
             Freshly roasted artisanal peanuts • Crispy na, Crunchy pa.

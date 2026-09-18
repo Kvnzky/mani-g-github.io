@@ -11,7 +11,7 @@ const htmlTemplate = `<!DOCTYPE html>
   <link rel="icon" type="image/png" href="./favicon.png" />
   <link rel="shortcut icon" href="./favicon.ico" />
   <meta name="theme-color" content="#7C552E" />
-  <title>🥜 MANI WONDERING — “Wondering where your money went? We know.” 👀🥜</title>
+  <title>🥜 Mani Wandering — “Wondering where your money went? We know.” 👀🥜</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -278,10 +278,10 @@ const htmlTemplate = `<!DOCTYPE html>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
               <div onClick={() => setView('order')} className="cursor-pointer flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-2xl bg-amber-50/90 flex items-center justify-center p-0.5 shadow-md border border-amber-200 overflow-hidden shrink-0">
-                  <img src="./images/logo.png" alt="MANI WONDERING" className="w-full h-full object-contain" />
+                  <img src="./images/logo.png" alt="Mani Wandering" className="w-full h-full object-contain" />
                 </div>
                 <div>
-                  <h1 className="text-lg sm:text-xl font-black text-mani-900 leading-none tracking-tight">MANI WONDERING</h1>
+                  <h1 className="text-lg sm:text-xl font-black text-mani-900 leading-none tracking-tight">Mani Wandering</h1>
                   <p className="text-xs text-mani-600 font-medium italic">“Wondering where your money went? We know.” 👀🥜</p>
                 </div>
               </div>
@@ -511,13 +511,13 @@ const htmlTemplate = `<!DOCTYPE html>
                 {/* Hero Header */}
                 <div className="text-center py-4 bg-gradient-to-b from-amber-100/60 to-transparent rounded-3xl p-5 border border-amber-200/60 shadow-xs">
                   <div className="flex justify-center mb-1">
-                    <img src="./images/logo.png" alt="MANI WONDERING" className="w-24 sm:w-28 h-auto drop-shadow-md" />
+                    <img src="./images/logo.png" alt="Mani Wandering" className="w-24 sm:w-28 h-auto drop-shadow-md" />
                   </div>
                   <span className="text-xs font-extrabold uppercase tracking-wider text-amber-900 bg-amber-200/80 px-3 py-1 rounded-full">
                     Crispy na, Crunchy pa. 🇵🇭
                   </span>
                   <h2 className="text-3xl sm:text-4xl font-black text-mani-900 mt-2 tracking-tight">
-                    MANI WONDERING
+                    Mani Wandering
                   </h2>
                   <p className="text-sm sm:text-base text-amber-900 mt-1 font-bold italic">
                     “Wondering where your money went? We know.” 👀🥜
