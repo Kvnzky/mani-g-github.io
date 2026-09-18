@@ -45,6 +45,7 @@
 
 var DEFAULT_SPREADSHEET_ID = '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI';
 var DEFAULT_NOTIFICATION_EMAIL = 'engrkevinramirez@gmail.com';
+var MASTER_SHEET_NAME = 'Master list';
 var TIMEZONE = 'Asia/Manila';
 
 /**
@@ -54,12 +55,19 @@ function onOpen() {
   try {
     var ui = SpreadsheetApp.getUi();
     ui.createMenu('🥜 Mani Wandering')
-      .addItem('🔑 1. Authorize Email Notifications', 'authorizeEmailNotifications')
-      .addItem('📧 2. Send Test Order Notification Email', 'menuSendTestEmail')
+      .addItem('📋 1. Consolidate All Orders into Master list', 'menuConsolidateToMasterList')
+      .addItem('🔑 2. Authorize Email Notifications', 'authorizeEmailNotifications')
+      .addItem('📧 3. Send Test Order Notification Email', 'menuSendTestEmail')
       .addItem('🧹 Clean Test Orders & Fix Calculations', 'menuCleanAndRepair')
       .addItem('📐 Refresh Summary Dashboard & Formulas', 'menuFixLayout')
       .addToUi();
   } catch (e) {}
+}
+
+function menuConsolidateToMasterList() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var res = handleConsolidateToMasterList(ss);
+  SpreadsheetApp.getUi().alert('Master list Consolidation', res.message, SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 /**
@@ -162,6 +170,8 @@ function doGet(e) {
 
     if (action === 'getOrders') {
       result = handleGetOrders(ss, e.parameter.date);
+    } else if (action === 'consolidate' || action === 'initMasterList') {
+      result = handleConsolidateToMasterList(ss);
     } else if (action === 'cleanSheet' || action === 'cleanup' || action === 'cleanTestOrders') {
       result = handleCleanAllSheets(ss);
     } else if (action === 'fixSheet' || action === 'repairLayout') {
@@ -230,6 +240,9 @@ function doPost(e) {
     } else if (action === 'getOrders') {
       var ordRes = handleGetOrders(ss, payload.date);
       return ContentService.createTextOutput(JSON.stringify(ordRes)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'consolidate' || action === 'initMasterList') {
+      var result = handleConsolidateToMasterList(ss);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'cleanSheet' || action === 'cleanup' || action === 'cleanTestOrders') {
       var result = handleCleanAllSheets(ss);
       return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
@@ -318,22 +331,31 @@ function handleSaveSettings(newSettings) {
  * Fetch all orders from Google Sheet for the Admin Portal across devices
  */
 function handleGetOrders(ss, dateFilter) {
-  var targetDate = dateFilter || Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
-  var sheet = ss.getSheetByName(targetDate);
+  var tz = getTimezone();
+  var todayDateStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  
+  // 1. Prioritize Master list tab
+  var sheet = ss.getSheetByName(MASTER_SHEET_NAME);
+  
+  // Fallback to legacy date tab if Master list doesn't exist yet
   if (!sheet) {
-    var sheets = ss.getSheets();
-    for (var i = 0; i < sheets.length; i++) {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(sheets[i].getName())) {
-        sheet = sheets[i];
-        break;
+    var targetDate = dateFilter || todayDateStr;
+    sheet = ss.getSheetByName(targetDate);
+    if (!sheet) {
+      var sheets = ss.getSheets();
+      for (var i = 0; i < sheets.length; i++) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(sheets[i].getName())) {
+          sheet = sheets[i];
+          break;
+        }
       }
     }
   }
 
-  if (!sheet) return { success: true, orders: [], todayDate: targetDate };
+  if (!sheet) return { success: true, orders: [], todayDate: todayDateStr, tabName: MASTER_SHEET_NAME };
 
   var lastRow = sheet.getLastRow();
-  if (lastRow < 8) return { success: true, orders: [], todayDate: sheet.getName() };
+  if (lastRow < 8) return { success: true, orders: [], todayDate: todayDateStr, tabName: sheet.getName() };
 
   var values = sheet.getRange(8, 1, lastRow - 7, 17).getValues();
   var orders = [];
@@ -345,18 +367,25 @@ function handleGetOrders(ss, dateFilter) {
 
     // Normalizing dates and times
     var rawDate = r[1];
-    var oDate = sheet.getName();
+    var oDate = todayDateStr;
     if (rawDate instanceof Date) {
-      oDate = Utilities.formatDate(rawDate, getTimezone(), 'yyyy-MM-dd');
+      oDate = Utilities.formatDate(rawDate, tz, 'yyyy-MM-dd');
     } else if (rawDate) {
       var sDate = String(rawDate).trim();
       if (/^\d{4}-\d{2}-\d{2}$/.test(sDate)) oDate = sDate;
     }
 
+    // Optional date filter: if user requested a specific date filter, only include matching dates
+    if (dateFilter && dateFilter !== 'all' && dateFilter !== '') {
+      if (oDate !== dateFilter) {
+        continue;
+      }
+    }
+
     var rawTime = r[2];
     var oTime = '10:00:00 AM';
     if (rawTime instanceof Date) {
-      oTime = Utilities.formatDate(rawTime, getTimezone(), 'hh:mm:ss a');
+      oTime = Utilities.formatDate(rawTime, tz, 'hh:mm:ss a');
     } else if (rawTime) {
       var sTime = String(rawTime).trim();
       if (!sTime.includes('GMT')) oTime = sTime;
@@ -388,7 +417,118 @@ function handleGetOrders(ss, dateFilter) {
   return {
     success: true,
     orders: orders,
-    todayDate: sheet.getName()
+    todayDate: todayDateStr,
+    tabName: sheet.getName()
+  };
+}
+
+/**
+ * 📋 Consolidate all existing orders from any daily tabs into the single "Master list" tab
+ */
+function handleConsolidateToMasterList(ss) {
+  var masterSheet = getOrCreateMasterSheet(ss);
+  var sheets = ss.getSheets();
+  var tz = getTimezone();
+  var todayDateStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+
+  // Collect all existing order IDs in Master list to avoid duplicates
+  var existingIds = {};
+  var masterLastRow = masterSheet.getLastRow();
+  if (masterLastRow >= 8) {
+    var existingValues = masterSheet.getRange(8, 1, masterLastRow - 7, 1).getValues();
+    for (var m = 0; m < existingValues.length; m++) {
+      var id = String(existingValues[m][0] || '').trim();
+      if (id) existingIds[id] = true;
+    }
+  }
+
+  var importedCount = 0;
+  var scannedTabs = [];
+
+  for (var s = 0; s < sheets.length; s++) {
+    var sh = sheets[s];
+    var name = sh.getName();
+    if (name === MASTER_SHEET_NAME) continue;
+
+    scannedTabs.push(name);
+    var shLastRow = sh.getLastRow();
+    if (shLastRow < 8) continue;
+
+    var rawRows = sh.getRange(8, 1, shLastRow - 7, Math.max(sh.getLastColumn(), 17)).getValues();
+    for (var r = 0; r < rawRows.length; r++) {
+      var row = rawRows[r];
+      var orderId = String(row[0] || '').trim();
+      var customer = String(row[3] || '').trim();
+      var customerLower = customer.toLowerCase();
+
+      // Skip empty or test orders
+      if (!orderId || !customer) continue;
+      if (customerLower.includes('juan dela cruz') || customerLower.includes('test') || customerLower.includes('bypass') || orderId.toLowerCase().includes('test')) {
+        continue;
+      }
+
+      // Check if already in Master list
+      if (existingIds[orderId]) continue;
+
+      // Extract and clean values
+      var rawDate = row[1];
+      var oDate = name;
+      if (rawDate instanceof Date) {
+        oDate = Utilities.formatDate(rawDate, tz, 'yyyy-MM-dd');
+      } else if (rawDate && /^\d{4}-\d{2}-\d{2}$/.test(String(rawDate).trim())) {
+        oDate = String(rawDate).trim();
+      } else if (!/^\d{4}-\d{2}-\d{2}$/.test(name)) {
+        oDate = todayDateStr;
+      }
+
+      var rawTime = row[2];
+      var oTime = '10:00:00 AM';
+      if (rawTime instanceof Date) {
+        oTime = Utilities.formatDate(rawTime, tz, 'hh:mm:ss a');
+      } else if (rawTime) {
+        var sTime = String(rawTime).trim();
+        if (!sTime.includes('GMT') && sTime.length < 25) oTime = sTime;
+      }
+
+      var mobile = String(row[4] || '');
+      var paymentMode = String(row[5] || 'Cash on Delivery');
+      var address = String(row[6] || 'N/A');
+      var paidStatus = String(row[7] || (paymentMode.toLowerCase().includes('cash') ? 'Unpaid' : 'Paid'));
+
+      var salted = Number(row[8] || 0);
+      var unsalted = Number(row[9] || 0);
+      var spicy = Number(row[10] || 0);
+      var bbq = Number(row[11] || 0);
+      var sourCream = Number(row[12] || 0);
+      var bawangOnly = Number(row[13] || 0);
+      var orderStatus = String(row[16] || 'New');
+
+      var targetRow = Math.max(masterSheet.getLastRow() + 1, 8);
+      var totalPacksFormula = '=SUM(I' + targetRow + ':N' + targetRow + ')';
+      var totalAmountFormula = '=(SUM(I' + targetRow + ':M' + targetRow + ')*50)+(N' + targetRow + '*60)';
+
+      var cleanRow = [
+        orderId, oDate, oTime, customer, mobile, paymentMode, address, paidStatus,
+        salted, unsalted, spicy, bbq, sourCream, bawangOnly,
+        totalPacksFormula, totalAmountFormula, orderStatus
+      ];
+
+      masterSheet.getRange(targetRow, 1, 1, 17).setValues([cleanRow]);
+      formatDataRow(masterSheet, targetRow, cleanRow);
+      existingIds[orderId] = true;
+      importedCount++;
+    }
+  }
+
+  // Ensure dashboard formulas are up-to-date
+  setupSheetHeadersAndSummary(masterSheet, MASTER_SHEET_NAME);
+
+  return {
+    success: true,
+    importedCount: importedCount,
+    masterLastRow: masterSheet.getLastRow(),
+    scannedTabs: scannedTabs,
+    message: 'Master list is ready! Successfully consolidated ' + importedCount + ' orders into the "Master list" tab.'
   };
 }
 
@@ -396,42 +536,46 @@ function handleGetOrders(ss, dateFilter) {
  * Repair and align all sheets in the spreadsheet with 17-column layout and formulas
  */
 function handleFixAllSheets(ss) {
+  var masterSheet = getOrCreateMasterSheet(ss);
+  fixAndAlignSheet(masterSheet, MASTER_SHEET_NAME);
+
   var sheets = ss.getSheets();
-  var fixed = [];
+  var fixed = [MASTER_SHEET_NAME];
   for (var i = 0; i < sheets.length; i++) {
     var sh = sheets[i];
     var name = sh.getName();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(name) || i === 0) {
+    if (name !== MASTER_SHEET_NAME && (/^\d{4}-\d{2}-\d{2}$/.test(name) || name === 'Sheet1')) {
       fixAndAlignSheet(sh, name);
       fixed.push(name);
     }
   }
-  return { success: true, fixedTabs: fixed, message: 'All sheets successfully realigned with correct 17-column headers and dynamic formulas.' };
+  return { success: true, fixedTabs: fixed, message: 'Master list and sheets successfully realigned with correct 17-column headers and dynamic formulas.' };
 }
 
 /**
  * Clean all test orders and repair calculations across all date sheets
  */
 function handleCleanAllSheets(ss) {
+  var masterSheet = getOrCreateMasterSheet(ss);
+  cleanAndRepairDateSheet(masterSheet, MASTER_SHEET_NAME);
+
   var sheets = ss.getSheets();
-  var cleaned = [];
+  var cleaned = [MASTER_SHEET_NAME];
 
   for (var i = 0; i < sheets.length; i++) {
     var sh = sheets[i];
     var name = sh.getName();
 
-    if (/^\d{4}-\d{2}-\d{2}$/.test(name)) {
+    if (name !== MASTER_SHEET_NAME && /^\d{4}-\d{2}-\d{2}$/.test(name)) {
       cleanAndRepairDateSheet(sh, name);
       cleaned.push(name);
-    } else if (name === 'Sheet1' || i === 0) {
-      setupSheetHeadersAndSummary(sh, name);
     }
   }
 
   return {
     success: true,
     cleanedTabs: cleaned,
-    message: 'Test orders successfully cleaned and all price calculations/totals restored to accurate dynamic formulas.'
+    message: 'Test orders successfully cleaned and all price calculations/totals in Master list restored to accurate dynamic formulas.'
   };
 }
 
@@ -469,14 +613,13 @@ function cleanAndRepairDateSheet(sheet, dateStr) {
 
     // Parse and normalize orderDate
     var rawDate = r[1];
-    var orderDate = dateStr;
+    var orderDate = Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
     if (rawDate instanceof Date) {
       orderDate = Utilities.formatDate(rawDate, getTimezone(), 'yyyy-MM-dd');
-    } else if (rawDate) {
-      var sDate = String(rawDate).trim();
-      if (/^\d{4}-\d{2}-\d{2}$/.test(sDate)) {
-        orderDate = sDate;
-      }
+    } else if (rawDate && /^\d{4}-\d{2}-\d{2}$/.test(String(rawDate).trim())) {
+      orderDate = String(rawDate).trim();
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      orderDate = dateStr;
     }
 
     // Parse and normalize orderTime
@@ -580,7 +723,30 @@ function cleanAndRepairDateSheet(sheet, dateStr) {
 }
 
 /**
- * Handle adding a new order to the daily date tab (YYYY-MM-DD)
+ * Get or create the single "Master list" tab
+ */
+function getOrCreateMasterSheet(ss) {
+  var sheet = ss.getSheetByName(MASTER_SHEET_NAME);
+  if (!sheet) {
+    var sheet1 = ss.getSheetByName('Sheet1');
+    if (sheet1 && sheet1.getLastRow() <= 1) {
+      sheet = sheet1;
+      sheet.setName(MASTER_SHEET_NAME);
+    } else {
+      sheet = ss.insertSheet(MASTER_SHEET_NAME, 0);
+    }
+    setupSheetHeadersAndSummary(sheet, MASTER_SHEET_NAME);
+  } else {
+    var h14 = String(sheet.getRange(2, 14).getValue() || '');
+    if (h14 !== 'Bawang Only (₱60)') {
+      setupSheetHeadersAndSummary(sheet, MASTER_SHEET_NAME);
+    }
+  }
+  return sheet;
+}
+
+/**
+ * Handle adding a new order to the single "Master list" tab
  */
 function handleAddOrder(ss, order) {
   if (!order) {
@@ -591,19 +757,8 @@ function handleAddOrder(ss, order) {
   var orderDate = order.orderDate || Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
   var orderTime = order.orderTime || Utilities.formatDate(new Date(), tz, 'hh:mm:ss a');
 
-  var sheetName = orderDate;
-  var sheet = ss.getSheetByName(sheetName);
-
-  if (!sheet) {
-    sheet = ss.insertSheet(sheetName);
-    setupSheetHeadersAndSummary(sheet, sheetName);
-  } else {
-    // Verify headers alignment
-    var h14 = String(sheet.getRange(2, 14).getValue() || '');
-    if (h14 !== 'Bawang Only (₱60)') {
-      setupSheetHeadersAndSummary(sheet, sheetName);
-    }
-  }
+  var sheet = getOrCreateMasterSheet(ss);
+  var sheetName = MASTER_SHEET_NAME;
 
   var lastRow = sheet.getLastRow();
   var targetRow = Math.max(lastRow + 1, 8);
@@ -732,11 +887,16 @@ function formatDataRow(sheet, targetRow, rowData) {
 /**
  * Setup sheet formatting: Top Daily Summary Dashboard + Column Headers (17 Columns Exact Alignment)
  */
-function setupSheetHeadersAndSummary(sheet, dateStr) {
+function setupSheetHeadersAndSummary(sheet, titleStr) {
+  var isMaster = (titleStr === MASTER_SHEET_NAME || sheet.getName() === MASTER_SHEET_NAME);
+  var displayTitle = isMaster 
+    ? '🥜 MANI WANDERING ORDERS — MASTER LIST' 
+    : ('🥜 MANI WANDERING ORDERS — DAILY LOG & SUMMARY (' + (titleStr || sheet.getName()) + ')');
+
   // Title Bar (Row 1)
   sheet.getRange('A1:Q1').breakApart();
   sheet.getRange('A1:Q1').merge()
-    .setValue('🥜 MANI WANDERING ORDERS — DAILY LOG & SUMMARY (' + dateStr + ')')
+    .setValue(displayTitle)
     .setFontFamily('Arial')
     .setFontSize(13)
     .setFontWeight('bold')
@@ -746,10 +906,10 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
     .setVerticalAlignment('middle');
   sheet.setRowHeight(1, 35);
 
-  // Daily Order Summary Metrics Header (Row 2) - Exactly 17 columns aligned 1:1 with columns A-Q
+  // Daily / Master Order Summary Metrics Header (Row 2) - Exactly 17 columns aligned 1:1 with columns A-Q
   var summaryHeaders = [
     'Total Orders',      // Col A (1)
-    'Log Date',          // Col B (2)
+    'Log Scope',         // Col B (2)
     'COD Orders',        // Col C (3)
     'GCash Orders',      // Col D (4)
     'Maribank Orders',   // Col E (5)
@@ -778,10 +938,11 @@ function setupSheetHeadersAndSummary(sheet, dateStr) {
     .setVerticalAlignment('middle');
   sheet.setRowHeight(2, 24);
 
-  // Daily Order Summary Dynamic Formulas (Row 3) - Exactly 17 columns aligned 1:1 with columns A-Q
+  // Dynamic Summary Formulas (Row 3) - Exactly 17 columns aligned 1:1 with columns A-Q
+  var logScopeFormula = isMaster ? '="Master List"' : '="' + (titleStr || sheet.getName()) + '"';
   var formulas = [
     '=COUNTA(A8:A)',                                                      // Col A: Total Orders
-    '="' + dateStr + '"',                                                 // Col B: Log Date
+    logScopeFormula,                                                      // Col B: Log Scope
     '=COUNTIF(F8:F, "*Cash*")',                                           // Col C: COD Orders
     '=COUNTIF(F8:F, "*GCash*")',                                          // Col D: GCash Orders
     '=COUNTIF(F8:F, "*Maribank*")',                                       // Col E: Maribank Orders
@@ -890,12 +1051,13 @@ function fixAndAlignSheet(sheet, dateStr) {
 
     var orderId = r[0];
     var rawDate = r[1];
-    var orderDate = dateStr;
+    var orderDate = Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
     if (rawDate instanceof Date) {
       orderDate = Utilities.formatDate(rawDate, getTimezone(), 'yyyy-MM-dd');
-    } else if (rawDate) {
-      var sDate = String(rawDate).trim();
-      if (/^\d{4}-\d{2}-\d{2}$/.test(sDate)) orderDate = sDate;
+    } else if (rawDate && /^\d{4}-\d{2}-\d{2}$/.test(String(rawDate).trim())) {
+      orderDate = String(rawDate).trim();
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      orderDate = dateStr;
     }
 
     var rawTime = r[2];
@@ -972,23 +1134,37 @@ function fixAndAlignSheet(sheet, dateStr) {
 function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
   if (!orderId) return { success: false, error: 'Missing orderId' };
   
-  var targetDate = orderDate || Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
-  var sheet = ss.getSheetByName(targetDate);
-  if (!sheet) {
+  // 1. Search Master list first
+  var sheet = ss.getSheetByName(MASTER_SHEET_NAME);
+  var row = sheet ? findOrderInSheet(sheet, orderId) : -1;
+
+  // 2. Fallback search across other sheets if needed
+  if (row === -1) {
+    var targetDate = orderDate || Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
+    var dateSheet = ss.getSheetByName(targetDate);
+    if (dateSheet) {
+      var dRow = findOrderInSheet(dateSheet, orderId);
+      if (dRow > 0) {
+        sheet = dateSheet;
+        row = dRow;
+      }
+    }
+  }
+
+  if (row === -1) {
     var sheets = ss.getSheets();
     for (var i = 0; i < sheets.length; i++) {
+      if (sheets[i].getName() === MASTER_SHEET_NAME) continue;
       var foundRow = findOrderInSheet(sheets[i], orderId);
       if (foundRow > 0) {
         sheet = sheets[i];
+        row = foundRow;
         break;
       }
     }
   }
 
-  if (!sheet) return { success: false, error: 'Sheet tab not found for date: ' + targetDate };
-
-  var row = findOrderInSheet(sheet, orderId);
-  if (row === -1) return { success: false, error: 'Order ' + orderId + ' not found in sheet ' + sheet.getName() };
+  if (!sheet || row === -1) return { success: false, error: 'Order ' + orderId + ' not found in sheet' };
 
   var cell = sheet.getRange(row, 17);
   cell.setValue(newStatus);
@@ -1011,23 +1187,37 @@ function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
 function handleUpdatePaymentStatus(ss, orderId, orderDate, newPaymentStatus) {
   if (!orderId) return { success: false, error: 'Missing orderId' };
   
-  var targetDate = orderDate || Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
-  var sheet = ss.getSheetByName(targetDate);
-  if (!sheet) {
+  // 1. Search Master list first
+  var sheet = ss.getSheetByName(MASTER_SHEET_NAME);
+  var row = sheet ? findOrderInSheet(sheet, orderId) : -1;
+
+  // 2. Fallback search across other sheets if needed
+  if (row === -1) {
+    var targetDate = orderDate || Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
+    var dateSheet = ss.getSheetByName(targetDate);
+    if (dateSheet) {
+      var dRow = findOrderInSheet(dateSheet, orderId);
+      if (dRow > 0) {
+        sheet = dateSheet;
+        row = dRow;
+      }
+    }
+  }
+
+  if (row === -1) {
     var sheets = ss.getSheets();
     for (var i = 0; i < sheets.length; i++) {
+      if (sheets[i].getName() === MASTER_SHEET_NAME) continue;
       var foundRow = findOrderInSheet(sheets[i], orderId);
       if (foundRow > 0) {
         sheet = sheets[i];
+        row = foundRow;
         break;
       }
     }
   }
 
-  if (!sheet) return { success: false, error: 'Sheet tab not found for date: ' + targetDate };
-
-  var row = findOrderInSheet(sheet, orderId);
-  if (row === -1) return { success: false, error: 'Order ' + orderId + ' not found in sheet ' + sheet.getName() };
+  if (!sheet || row === -1) return { success: false, error: 'Order ' + orderId + ' not found in sheet' };
 
   var cell = sheet.getRange(row, 8);
   cell.setValue(newPaymentStatus);
