@@ -7,7 +7,6 @@ import OrderConfirmationModal from './components/OrderConfirmationModal';
 import AdminPortal from './components/AdminPortal';
 import AdminLoginModal from './components/AdminLoginModal';
 import OrderCutoffBanner from './components/OrderCutoffBanner';
-import TopCutoffAlertBar from './components/TopCutoffAlertBar';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
@@ -543,12 +542,6 @@ export default function App() {
         onOpenLoginModal={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
         cutoffInfo={cutoffInfo}
-      />
-
-      {/* Top Persistent Cutoff Announcement Bar - Visible to EVERYONE */}
-      <TopCutoffAlertBar
-        cutoffInfo={cutoffInfo}
-        onRefreshCutoff={fetchCutoff}
       />
 
       {/* Main Content */}
