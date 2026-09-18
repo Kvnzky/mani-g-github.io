@@ -558,7 +558,7 @@ export default function App() {
                 <img 
                   src="./images/logo.png" 
                   alt="Mani Wandering" 
-                  className="w-24 sm:w-28 md:w-32 h-auto drop-shadow-md hover:scale-105 transition-transform duration-200" 
+                  className="w-32 sm:w-40 md:w-48 h-auto drop-shadow-md hover:scale-105 transition-transform duration-200" 
                 />
               </div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
