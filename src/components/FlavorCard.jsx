@@ -33,19 +33,38 @@ export default function FlavorCard({ product, quantity, onQuantityChange }) {
           : 'bg-white border-mani-200/90 shadow-warm hover:border-amber-300/80 hover:shadow-warm-lg'
       } ${!isAvailable ? 'opacity-60 grayscale-[40%]' : ''}`}
     >
+      {/* Product Image Preview */}
+      {product.image && (
+        <div className="relative w-full h-44 sm:h-48 mb-3 rounded-2xl overflow-hidden bg-amber-100/40 border border-amber-200/60 group shadow-xs">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+          />
+          {product.badge && (
+            <span className={`absolute top-2.5 right-2.5 text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm backdrop-blur-xs ${product.accentColor || 'bg-amber-100 text-amber-900'}`}>
+              {product.badge}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Top Header Row */}
       <div>
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2.5">
-            <span className="text-3xl sm:text-4xl filter drop-shadow-sm select-none">
-              {product.icon || '🥜'}
-            </span>
+            {!product.image && (
+              <span className="text-3xl sm:text-4xl filter drop-shadow-sm select-none">
+                {product.icon || '🥜'}
+              </span>
+            )}
             <div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <h3 className="font-extrabold text-base sm:text-lg text-mani-900 leading-tight">
                   {product.name}
                 </h3>
-                {product.badge && (
+                {!product.image && product.badge && (
                   <span className={`text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-md ${product.accentColor || 'bg-amber-100 text-amber-900'}`}>
                     {product.badge}
                   </span>
@@ -59,7 +78,7 @@ export default function FlavorCard({ product, quantity, onQuantityChange }) {
 
           {/* Active selection badge */}
           {isSelected && (
-            <span className="flex items-center gap-1 text-[11px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full shadow-xs">
+            <span className="flex items-center gap-1 text-[11px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full shadow-xs shrink-0">
               <Check className="w-3 h-3" />
               {quantity} in cart
             </span>
