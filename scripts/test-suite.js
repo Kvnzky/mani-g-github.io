@@ -119,12 +119,13 @@ async function runTests() {
   try {
     const orderRes = await fetch(`${BASE_URL}/api/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-test-suite': 'true' },
       body: JSON.stringify({
-        customerName: 'Juan Dela Cruz',
+        customerName: 'Test Juan Dela Cruz',
         mobileNumber: '09171234567',
         deliveryAddress: 'Unit 102, Manila Building',
         paymentMethod: 'Cash on Delivery',
+        isTest: true,
         items: [{ id: 'salted', quantity: 2, price: 50 }]
       })
     });

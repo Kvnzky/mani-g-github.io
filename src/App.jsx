@@ -9,6 +9,7 @@ import AdminLoginModal from './components/AdminLoginModal';
 import OrderCutoffBanner from './components/OrderCutoffBanner';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
+import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
 import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock } from 'lucide-react';
 
 export default function App() {
@@ -308,7 +309,7 @@ export default function App() {
         mobileNumber: payload.mobileNumber,
         deliveryAddress: payload.deliveryAddress,
         paymentMethod: payload.paymentMethod,
-        paymentStatus: 'Unpaid',
+        paymentStatus: payload.paymentMethod === 'Cash on Delivery' ? 'Unpaid' : 'Paid',
         items: orderedItems,
         flavorQuantities: { ...quantities },
         totalPacks,
@@ -318,15 +319,17 @@ export default function App() {
         syncedToGoogleSheets: false
       };
 
-      const appsUrl = localStorage.getItem('mani_apps_script_url') || '';
-      const sheetId = localStorage.getItem('mani_spreadsheet_id') || '';
+      const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+      const sheetId = (localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID || '').trim();
       if (appsUrl) {
         fetch(appsUrl, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'addOrder', spreadsheetId: sheetId, order: clientOrder })
-        }).catch(() => {});
+        }).catch((syncErr) => {
+          console.warn('Apps Script sync error:', syncErr);
+        });
         clientOrder.syncedToGoogleSheets = true;
       }
 
