@@ -16,12 +16,13 @@ This guide walks you through updating and connecting your Mani Wandering Orderin
 2. Copy the entire contents of [`google-apps-script/Code.gs`](./Code.gs) and paste it into the editor.
 3. Click the **💾 Save** icon (or press `Ctrl+S`).
 
-### Step 3: Run One-Click Cleanup & Formula Repair
+### Step 3: Grant Email Permission & Test (One-Time Only)
 In the Apps Script editor:
-1. Select **`handleCleanAllSheets`** in the function dropdown at the top toolbar.
+1. Select **`handleSendTestEmail`** in the function dropdown at the top toolbar.
 2. Click **▶ Run**.
-3. If prompted, grant authorization once.
-4. Open the Google Sheet! All test orders ("Juan Dela Cruz") will be removed, Mermer's order will be corrected (4 packs, ₱200, GCash, Paid), and the 17-column summary dashboard and dynamic price formulas will be aligned and live.
+3. Google will prompt: **"Authorization Required"** (this is Google's standard security prompt when an Apps Script gains email-sending capabilities).
+4. Click **Review permissions** > Choose your Google account (`rkevinramirez@gmail.com`) > Click **Advanced** > Click **Go to Mani Wandering (unsafe)** > Click **Allow**.
+5. Check your Gmail inbox! A live test email will arrive immediately, confirming your script now has permanent permission to send order emails.
 
 ### Step 4: Deploy the New Version (Takes 30 seconds)
 1. At the top right of Apps Script, click the blue **Deploy** button > **Manage deployments**.
