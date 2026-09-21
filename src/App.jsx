@@ -67,6 +67,7 @@ export default function App() {
     spicy: 0,
     bbq: 0,
     'sour-cream': 0,
+    cheese: 0,
     'bawang-only': 0
   });
 

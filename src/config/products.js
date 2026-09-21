@@ -68,6 +68,19 @@ export const DEFAULT_PRODUCTS = [
     accentColor: 'bg-emerald-100 text-emerald-900 border-emerald-300'
   },
   {
+    id: 'cheese',
+    name: 'Cheese',
+    tagline: 'Rich & Cheesy',
+    description: 'Crisp, golden roasted peanuts generously tossed in savory, mouthwatering cheese powder.',
+    price: 50,
+    icon: '🧀',
+    image: './images/products/cheese.jpg',
+    badge: 'New',
+    available: true,
+    sortOrder: 6,
+    accentColor: 'bg-amber-100 text-amber-900 border-amber-300'
+  },
+  {
     id: 'bawang-only',
     name: 'Bawang Only',
     tagline: 'Garlic Lovers Only',
@@ -77,7 +90,7 @@ export const DEFAULT_PRODUCTS = [
     image: './images/products/bawang-only.jpg',
     badge: 'Must Try',
     available: true,
-    sortOrder: 6,
+    sortOrder: 7,
     accentColor: 'bg-yellow-100 text-yellow-900 border-yellow-300'
   }
 ];

@@ -549,6 +549,7 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
       spicy: 0,
       bbq: 0,
       'sour-cream': 0,
+      cheese: 0,
       'bawang-only': 0
     };
 
@@ -676,6 +677,7 @@ app.get('/api/orders', requireAdminAuth, (req, res) => {
     spicy: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.spicy || 0), 0),
     bbq: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.bbq || 0), 0),
     sourCream: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.['sour-cream'] || 0), 0),
+    cheese: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.cheese || 0), 0),
     bawangOnly: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.['bawang-only'] || 0), 0),
     cod: dayOrders.filter(o => (o.paymentMethod || '').toLowerCase().includes('cash')).length,
     gcash: dayOrders.filter(o => (o.paymentMethod || '').toLowerCase().includes('gcash')).length,

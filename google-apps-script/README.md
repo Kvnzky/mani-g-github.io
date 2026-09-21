@@ -58,17 +58,17 @@ Whenever a customer places an order on the website:
 When you refresh the Google Sheet, you will see the custom menu in the top menu bar:
 - **`🥜 Mani Wandering`**
   - **`🧹 Clean Test Orders & Fix Calculations`**: Automatically purges test orders and recalibrates all pricing and summary formulas.
-  - **`📐 Refresh Summary Dashboard & Formulas`**: Realigns the 17-column header cards and recomputes all metrics.
+  - **`📐 Refresh Summary Dashboard & Formulas`**: Realigns the 18-column header cards and recomputes all metrics.
   - **`📧 Send Test Order Notification Email`**: Sends a live test email directly to `engrkevinramirez@gmail.com` to verify email delivery.
 
 ---
 
-## 📊 17-Column Standard Layout (Columns A to Q)
+## 📊 18-Column Standard Layout (Columns A to R)
 
 | Col | Field | Summary Metric (Row 2 & 3) |
 |---|---|---|
 | **A** | Order ID | **Total Orders** (`=COUNTA(A8:A)`) |
-| **B** | Order Date | **Log Date** (`YYYY-MM-DD`) |
+| **B** | Order Date | **Log Scope** (`"Master List"`) |
 | **C** | Order Time | **COD Orders** (`=COUNTIF(F8:F, "*Cash*")`) |
 | **D** | Customer Name | **GCash Orders** (`=COUNTIF(F8:F, "*GCash*")`) |
 | **E** | Mobile Number | **Maribank Orders** (`=COUNTIF(F8:F, "*Maribank*")`) |
@@ -80,7 +80,8 @@ When you refresh the Google Sheet, you will see the custom menu in the top menu 
 | **K** | Spicy Qty (₱50) | **Total Spicy** (`=SUM(K8:K)`) |
 | **L** | BBQ Qty (₱50) | **Total BBQ** (`=SUM(L8:L)`) |
 | **M** | Sour Cream Qty (₱50) | **Total Sour Cream** (`=SUM(M8:M)`) |
-| **N** | Bawang Only Qty (₱60) | **Total Bawang** (`=SUM(N8:N)`) |
-| **O** | Total Packs | **Total Packs** (`=SUM(O8:O)`) |
-| **P** | Total Amount (₱) | **Total Revenue (₱)** (`=SUM(P8:P)`) |
-| **Q** | Order Status | **Active Orders** (`=COUNTIF(Q8:Q, "<>Completed")`) |
+| **N** | Cheese Qty (₱50) | **Total Cheese** (`=SUM(N8:N)`) |
+| **O** | Bawang Only Qty (₱60) | **Total Bawang** (`=SUM(O8:O)`) |
+| **P** | Total Packs | **Total Packs** (`=SUM(P8:P)`) |
+| **Q** | Total Amount (₱) | **Total Revenue (₱)** (`=SUM(Q8:Q)`) |
+| **R** | Order Status | **Active Orders** (`=COUNTIFS(A8:A, "<>", R8:R, "<>Completed")`) |

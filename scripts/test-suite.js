@@ -278,6 +278,56 @@ async function runTests() {
     'Google Apps Script backend includes production MailApp.sendEmail targeted to engrkevinramirez@gmail.com'
   );
 
+  // -------------------------------------------------------------
+  // 5. CHEESE FLAVOR VERIFICATION TESTS
+  // -------------------------------------------------------------
+  console.log('\n--- 5. CHEESE FLAVOR VERIFICATION TESTS ---');
+
+  // Test 5.1: Verify Cheese in products.js is placed immediately after Sour Cream with price 50
+  const productsJs = fs.readFileSync('src/config/products.js', 'utf8');
+  const sourCreamIdx = productsJs.indexOf("'sour-cream'");
+  const cheeseIdx = productsJs.indexOf("'cheese'");
+  const bawangIdx = productsJs.indexOf("'bawang-only'");
+  assert(
+    cheeseIdx > sourCreamIdx && cheeseIdx < bawangIdx,
+    'Cheese is configured immediately after Sour Cream and before Bawang Only'
+  );
+
+  // Test 5.2: Order with Cheese succeeds and records cheese flavor quantity
+  try {
+    const orderRes = await fetch(`${BASE_URL}/api/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-test-suite': 'true' },
+      body: JSON.stringify({
+        customerName: 'Cheese Test Customer',
+        mobileNumber: '09181234567',
+        deliveryAddress: 'Cheese Test Address',
+        paymentMethod: 'Cash on Delivery',
+        isTest: true,
+        items: [
+          { id: 'cheese', name: 'Cheese', quantity: 3, price: 50 }
+        ]
+      })
+    });
+    const orderData = await orderRes.json();
+    assert(
+      orderRes.status === 201 &&
+      orderData.order.flavorQuantities?.cheese === 3 &&
+      orderData.order.totalAmount === 150,
+      'Order with Cheese flavor calculates 3 packs x ₱50 = ₱150 and maps cheese quantity 3'
+    );
+  } catch (e) {
+    assert(false, `Cheese order test error: ${e.message}`);
+  }
+
+  // Test 5.3: Verify Google Apps Script supports Cheese in Column 14 (N)
+  assert(
+    codeGs.includes('Cheese Qty') &&
+    codeGs.includes("cheeseQty") &&
+    codeGs.includes("'Cheese (₱50)'"),
+    'Google Apps Script backend includes Cheese in 18-column layout (Col 14 / N) at ₱50'
+  );
+
   console.log(`\n========================================`);
   console.log(`TEST SUMMARY: ${passed} PASSED, ${failed} FAILED`);
   console.log(`========================================\n`);

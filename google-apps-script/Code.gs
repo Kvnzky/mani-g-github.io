@@ -4,7 +4,7 @@
  * Target Google Sheet: https://docs.google.com/spreadsheets/d/1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI/edit
  * Default Spreadsheet ID: 1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI
  * 
- * 17-Column Standard Order Layout (Columns A to Q):
+ * 18-Column Standard Order Layout (Columns A to R):
  * 1  (A): Order ID
  * 2  (B): Order Date
  * 3  (C): Order Time
@@ -18,14 +18,15 @@
  * 11 (K): Spicy Qty (₱50)
  * 12 (L): BBQ Qty (₱50)
  * 13 (M): Sour Cream Qty (₱50)
- * 14 (N): Bawang Only Qty (₱60)
- * 15 (O): Total Packs [Formula: =SUM(I{row}:N{row})]
- * 16 (P): Total Amount (₱) [Formula: =(SUM(I{row}:M{row})*50)+(N{row}*60)]
- * 17 (Q): Order Status (New, Confirmed, Preparing, Ready, Completed, Cancelled)
+ * 14 (N): Cheese Qty (₱50)
+ * 15 (O): Bawang Only Qty (₱60)
+ * 16 (P): Total Packs [Formula: =SUM(I{row}:O{row})]
+ * 17 (Q): Total Amount (₱) [Formula: =(SUM(I{row}:N{row})*50)+(O{row}*60)]
+ * 18 (R): Order Status (New, Confirmed, Preparing, Ready, Completed, Cancelled)
  * 
- * 17-Column Aligned Summary Dashboard (Rows 2 & 3, aligned 1:1 with Data Columns):
+ * 18-Column Aligned Summary Dashboard (Rows 2 & 3, aligned 1:1 with Data Columns):
  * A: Total Orders               [=COUNTA(A8:A)]
- * B: Log Date                   [="YYYY-MM-DD"]
+ * B: Log Scope                  [="Master List"]
  * C: COD Orders                 [=COUNTIF(F8:F, "*Cash*")]
  * D: GCash Orders               [=COUNTIF(F8:F, "*GCash*")]
  * E: Maribank Orders            [=COUNTIF(F8:F, "*Maribank*")]
@@ -37,10 +38,11 @@
  * K: Spicy (₱50)                [=SUM(K8:K)]
  * L: BBQ (₱50)                  [=SUM(L8:L)]
  * M: Sour Cream (₱50)           [=SUM(M8:M)]
- * N: Bawang Only (₱60)          [=SUM(N8:N)]
- * O: Total Packs                [=SUM(O8:O)]
- * P: Total Revenue (₱)          [=SUM(P8:P)]
- * Q: Active Orders              [=COUNTIFS(A8:A, "<>", Q8:Q, "<>Completed") & " active"]
+ * N: Cheese (₱50)               [=SUM(N8:N)]
+ * O: Bawang Only (₱60)          [=SUM(O8:O)]
+ * P: Total Packs                [=SUM(P8:P)]
+ * Q: Total Revenue (₱)          [=SUM(Q8:Q)]
+ * R: Active Orders              [=COUNTIFS(A8:A, "<>", R8:R, "<>Completed") & " active"]
  */
 
 var DEFAULT_SPREADSHEET_ID = '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI';
@@ -357,7 +359,10 @@ function handleGetOrders(ss, dateFilter) {
   var lastRow = sheet.getLastRow();
   if (lastRow < 8) return { success: true, orders: [], todayDate: todayDateStr, tabName: sheet.getName() };
 
-  var values = sheet.getRange(8, 1, lastRow - 7, 17).getValues();
+  var lastCol = Math.max(sheet.getLastColumn(), 18);
+  var values = sheet.getRange(8, 1, lastRow - 7, lastCol).getValues();
+  var col14Name = String(sheet.getRange(7, 14).getValue() || '');
+  var hasCheese = (col14Name.indexOf('Cheese') !== -1 || sheet.getLastColumn() >= 18);
   var orders = [];
 
   for (var i = values.length - 1; i >= 0; i--) {
@@ -391,6 +396,17 @@ function handleGetOrders(ss, dateFilter) {
       if (!sTime.includes('GMT')) oTime = sTime;
     }
 
+    var salted = Number(r[8] || 0);
+    var unsalted = Number(r[9] || 0);
+    var spicy = Number(r[10] || 0);
+    var bbq = Number(r[11] || 0);
+    var sourCream = Number(r[12] || 0);
+    var cheese = hasCheese ? Number(r[13] || 0) : 0;
+    var bawangOnly = hasCheese ? Number(r[14] || 0) : Number(r[13] || 0);
+    var totalPacks = hasCheese ? Number(r[15] || 0) : Number(r[14] || 0);
+    var subtotal = hasCheese ? Number(r[16] || 0) : Number(r[15] || 0);
+    var status = hasCheese ? String(r[17] || 'New') : String(r[16] || 'New');
+
     orders.push({
       orderId: ordId,
       orderDate: oDate,
@@ -401,16 +417,17 @@ function handleGetOrders(ss, dateFilter) {
       deliveryAddress: String(r[6] || ''),
       paymentStatus: String(r[7] || 'Unpaid'),
       flavorQuantities: {
-        salted: Number(r[8] || 0),
-        unsalted: Number(r[9] || 0),
-        spicy: Number(r[10] || 0),
-        bbq: Number(r[11] || 0),
-        'sour-cream': Number(r[12] || 0),
-        'bawang-only': Number(r[13] || 0)
+        salted: salted,
+        unsalted: unsalted,
+        spicy: spicy,
+        bbq: bbq,
+        'sour-cream': sourCream,
+        cheese: cheese,
+        'bawang-only': bawangOnly
       },
-      totalPacks: Number(r[14] || 0),
-      subtotal: Number(r[15] || 0),
-      status: String(r[16] || 'New')
+      totalPacks: totalPacks,
+      subtotal: subtotal,
+      status: status
     });
   }
 
@@ -454,7 +471,8 @@ function handleConsolidateToMasterList(ss) {
     var shLastRow = sh.getLastRow();
     if (shLastRow < 8) continue;
 
-    var rawRows = sh.getRange(8, 1, shLastRow - 7, Math.max(sh.getLastColumn(), 17)).getValues();
+    var rawRows = sh.getRange(8, 1, shLastRow - 7, Math.max(sh.getLastColumn(), 18)).getValues();
+    var srcHasCheese = (String(sh.getRange(7, 14).getValue() || '').indexOf('Cheese') !== -1 || sh.getLastColumn() >= 18);
     for (var r = 0; r < rawRows.length; r++) {
       var row = rawRows[r];
       var orderId = String(row[0] || '').trim();
@@ -500,20 +518,21 @@ function handleConsolidateToMasterList(ss) {
       var spicy = Number(row[10] || 0);
       var bbq = Number(row[11] || 0);
       var sourCream = Number(row[12] || 0);
-      var bawangOnly = Number(row[13] || 0);
-      var orderStatus = String(row[16] || 'New');
+      var cheese = srcHasCheese ? Number(row[13] || 0) : 0;
+      var bawangOnly = srcHasCheese ? Number(row[14] || 0) : Number(row[13] || 0);
+      var orderStatus = srcHasCheese ? String(row[17] || 'New') : String(row[16] || 'New');
 
       var targetRow = Math.max(masterSheet.getLastRow() + 1, 8);
-      var totalPacksFormula = '=SUM(I' + targetRow + ':N' + targetRow + ')';
-      var totalAmountFormula = '=(SUM(I' + targetRow + ':M' + targetRow + ')*50)+(N' + targetRow + '*60)';
+      var totalPacksFormula = '=SUM(I' + targetRow + ':O' + targetRow + ')';
+      var totalAmountFormula = '=(SUM(I' + targetRow + ':N' + targetRow + ')*50)+(O' + targetRow + '*60)';
 
       var cleanRow = [
         orderId, oDate, oTime, customer, mobile, paymentMode, address, paidStatus,
-        salted, unsalted, spicy, bbq, sourCream, bawangOnly,
+        salted, unsalted, spicy, bbq, sourCream, cheese, bawangOnly,
         totalPacksFormula, totalAmountFormula, orderStatus
       ];
 
-      masterSheet.getRange(targetRow, 1, 1, 17).setValues([cleanRow]);
+      masterSheet.getRange(targetRow, 1, 1, 18).setValues([cleanRow]);
       formatDataRow(masterSheet, targetRow, cleanRow);
       existingIds[orderId] = true;
       importedCount++;
@@ -738,7 +757,7 @@ function getOrCreateMasterSheet(ss) {
     setupSheetHeadersAndSummary(sheet, MASTER_SHEET_NAME);
   } else {
     var h14 = String(sheet.getRange(2, 14).getValue() || '');
-    if (h14 !== 'Bawang Only (₱60)') {
+    if (h14 !== 'Cheese (₱50)') {
       setupSheetHeadersAndSummary(sheet, MASTER_SHEET_NAME);
     }
   }
@@ -765,7 +784,7 @@ function handleAddOrder(ss, order) {
 
   var fq = order.flavorQuantities || {};
   if ((!order.flavorQuantities || Object.keys(order.flavorQuantities).length === 0) && Array.isArray(order.items)) {
-    fq = { salted: 0, unsalted: 0, spicy: 0, bbq: 0, 'sour-cream': 0, 'bawang-only': 0 };
+    fq = { salted: 0, unsalted: 0, spicy: 0, bbq: 0, 'sour-cream': 0, cheese: 0, 'bawang-only': 0 };
     order.items.forEach(function(it) {
       var k = it.productId || it.id;
       if (k && fq[k] !== undefined) {
@@ -779,16 +798,17 @@ function handleAddOrder(ss, order) {
   var spicyQty = Number(fq.spicy || 0);
   var bbqQty = Number(fq.bbq || 0);
   var sourCreamQty = Number(fq['sour-cream'] || 0);
+  var cheeseQty = Number(fq.cheese || 0);
   var bawangOnlyQty = Number(fq['bawang-only'] || 0);
 
   var paymentMethod = (order.paymentMethod || order.paymentMode || 'Cash on Delivery').trim();
   var defaultPaidStatus = paymentMethod.toLowerCase().includes('cash') ? 'Unpaid' : 'Paid';
   var paymentStatus = order.paymentStatus || order.paidStatus || defaultPaidStatus;
 
-  var totalPacksFormula = '=SUM(I' + targetRow + ':N' + targetRow + ')';
-  var totalAmountFormula = '=(SUM(I' + targetRow + ':M' + targetRow + ')*50)+(N' + targetRow + '*60)';
+  var totalPacksFormula = '=SUM(I' + targetRow + ':O' + targetRow + ')';
+  var totalAmountFormula = '=(SUM(I' + targetRow + ':N' + targetRow + ')*50)+(O' + targetRow + '*60)';
 
-  // 17-Column Standard Order Array
+  // 18-Column Standard Order Array
   var rowData = [
     order.orderId || 'MANI-' + orderDate.replace(/-/g, '') + '-001', // Col 1  (A): Order ID
     orderDate,                                                        // Col 2  (B): Order Date
@@ -803,10 +823,11 @@ function handleAddOrder(ss, order) {
     spicyQty,                                                         // Col 11 (K): Spicy Qty
     bbqQty,                                                           // Col 12 (L): BBQ Qty
     sourCreamQty,                                                     // Col 13 (M): Sour Cream Qty
-    bawangOnlyQty,                                                    // Col 14 (N): Bawang Only Qty
-    totalPacksFormula,                                                // Col 15 (O): Total Packs (Formula)
-    totalAmountFormula,                                               // Col 16 (P): Total Amount (Formula)
-    order.status || 'New'                                             // Col 17 (Q): Order Status
+    cheeseQty,                                                        // Col 14 (N): Cheese Qty
+    bawangOnlyQty,                                                    // Col 15 (O): Bawang Only Qty
+    totalPacksFormula,                                                // Col 16 (P): Total Packs (Formula)
+    totalAmountFormula,                                               // Col 17 (Q): Total Amount (Formula)
+    order.status || 'New'                                             // Col 18 (R): Order Status
   ];
 
   var range = sheet.getRange(targetRow, 1, 1, rowData.length);
@@ -836,7 +857,7 @@ function handleAddOrder(ss, order) {
  * Format a single data row with alternating backgrounds, currencies, and status colors
  */
 function formatDataRow(sheet, targetRow, rowData) {
-  var range = sheet.getRange(targetRow, 1, 1, 17);
+  var range = sheet.getRange(targetRow, 1, 1, 18);
   range.setFontFamily('Arial');
   range.setFontSize(10);
   range.setVerticalAlignment('middle');
@@ -857,10 +878,10 @@ function formatDataRow(sheet, targetRow, rowData) {
   sheet.getRange(targetRow, 3).setNumberFormat('@');
   sheet.getRange(targetRow, 5).setNumberFormat('@');
 
-  // Number format for pack counts (Cols 9-15)
-  sheet.getRange(targetRow, 9, 1, 7).setNumberFormat('#,##0');
-  // Currency format for Total Amount (Col 16 / P)
-  sheet.getRange(targetRow, 16).setNumberFormat('"₱"#,##0.00');
+  // Number format for pack counts (Cols 9-16)
+  sheet.getRange(targetRow, 9, 1, 8).setNumberFormat('#,##0');
+  // Currency format for Total Amount (Col 17 / Q)
+  sheet.getRange(targetRow, 17).setNumberFormat('"₱"#,##0.00');
 
   // Paid Status formatting (Col 8 / H)
   var paidCell = sheet.getRange(targetRow, 8);
@@ -872,10 +893,10 @@ function formatDataRow(sheet, targetRow, rowData) {
     paidCell.setFontColor('#92400E').setBackground('#FEF3C7');
   }
 
-  // Order Status formatting (Col 17 / Q)
-  var statusCell = sheet.getRange(targetRow, 17);
+  // Order Status formatting (Col 18 / R)
+  var statusCell = sheet.getRange(targetRow, 18);
   statusCell.setFontWeight('bold');
-  var st = String(rowData[16] || 'New').toLowerCase();
+  var st = String(rowData[17] || 'New').toLowerCase();
   if (st === 'new') statusCell.setFontColor('#D97706').setBackground('#FEF3C7');
   else if (st === 'confirmed') statusCell.setFontColor('#2563EB').setBackground('#DBEAFE');
   else if (st === 'preparing') statusCell.setFontColor('#EA580C').setBackground('#FFEDD5');
@@ -885,7 +906,7 @@ function formatDataRow(sheet, targetRow, rowData) {
 }
 
 /**
- * Setup sheet formatting: Top Daily Summary Dashboard + Column Headers (17 Columns Exact Alignment)
+ * Setup sheet formatting: Top Daily Summary Dashboard + Column Headers (18 Columns Exact Alignment)
  */
 function setupSheetHeadersAndSummary(sheet, titleStr) {
   var isMaster = (titleStr === MASTER_SHEET_NAME || sheet.getName() === MASTER_SHEET_NAME);
@@ -894,8 +915,8 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     : ('🥜 MANI WANDERING ORDERS — DAILY LOG & SUMMARY (' + (titleStr || sheet.getName()) + ')');
 
   // Title Bar (Row 1)
-  sheet.getRange('A1:Q1').breakApart();
-  sheet.getRange('A1:Q1').merge()
+  sheet.getRange('A1:R1').breakApart();
+  sheet.getRange('A1:R1').merge()
     .setValue(displayTitle)
     .setFontFamily('Arial')
     .setFontSize(13)
@@ -906,7 +927,7 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     .setVerticalAlignment('middle');
   sheet.setRowHeight(1, 35);
 
-  // Daily / Master Order Summary Metrics Header (Row 2) - Exactly 17 columns aligned 1:1 with columns A-Q
+  // Daily / Master Order Summary Metrics Header (Row 2) - Exactly 18 columns aligned 1:1 with columns A-R
   var summaryHeaders = [
     'Total Orders',      // Col A (1)
     'Log Scope',         // Col B (2)
@@ -921,14 +942,15 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     'Spicy (₱50)',       // Col K (11)
     'BBQ (₱50)',         // Col L (12)
     'Sour Cream (₱50)',  // Col M (13)
-    'Bawang Only (₱60)', // Col N (14)
-    'Total Packs',       // Col O (15)
-    'Total Sales (₱)',   // Col P (16)
-    'Pending / Active'   // Col Q (17)
+    'Cheese (₱50)',      // Col N (14)
+    'Bawang Only (₱60)', // Col O (15)
+    'Total Packs',       // Col P (16)
+    'Total Sales (₱)',   // Col Q (17)
+    'Pending / Active'   // Col R (18)
   ];
 
-  sheet.getRange('A2:Q2').breakApart();
-  sheet.getRange('A2:Q2').setValues([summaryHeaders])
+  sheet.getRange('A2:R2').breakApart();
+  sheet.getRange('A2:R2').setValues([summaryHeaders])
     .setFontFamily('Arial')
     .setFontSize(9)
     .setFontWeight('bold')
@@ -938,7 +960,7 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     .setVerticalAlignment('middle');
   sheet.setRowHeight(2, 24);
 
-  // Dynamic Summary Formulas (Row 3) - Exactly 17 columns aligned 1:1 with columns A-Q
+  // Dynamic Summary Formulas (Row 3) - Exactly 18 columns aligned 1:1 with columns A-R
   var logScopeFormula = isMaster ? '="Master List"' : '="' + (titleStr || sheet.getName()) + '"';
   var formulas = [
     '=COUNTA(A8:A)',                                                      // Col A: Total Orders
@@ -954,14 +976,15 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     '=SUM(K8:K)',                                                         // Col K: Spicy Qty Sum
     '=SUM(L8:L)',                                                         // Col L: BBQ Qty Sum
     '=SUM(M8:M)',                                                         // Col M: Sour Cream Qty Sum
-    '=SUM(N8:N)',                                                         // Col N: Bawang Only Qty Sum
-    '=SUM(O8:O)',                                                         // Col O: Total Packs Sum
-    '=SUM(P8:P)',                                                         // Col P: Total Revenue Sum
-    '=COUNTIFS(A8:A, "<>", Q8:Q, "<>Completed") & " active"'              // Col Q: Active Orders
+    '=SUM(N8:N)',                                                         // Col N: Cheese Qty Sum
+    '=SUM(O8:O)',                                                         // Col O: Bawang Only Qty Sum
+    '=SUM(P8:P)',                                                         // Col P: Total Packs Sum
+    '=SUM(Q8:Q)',                                                         // Col Q: Total Revenue Sum
+    '=COUNTIFS(A8:A, "<>", R8:R, "<>Completed") & " active"'              // Col R: Active Orders
   ];
 
-  sheet.getRange('A3:Q3').breakApart();
-  sheet.getRange('A3:Q3').setFormulas([formulas])
+  sheet.getRange('A3:R3').breakApart();
+  sheet.getRange('A3:R3').setFormulas([formulas])
     .setFontFamily('Arial')
     .setFontSize(11)
     .setFontWeight('bold')
@@ -970,14 +993,14 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle');
   sheet.setRowHeight(3, 30);
-  sheet.getRange('P3').setNumberFormat('"₱"#,##0.00');
+  sheet.getRange('Q3').setNumberFormat('"₱"#,##0.00');
 
   // Blank Separator (Rows 4, 5, 6)
   sheet.setRowHeight(4, 8);
   sheet.setRowHeight(5, 8);
   sheet.setRowHeight(6, 8);
 
-  // Column Headers (Row 7) - Exactly 17 columns
+  // Column Headers (Row 7) - Exactly 18 columns
   var colHeaders = [
     'Order ID',          // Col 1  (A)
     'Order Date',        // Col 2  (B)
@@ -992,10 +1015,11 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     'Spicy Qty',         // Col 11 (K)
     'BBQ Qty',           // Col 12 (L)
     'Sour Cream Qty',    // Col 13 (M)
-    'Bawang Only Qty',   // Col 14 (N)
-    'Total Packs',       // Col 15 (O)
-    'Total Amount (₱)',  // Col 16 (P)
-    'Order Status'       // Col 17 (Q)
+    'Cheese Qty',        // Col 14 (N)
+    'Bawang Only Qty',   // Col 15 (O)
+    'Total Packs',       // Col 16 (P)
+    'Total Amount (₱)',  // Col 17 (Q)
+    'Order Status'       // Col 18 (R)
   ];
 
   var hRange = sheet.getRange(7, 1, 1, colHeaders.length);
@@ -1026,10 +1050,11 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
   sheet.setColumnWidth(11, 90); // Spicy
   sheet.setColumnWidth(12, 90); // BBQ
   sheet.setColumnWidth(13, 105);// Sour Cream
-  sheet.setColumnWidth(14, 115);// Bawang Only
-  sheet.setColumnWidth(15, 95); // Total Packs
-  sheet.setColumnWidth(16, 125);// Total Amount
-  sheet.setColumnWidth(17, 115);// Order Status
+  sheet.setColumnWidth(14, 95); // Cheese
+  sheet.setColumnWidth(15, 115);// Bawang Only
+  sheet.setColumnWidth(16, 95); // Total Packs
+  sheet.setColumnWidth(17, 125);// Total Amount
+  sheet.setColumnWidth(18, 115);// Order Status
 }
 
 /**
@@ -1041,7 +1066,7 @@ function fixAndAlignSheet(sheet, dateStr) {
   var lastRow = sheet.getLastRow();
   if (lastRow < 8) return;
 
-  var lastCol = Math.max(sheet.getLastColumn(), 17);
+  var lastCol = Math.max(sheet.getLastColumn(), 18);
   var range = sheet.getRange(8, 1, lastRow - 7, lastCol);
   var values = range.getValues();
 
@@ -1080,8 +1105,6 @@ function fixAndAlignSheet(sheet, dateStr) {
     var paymentMode = 'Cash on Delivery';
     var deliveryAddress = '';
     var paidStatus = 'Unpaid';
-    var salted = 0, unsalted = 0, spicy = 0, bbq = 0, sourCream = 0, bawangOnly = 0;
-    var orderStatus = 'New';
 
     if (valH.toLowerCase() === 'paid' || valH.toLowerCase() === 'unpaid') {
       paidStatus = (valH.toLowerCase() === 'paid') ? 'Paid' : 'Unpaid';
@@ -1092,38 +1115,42 @@ function fixAndAlignSheet(sheet, dateStr) {
         paymentMode = valF;
         deliveryAddress = valG;
       }
-
-      salted = Number(r[8] || 0);
-      unsalted = Number(r[9] || 0);
-      spicy = Number(r[10] || 0);
-      bbq = Number(r[11] || 0);
-      sourCream = Number(r[12] || 0);
-      bawangOnly = Number(r[13] || 0);
-      orderStatus = r[16] || 'New';
     } else {
       paymentMode = valF || 'Cash on Delivery';
       deliveryAddress = valG || '';
       paidStatus = paymentMode.toLowerCase().includes('cash') ? 'Unpaid' : 'Paid';
-      salted = Number(r[8] || 0);
-      unsalted = Number(r[9] || 0);
-      spicy = Number(r[10] || 0);
-      bbq = Number(r[11] || 0);
-      sourCream = Number(r[12] || 0);
-      bawangOnly = Number(r[13] || 0);
-      orderStatus = r[16] || 'New';
     }
 
-    var totalPacksFormula = '=SUM(I' + rowNum + ':N' + rowNum + ')';
-    var totalAmountFormula = '=(SUM(I' + rowNum + ':M' + rowNum + ')*50)+(N' + rowNum + '*60)';
+    var salted = Number(r[8] || 0);
+    var unsalted = Number(r[9] || 0);
+    var spicy = Number(r[10] || 0);
+    var bbq = Number(r[11] || 0);
+    var sourCream = Number(r[12] || 0);
+    var cheese = 0;
+    var bawangOnly = 0;
+    var orderStatus = 'New';
+
+    if (r.length >= 18 && r[17] !== undefined && r[17] !== '') {
+      cheese = Number(r[13] || 0);
+      bawangOnly = Number(r[14] || 0);
+      orderStatus = String(r[17] || 'New');
+    } else {
+      cheese = 0;
+      bawangOnly = Number(r[13] || 0);
+      orderStatus = String(r[16] || 'New');
+    }
+
+    var totalPacksFormula = '=SUM(I' + rowNum + ':O' + rowNum + ')';
+    var totalAmountFormula = '=(SUM(I' + rowNum + ':N' + rowNum + ')*50)+(O' + rowNum + '*60)';
 
     var cleanRow = [
       orderId, orderDate, orderTime, customer, mobile,
       paymentMode, deliveryAddress, paidStatus,
-      salted, unsalted, spicy, bbq, sourCream, bawangOnly,
+      salted, unsalted, spicy, bbq, sourCream, cheese, bawangOnly,
       totalPacksFormula, totalAmountFormula, orderStatus
     ];
 
-    sheet.getRange(rowNum, 1, 1, 17).setValues([cleanRow]);
+    sheet.getRange(rowNum, 1, 1, 18).setValues([cleanRow]);
     formatDataRow(sheet, rowNum, cleanRow);
   }
 }
@@ -1164,9 +1191,8 @@ function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
     }
   }
 
-  if (!sheet || row === -1) return { success: false, error: 'Order ' + orderId + ' not found in sheet' };
-
-  var cell = sheet.getRange(row, 17);
+  var statusCol = (sheet.getLastColumn() >= 18 || String(sheet.getRange(7, 14).getValue() || '').indexOf('Cheese') !== -1) ? 18 : 17;
+  var cell = sheet.getRange(row, statusCol);
   cell.setValue(newStatus);
   cell.setFontWeight('bold');
   
@@ -1352,6 +1378,7 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
       { key: 'spicy', name: 'Spicy Mani', price: 50 },
       { key: 'bbq', name: 'BBQ Mani', price: 50 },
       { key: 'sour-cream', name: 'Sour Cream Mani', price: 50 },
+      { key: 'cheese', name: 'Cheese Mani', price: 50 },
       { key: 'bawang-only', name: 'Bawang Only', price: 60 }
     ];
     flavorCatalog.forEach(function(flv) {
@@ -1369,7 +1396,15 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
 
   // Fallback to rowData if available
   if (itemsList.length === 0 && rowData) {
-    var rowCatalog = [
+    var rowCatalog = (rowData.length >= 18) ? [
+      { name: 'Salted Mani', qty: Number(rowData[8] || 0), price: 50 },
+      { name: 'Unsalted Mani', qty: Number(rowData[9] || 0), price: 50 },
+      { name: 'Spicy Mani', qty: Number(rowData[10] || 0), price: 50 },
+      { name: 'BBQ Mani', qty: Number(rowData[11] || 0), price: 50 },
+      { name: 'Sour Cream Mani', qty: Number(rowData[12] || 0), price: 50 },
+      { name: 'Cheese Mani', qty: Number(rowData[13] || 0), price: 50 },
+      { name: 'Bawang Only', qty: Number(rowData[14] || 0), price: 60 }
+    ] : [
       { name: 'Salted Mani', qty: Number(rowData[8] || 0), price: 50 },
       { name: 'Unsalted Mani', qty: Number(rowData[9] || 0), price: 50 },
       { name: 'Spicy Mani', qty: Number(rowData[10] || 0), price: 50 },
@@ -1584,10 +1619,11 @@ function handleSendTestEmail(toEmail) {
     items: [
       { name: 'Original Crispy Salted', quantity: 2, price: 50 },
       { name: 'Spicy Kick Mani', quantity: 1, price: 50 },
+      { name: 'Cheese Mani', quantity: 2, price: 50 },
       { name: 'Garlic Bawang Only', quantity: 3, price: 60 }
     ],
-    subtotal: 330,
-    totalAmount: 330
+    subtotal: 430,
+    totalAmount: 430
   };
 
   if (toEmail) {
