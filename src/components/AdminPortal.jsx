@@ -32,6 +32,7 @@ export default function AdminPortal({
   const [cutoffEnabled, setCutoffEnabled] = useState(cutoffInfo?.enabled || false);
   const [cutoffDate, setCutoffDate] = useState(cutoffInfo?.cutoffDate || '');
   const [cutoffTime, setCutoffTime] = useState(cutoffInfo?.cutoffTime || '23:59');
+  const [deliveryDay, setDeliveryDay] = useState(cutoffInfo?.deliveryDay || 'Wednesday');
   const [isSavingCutoff, setIsSavingCutoff] = useState(false);
   const [cutoffSaveMsg, setCutoffSaveMsg] = useState({ msg: '', type: '' });
 
@@ -41,6 +42,7 @@ export default function AdminPortal({
       setCutoffEnabled(Boolean(cutoffInfo.enabled));
       if (cutoffInfo.cutoffDate) setCutoffDate(cutoffInfo.cutoffDate);
       if (cutoffInfo.cutoffTime) setCutoffTime(cutoffInfo.cutoffTime);
+      if (cutoffInfo.deliveryDay) setDeliveryDay(cutoffInfo.deliveryDay);
     }
   }, [cutoffInfo]);
 
@@ -210,7 +212,86 @@ export default function AdminPortal({
     fetchSettings();
   }, [selectedDate, statusFilter]);
 
-  // Handle Cutoff Save with Cross-Device Cloud Sync
+  // Handle Flavor Availability Toggle
+  const handleToggleFlavorAvailability = async (id) => {
+    const updated = products.map((p) =>
+      p.id === id ? { ...p, available: p.available === false ? true : false } : p
+    );
+    onUpdateProducts(updated);
+
+    const availabilityMap = {};
+    updated.forEach(p => {
+      availabilityMap[p.id] = p.available !== false;
+    });
+
+    localStorage.setItem('mani_products', JSON.stringify(updated));
+    localStorage.setItem('mani_flavor_availability', JSON.stringify(availabilityMap));
+
+    // Fast sync to Express backend
+    try {
+      await fetch('/api/admin/flavor-availability', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ flavorAvailability: availabilityMap })
+      });
+    } catch (e) {}
+
+    // Cloud sync to Google Apps Script Web App
+    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      fetch(appsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveSettings',
+          settings: {
+            products: updated,
+            flavorAvailability: availabilityMap
+          }
+        })
+      }).catch(() => {});
+    }
+  };
+
+  const handleBulkFlavorAvailability = async (setAllToAvailable) => {
+    const updated = products.map(p => ({ ...p, available: setAllToAvailable }));
+    onUpdateProducts(updated);
+
+    const availabilityMap = {};
+    updated.forEach(p => {
+      availabilityMap[p.id] = setAllToAvailable;
+    });
+
+    localStorage.setItem('mani_products', JSON.stringify(updated));
+    localStorage.setItem('mani_flavor_availability', JSON.stringify(availabilityMap));
+
+    try {
+      await fetch('/api/admin/flavor-availability', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ flavorAvailability: availabilityMap })
+      });
+    } catch (e) {}
+
+    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      fetch(appsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveSettings',
+          settings: {
+            products: updated,
+            flavorAvailability: availabilityMap
+          }
+        })
+      }).catch(() => {});
+    }
+  };
+
+  // Handle Cutoff & Delivery Day Save with Cross-Device Cloud Sync
   const handleSaveCutoffSettings = async (e) => {
     e.preventDefault();
 
@@ -219,9 +300,10 @@ export default function AdminPortal({
       return;
     }
 
+    const currentDelivery = (deliveryDay || 'Wednesday').trim();
     const confirmMsg = cutoffEnabled
-      ? `Are you sure you want to set the order cutoff to ${cutoffDate} at ${cutoffTime}? Orders will automatically close once this time is reached.`
-      : 'Are you sure you want to DISABLE the cutoff timer? Order submissions will remain open continuously.';
+      ? `Are you sure you want to set the order cutoff to ${cutoffDate} at ${cutoffTime} with delivery on ${currentDelivery}? Orders will automatically close once this time is reached.`
+      : `Are you sure you want to DISABLE the cutoff timer? Order submissions will remain open continuously with delivery on ${currentDelivery}.`;
 
     if (!window.confirm(confirmMsg)) {
       return;
@@ -229,6 +311,11 @@ export default function AdminPortal({
 
     setIsSavingCutoff(true);
     setCutoffSaveMsg({ msg: '', type: '' });
+
+    const availabilityMap = {};
+    products.forEach(p => {
+      availabilityMap[p.id] = p.available !== false;
+    });
 
     // 1. Try local Express backend if running
     try {
@@ -238,7 +325,9 @@ export default function AdminPortal({
         body: JSON.stringify({
           enabled: cutoffEnabled,
           date: cutoffDate,
-          time: cutoffTime
+          time: cutoffTime,
+          deliveryDay: currentDelivery,
+          flavorAvailability: availabilityMap
         })
       });
 
@@ -263,14 +352,18 @@ export default function AdminPortal({
             cutoff: {
               enabled: cutoffEnabled,
               date: cutoffDate,
-              time: cutoffTime
-            }
+              time: cutoffTime,
+              deliveryDay: currentDelivery
+            },
+            deliveryDay: currentDelivery,
+            products,
+            flavorAvailability: availabilityMap
           }
         })
       }).catch(() => {});
 
       // GET sync fast-path
-      fetch(`${appsUrl}?action=saveCutoff&enabled=${cutoffEnabled}&date=${encodeURIComponent(cutoffDate)}&time=${encodeURIComponent(cutoffTime)}`, {
+      fetch(`${appsUrl}?action=saveCutoff&enabled=${cutoffEnabled}&date=${encodeURIComponent(cutoffDate)}&time=${encodeURIComponent(cutoffTime)}&deliveryDay=${encodeURIComponent(currentDelivery)}`, {
         mode: 'no-cors'
       }).catch(() => {});
     }
@@ -279,12 +372,14 @@ export default function AdminPortal({
     localStorage.setItem('mani_cutoff_settings', JSON.stringify({
       enabled: cutoffEnabled,
       date: cutoffDate,
-      time: cutoffTime
+      time: cutoffTime,
+      deliveryDay: currentDelivery,
+      flavorAvailability: availabilityMap
     }));
 
     if (onRefreshCutoff) onRefreshCutoff();
 
-    setCutoffSaveMsg({ msg: 'Cutoff settings saved & synchronized across desktop & mobile devices!', type: 'success' });
+    setCutoffSaveMsg({ msg: 'Cutoff and Delivery Day settings saved & synchronized across desktop & mobile devices!', type: 'success' });
     setTimeout(() => setCutoffSaveMsg({ msg: '', type: '' }), 4000);
     setIsSavingCutoff(false);
   };
@@ -592,7 +687,7 @@ export default function AdminPortal({
             )}
 
             {/* Dashboard Overview Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
               <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200">
                 <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Form Status</span>
                 <div className="text-xl sm:text-2xl font-black text-amber-950 mt-1">
@@ -613,6 +708,17 @@ export default function AdminPortal({
                 </p>
               </div>
 
+              <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200">
+                <span className="text-xs font-bold text-blue-800 uppercase tracking-wider">Delivery Day</span>
+                <div className="text-xl sm:text-2xl font-black text-blue-950 mt-1 flex items-center gap-1.5 truncate">
+                  <span className="text-xl">🚚</span>
+                  <span className="truncate">{deliveryDay || 'Wednesday'}</span>
+                </div>
+                <p className="text-[11px] text-mani-600 mt-1 font-medium">
+                  Displayed live in customer cutoff banners
+                </p>
+              </div>
+
               <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
                 <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Timezone Standard</span>
                 <div className="text-xl sm:text-2xl font-black text-emerald-950 mt-1">
@@ -625,7 +731,7 @@ export default function AdminPortal({
             </div>
 
             {/* Form Settings */}
-            <form onSubmit={handleSaveCutoffSettings} className="space-y-5 pt-2">
+            <form onSubmit={handleSaveCutoffSettings} className="space-y-6 pt-2">
               {/* Enable / Disable Switch */}
               <div className="p-4 rounded-2xl bg-cream border border-mani-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -649,8 +755,8 @@ export default function AdminPortal({
                 </button>
               </div>
 
-              {/* Date & Time Pickers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Date, Time & Delivery Day Pickers */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-amber-600" />
@@ -678,6 +784,135 @@ export default function AdminPortal({
                     className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all disabled:opacity-50 disabled:bg-mani-50"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
+                    <span>🚚</span>
+                    Delivery Day <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={deliveryDay}
+                    onChange={(e) => setDeliveryDay(e.target.value)}
+                    placeholder="e.g., Wednesday"
+                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white font-semibold"
+                  />
+                  {/* Preset quick pills */}
+                  <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                    {['Wednesday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => setDeliveryDay(day)}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                          deliveryDay === day
+                            ? 'bg-amber-600 text-white border-amber-600'
+                            : 'bg-white text-mani-700 border-mani-200 hover:border-amber-400'
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Flavor Availability Section */}
+              <div className="pt-4 border-t border-mani-200/80 space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <h4 className="text-sm font-black text-mani-900 flex items-center gap-2">
+                      <span>🥜</span>
+                      Flavor Availability Controls
+                    </h4>
+                    <p className="text-xs text-mani-600 font-medium">
+                      Control whether each flavor can be selected on the customer order form. Unavailable flavors are disabled with an “Unavailable” badge.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => handleBulkFlavorAvailability(true)}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold hover:bg-emerald-100 transition-colors cursor-pointer"
+                    >
+                      🟢 Enable All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkFlavorAvailability(false)}
+                      className="px-2.5 py-1 rounded-lg bg-red-50 text-red-800 border border-red-300 font-bold hover:bg-red-100 transition-colors cursor-pointer"
+                    >
+                      🔴 Disable All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {products.map((p) => {
+                    const isAvail = p.available !== false;
+                    return (
+                      <div
+                        key={p.id}
+                        className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                          isAvail
+                            ? 'bg-white border-mani-200 shadow-xs'
+                            : 'bg-red-50/50 border-red-200/90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-2xl shrink-0">{p.icon || '🥜'}</span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-extrabold text-sm text-mani-900 truncate">
+                                {p.name}
+                              </span>
+                              {p.badge && (
+                                <span className="text-[9px] font-bold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded">
+                                  {p.badge}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-xs font-bold text-mani-700">
+                                {formatPHP(p.price)}
+                              </span>
+                              <span
+                                className={`text-[10px] font-black px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                                  isAvail
+                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                    : 'bg-red-100 text-red-800 border-red-300'
+                                }`}
+                              >
+                                <span>{isAvail ? '🟢 Available' : '🔴 Unavailable'}</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Individual ON / OFF Toggle Switch */}
+                        <div className="flex flex-col items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleFlavorAvailability(p.id)}
+                            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                              isAvail ? 'bg-emerald-600' : 'bg-red-400'
+                            }`}
+                            title={`Click to mark ${p.name} as ${isAvail ? 'Unavailable' : 'Available'}`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                isAvail ? 'translate-x-5' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+                          <span className="text-[9px] font-black tracking-wider uppercase text-mani-600">
+                            {isAvail ? 'ON' : 'OFF'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Save Button */}
@@ -688,7 +923,7 @@ export default function AdminPortal({
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-black text-xs sm:text-sm shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   <Check className="w-4 h-4" />
-                  <span>{isSavingCutoff ? 'Saving Cutoff Settings...' : 'Save Cutoff Settings'}</span>
+                  <span>{isSavingCutoff ? 'Saving Settings...' : 'Save Cutoff & Delivery Settings'}</span>
                 </button>
               </div>
             </form>
@@ -944,6 +1179,7 @@ export default function AdminPortal({
                   { name: 'Spicy', qty: dailySummary.spicy, icon: '🌶️' },
                   { name: 'BBQ', qty: dailySummary.bbq, icon: '🔥' },
                   { name: 'Sour Cream', qty: dailySummary.sourCream, icon: '🥛' },
+                  { name: 'Cheese', qty: dailySummary.cheese, icon: '🧀' },
                   { name: 'Bawang Only', qty: dailySummary.bawangOnly, icon: '🧄' }
                 ].map((fl) => (
                   <div key={fl.name} className="bg-cream p-3 rounded-xl border border-mani-100 flex items-center justify-between">
@@ -1035,14 +1271,14 @@ export default function AdminPortal({
 
                     <button
                       type="button"
-                      onClick={() => handleToggleProduct(p.id)}
-                      className={`text-xs font-bold px-2.5 py-1 rounded-xl transition-colors cursor-pointer ${
+                      onClick={() => handleToggleFlavorAvailability(p.id)}
+                      className={`text-xs font-black px-3 py-1 rounded-xl transition-all cursor-pointer border ${
                         p.available !== false
-                          ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                          : 'bg-red-100 text-red-800 hover:bg-red-200'
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200'
+                          : 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'
                       }`}
                     >
-                      {p.available !== false ? 'In Stock' : 'Out of Stock'}
+                      {p.available !== false ? '🟢 Available' : '🔴 Unavailable'}
                     </button>
                   </div>
                 </div>

@@ -79,7 +79,7 @@ export default function TopCutoffAlertBar({ cutoffInfo, onRefreshCutoff }) {
             </span>
             <span className="font-extrabold tracking-wide uppercase text-red-200">Orders Closed:</span>
             <span className="text-white/95 font-medium">
-              The order cutoff has ended. We are currently preparing active orders.
+              The order cutoff has ended. Preparing active orders for delivery on <span className="font-bold underline decoration-red-300">{cutoffInfo?.deliveryDay || 'Wednesday'}</span>.
             </span>
           </div>
           <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-[11px] font-black uppercase tracking-wider text-red-100 shrink-0">
@@ -98,7 +98,7 @@ export default function TopCutoffAlertBar({ cutoffInfo, onRefreshCutoff }) {
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
           {/* Left: Deadline message */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center shrink-0 animate-pulse">
               <Clock className="w-3 h-3 text-amber-950" />
             </span>
@@ -107,6 +107,10 @@ export default function TopCutoffAlertBar({ cutoffInfo, onRefreshCutoff }) {
             </span>
             <span className="text-white font-semibold">
               Orders close on <span className="underline decoration-amber-300 font-bold">{cutoffInfo.cutoffDate}</span> at <span className="underline decoration-amber-300 font-bold">{format12Hour(cutoffInfo.cutoffTime)}</span> (PHT)
+              <span className="mx-2 text-amber-300/80">•</span>
+              <span className="inline-flex items-center gap-1 font-black text-amber-100 bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-300/30">
+                🚚 Delivery: {cutoffInfo.deliveryDay || 'Wednesday'}
+              </span>
             </span>
           </div>
 
@@ -136,7 +140,9 @@ export default function TopCutoffAlertBar({ cutoffInfo, onRefreshCutoff }) {
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
           <span className="font-extrabold uppercase tracking-wider text-emerald-200">Orders Open:</span>
-          <span className="text-emerald-50 font-medium">Fresh artisanal batches available. Place your order now!</span>
+          <span className="text-emerald-50 font-medium">
+            Fresh artisanal batches available. Next delivery: <span className="font-bold underline">{cutoffInfo?.deliveryDay || 'Wednesday'}</span>.
+          </span>
         </div>
         <span className="text-[11px] font-bold text-emerald-200 underline hidden sm:inline">Order Now &rarr;</span>
       </div>

@@ -83,6 +83,11 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
             </h3>
             <p className="text-xs sm:text-sm text-emerald-800 font-medium">
               Fresh artisanal roasted peanuts are prepared daily. Select your flavors and submit your order anytime.
+              {cutoffInfo?.deliveryDay && (
+                <span className="block mt-1 text-emerald-950 font-bold">
+                  🚚 Delivery Day: {cutoffInfo.deliveryDay}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -109,7 +114,12 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
               The order cutoff has ended. We are no longer accepting orders for this batch.
             </h3>
             <p className="text-xs sm:text-sm text-red-900/80 font-medium">
-              Orders are closed so our team can roast and prepare everyone's packages. Please check back next batch!
+              Orders are closed so our team can roast and prepare everyone's packages.
+              {cutoffInfo?.deliveryDay && (
+                <span className="block mt-1 text-red-950 font-bold">
+                  🚚 Scheduled Delivery Day: {cutoffInfo.deliveryDay}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -145,7 +155,8 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
             </div>
 
             <h3 className="text-lg sm:text-xl font-black text-mani-950 tracking-tight">
-              Order before the cutoff time to get your freshly roasted batch!
+              Orders close on {formatDateNice(cutoffInfo?.cutoffDate)}, {formatNormalTime(cutoffInfo?.cutoffTime)}
+              {cutoffInfo?.deliveryDay ? ` • Delivery on ${cutoffInfo.deliveryDay}` : ''}
             </h3>
 
             <div className="flex items-center gap-3 justify-center sm:justify-start text-xs sm:text-sm text-mani-700 font-semibold flex-wrap">
@@ -157,6 +168,12 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
                 <Clock className="w-3.5 h-3.5 text-amber-600" />
                 <strong className="text-mani-900">{formatNormalTime(cutoffInfo?.cutoffTime)} PHT</strong>
               </span>
+              {cutoffInfo?.deliveryDay && (
+                <span className="flex items-center gap-1.5 bg-amber-500 text-white px-3 py-1 rounded-xl border border-amber-600 shadow-xs font-black">
+                  <span>🚚</span>
+                  <span>Delivery on {cutoffInfo.deliveryDay}</span>
+                </span>
+              )}
             </div>
           </div>
         </div>

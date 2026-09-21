@@ -2,6 +2,12 @@
   "spreadsheetId": "1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI",
   "appsScriptUrl": "https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec",
   "timezone": "Asia/Manila",
+  "cutoff": {
+    "enabled": true,
+    "date": "2026-09-30",
+    "time": "23:59",
+    "deliveryDay": "Wednesday"
+  },
   "deliveryDay": "Wednesday",
   "flavorAvailability": {
     "salted": true,
@@ -11,11 +17,5 @@
     "sour-cream": true,
     "cheese": true,
     "bawang-only": true
-  },
-  "cutoff": {
-    "enabled": false,
-    "date": "2026-09-17",
-    "time": "23:59",
-    "deliveryDay": "Wednesday"
   }
 }

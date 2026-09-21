@@ -14,7 +14,19 @@ import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock, Clock } from 
 
 export default function App() {
   const [currentView, setCurrentView] = useState('order'); // 'order' or 'admin'
-  const [products, setProducts] = useState(DEFAULT_PRODUCTS);
+  const [products, setProducts] = useState(() => {
+    try {
+      const savedProds = JSON.parse(localStorage.getItem('mani_products') || 'null');
+      const savedAvailability = JSON.parse(localStorage.getItem('mani_flavor_availability') || 'null');
+      let base = Array.isArray(savedProds) && savedProds.length > 0 ? savedProds : DEFAULT_PRODUCTS;
+      if (savedAvailability && typeof savedAvailability === 'object') {
+        base = base.map(p => savedAvailability[p.id] !== undefined ? { ...p, available: Boolean(savedAvailability[p.id]) } : p);
+      }
+      return base;
+    } catch (e) {
+      return DEFAULT_PRODUCTS;
+    }
+  });
   
   // Admin Authentication State
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -36,7 +48,8 @@ export default function App() {
       const conf = saved || {
         enabled: true,
         date: manilaDateStr,
-        time: '23:59'
+        time: '23:59',
+        deliveryDay: 'Wednesday'
       };
       const normalizedTime = conf.time?.length === 5 ? `${conf.time}:00` : (conf.time || '23:59:00');
       const cutoffIso = conf.date ? `${conf.date}T${normalizedTime}+08:00` : null;
@@ -50,6 +63,8 @@ export default function App() {
         status,
         cutoffDate: conf.date,
         cutoffTime: conf.time,
+        deliveryDay: conf.deliveryDay || 'Wednesday',
+        flavorAvailability: conf.flavorAvailability || null,
         timezone: 'Asia/Manila',
         serverTime: now.toISOString(),
         remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
@@ -99,13 +114,22 @@ export default function App() {
   const [submissionError, setSubmissionError] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
+  // Reset cart quantities for any unavailable flavors
+  useEffect(() => {
+    products.forEach((p) => {
+      if (p.available === false && quantities[p.id] > 0) {
+        setQuantities((prev) => ({ ...prev, [p.id]: 0 }));
+      }
+    });
+  }, [products]);
+
   // Apply cloud settings payload to React states & local cache
   const applyCloudSettings = (settings, serverTimeStr) => {
     if (!settings) return;
 
-    // 1. Synchronize Cutoff Settings
-    if (settings.cutoff) {
-      const saved = settings.cutoff;
+    // 1. Synchronize Cutoff Settings & Delivery Day
+    if (settings.cutoff || settings.deliveryDay) {
+      const saved = settings.cutoff || {};
       const now = serverTimeStr ? new Date(serverTimeStr) : new Date();
       const normalizedTime = saved.time?.length === 5 ? `${saved.time}:00` : (saved.time || '23:59:00');
       const cutoffIso = saved.date ? `${saved.date}T${normalizedTime}+08:00` : null;
@@ -113,6 +137,7 @@ export default function App() {
       const diffSec = cutoffTimestamp ? Math.floor((cutoffTimestamp - now.getTime()) / 1000) : null;
       const isOpen = saved.enabled ? (diffSec > 0) : true;
       const status = !saved.enabled ? 'OPEN' : (isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED');
+      const deliveryDay = settings.deliveryDay || saved.deliveryDay || 'Wednesday';
 
       setCutoffInfo({
         enabled: Boolean(saved.enabled),
@@ -120,22 +145,40 @@ export default function App() {
         status,
         cutoffDate: saved.date,
         cutoffTime: saved.time,
+        deliveryDay,
+        flavorAvailability: saved.flavorAvailability || settings.flavorAvailability || null,
         timezone: 'Asia/Manila',
         serverTime: now.toISOString(),
         remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
         cutoffIso
       });
 
-      localStorage.setItem('mani_cutoff_settings', JSON.stringify(saved));
+      localStorage.setItem('mani_cutoff_settings', JSON.stringify({
+        ...saved,
+        deliveryDay
+      }));
     }
 
-    // 2. Synchronize Products & Pricing
+    // 2. Synchronize Flavor Availability
+    if (settings.flavorAvailability && typeof settings.flavorAvailability === 'object') {
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (settings.flavorAvailability[p.id] !== undefined) {
+            return { ...p, available: Boolean(settings.flavorAvailability[p.id]) };
+          }
+          return p;
+        })
+      );
+      localStorage.setItem('mani_flavor_availability', JSON.stringify(settings.flavorAvailability));
+    }
+
+    // 3. Synchronize Products & Pricing
     if (Array.isArray(settings.products) && settings.products.length > 0) {
       setProducts(settings.products);
       localStorage.setItem('mani_products', JSON.stringify(settings.products));
     }
 
-    // 3. Synchronize Payment QR Codes & GCash Number
+    // 4. Synchronize Payment QR Codes & GCash Number
     if (settings.qrs && typeof settings.qrs === 'object') {
       setCustomQrs((prev) => ({ ...prev, ...settings.qrs }));
       localStorage.setItem('mani_qr_config_v2', JSON.stringify(settings.qrs));
@@ -161,6 +204,8 @@ export default function App() {
           status,
           cutoffDate: saved.date,
           cutoffTime: saved.time,
+          deliveryDay: saved.deliveryDay || 'Wednesday',
+          flavorAvailability: saved.flavorAvailability || null,
           timezone: 'Asia/Manila',
           serverTime: now.toISOString(),
           remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
@@ -180,6 +225,16 @@ export default function App() {
         const data = await res.json();
         if (data && data.status) {
           setCutoffInfo(data);
+          if (data.flavorAvailability && typeof data.flavorAvailability === 'object') {
+            setProducts((prev) =>
+              prev.map((p) => {
+                if (data.flavorAvailability[p.id] !== undefined) {
+                  return { ...p, available: Boolean(data.flavorAvailability[p.id]) };
+                }
+                return p;
+              })
+            );
+          }
           return;
         }
       }
@@ -327,6 +382,10 @@ export default function App() {
   };
 
   const handleQuantityChange = (productId, newQty) => {
+    const prod = products.find((p) => p.id === productId);
+    if (prod && prod.available === false && newQty > 0) {
+      return;
+    }
     setQuantities((prev) => ({
       ...prev,
       [productId]: Math.max(0, newQty)

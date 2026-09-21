@@ -183,6 +183,8 @@
       }, [customQrs]);
 
       const handleQty = (id, change) => {
+        const prod = products.find(p => p.id === id);
+        if (prod && prod.available === false && change > 0) return;
         setQuantities(prev => ({
           ...prev,
           [id]: Math.max(0, (prev[id] || 0) + change)
@@ -426,6 +428,33 @@
                   </div>
                 </div>
 
+                {/* Flavor Availability Section */}
+                <div className="bg-white rounded-3xl p-5 border border-mani-200 shadow-sm space-y-3">
+                  <h3 className="text-sm font-bold text-mani-900 flex items-center justify-between">
+                    <span>🥜 Flavor Availability Controls</span>
+                    <span className="text-xs text-mani-500 font-normal">Toggle ON/OFF for customer ordering</span>
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {products.map(p => {
+                      const isAvail = p.available !== false;
+                      return (
+                        <div key={p.id} className="p-2.5 rounded-xl border flex items-center justify-between gap-2 bg-mani-50/50">
+                          <span className="text-xs font-bold truncate">{p.icon} {p.name}</span>
+                          <button
+                            onClick={() => {
+                              const updated = products.map(prod => prod.id === p.id ? { ...prod, available: !isAvail } : prod);
+                              setProducts(updated);
+                            }}
+                            className={"text-[11px] font-black px-2 py-0.5 rounded-md border cursor-pointer " + (isAvail ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-red-100 text-red-800 border-red-300")}
+                          >
+                            {isAvail ? "🟢 ON" : "🔴 OFF"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Orders List */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-bold text-mani-900 uppercase tracking-wider text-xs">
@@ -572,18 +601,30 @@
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
                     {products.map((p) => {
+                      const isAvail = p.available !== false;
                       const qty = quantities[p.id] || 0;
                       return (
                         <div
                           key={p.id}
                           className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
-                            qty > 0 ? 'bg-amber-50/50 border-amber-400 shadow-md ring-1 ring-amber-300' : 'bg-white border-mani-200 shadow-sm'
+                            !isAvail
+                              ? 'bg-stone-50 border-stone-200 opacity-70'
+                              : qty > 0
+                              ? 'bg-amber-50/50 border-amber-400 shadow-md ring-1 ring-amber-300'
+                              : 'bg-white border-mani-200 shadow-sm'
                           }`}
                         >
                           <div>
                             {p.image && (
                               <div className="relative w-full h-36 mb-2.5 rounded-xl overflow-hidden bg-amber-100/50 border border-amber-200">
                                 <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                                {!isAvail && (
+                                  <div className="absolute inset-0 bg-stone-900/60 backdrop-blur-[1px] flex items-center justify-center">
+                                    <span className="bg-red-600 text-white font-black text-xs px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                                      Unavailable
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             )}
                             <div className="flex justify-between items-start mb-1.5">
@@ -594,32 +635,42 @@
                                   <span className="text-xs font-bold text-amber-800">{formatPHP(p.price)} / pack</span>
                                 </div>
                               </div>
-                              {p.badge && (
+                              {!isAvail ? (
+                                <span className="text-[10px] uppercase font-black bg-red-100 text-red-700 px-1.5 py-0.5 rounded border border-red-200">
+                                  Unavailable
+                                </span>
+                              ) : p.badge ? (
                                 <span className="text-[10px] uppercase font-bold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded">
                                   {p.badge}
                                 </span>
-                              )}
+                              ) : null}
                             </div>
                             <p className="text-xs text-mani-600 mb-3">{p.description}</p>
                           </div>
 
                           <div className="flex items-center justify-between pt-2 border-t border-mani-100">
                             <span className="text-xs font-bold text-mani-600">Qty:</span>
-                            <div className="flex items-center gap-2 bg-mani-50 p-1 rounded-xl border border-mani-200">
-                              <button
-                                onClick={() => handleQty(p.id, -1)}
-                                className="w-8 h-8 rounded-lg bg-white text-mani-800 font-bold shadow-xs border border-mani-200 flex items-center justify-center active:scale-95"
-                              >
-                                -
-                              </button>
-                              <span className="w-8 text-center text-sm font-black text-mani-900">{qty}</span>
-                              <button
-                                onClick={() => handleQty(p.id, 1)}
-                                className="w-8 h-8 rounded-lg bg-amber-500 text-white font-bold shadow-xs flex items-center justify-center active:scale-95"
-                              >
-                                +
-                              </button>
-                            </div>
+                            {!isAvail ? (
+                              <span className="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-xl border border-red-200">
+                                Unavailable
+                              </span>
+                            ) : (
+                              <div className="flex items-center gap-2 bg-mani-50 p-1 rounded-xl border border-mani-200">
+                                <button
+                                  onClick={() => handleQty(p.id, -1)}
+                                  className="w-8 h-8 rounded-lg bg-white text-mani-800 font-bold shadow-xs border border-mani-200 flex items-center justify-center active:scale-95 cursor-pointer"
+                                >
+                                  -
+                                </button>
+                                <span className="w-8 text-center text-sm font-black text-mani-900">{qty}</span>
+                                <button
+                                  onClick={() => handleQty(p.id, 1)}
+                                  className="w-8 h-8 rounded-lg bg-amber-500 text-white font-bold shadow-xs flex items-center justify-center active:scale-95 cursor-pointer"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );

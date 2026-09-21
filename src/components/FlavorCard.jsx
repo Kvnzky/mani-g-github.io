@@ -100,9 +100,13 @@ export default function FlavorCard({ product, quantity, onQuantityChange }) {
         <span className="text-xs font-semibold text-mani-600">Quantity</span>
 
         {!isAvailable ? (
-          <span className="text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded-md">
-            Out of Stock
-          </span>
+          <button
+            type="button"
+            disabled
+            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gray-100 text-gray-400 font-bold text-xs sm:text-sm cursor-not-allowed border border-gray-200"
+          >
+            Unavailable
+          </button>
         ) : quantity === 0 ? (
           <button
             type="button"
