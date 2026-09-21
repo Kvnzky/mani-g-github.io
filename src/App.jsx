@@ -12,8 +12,42 @@ import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qr
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
 import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock, Clock } from 'lucide-react';
 
+// Helper to detect if current URL or hash targets the admin route
+const parseAdminRoute = () => {
+  if (typeof window === 'undefined') return { isAdmin: false, subroute: '' };
+  const pathname = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
+
+  let isAdmin = false;
+  let subroute = '';
+
+  const adminPathIndex = pathname.indexOf('/admin');
+  if (adminPathIndex !== -1) {
+    isAdmin = true;
+    const afterAdmin = pathname.substring(adminPathIndex + 6).replace(/^\/+|\/+$/g, '');
+    subroute = afterAdmin.split('/')[0] || '';
+  } else if (hash.startsWith('admin')) {
+    isAdmin = true;
+    const afterAdmin = hash.replace(/^admin\/?/, '').replace(/^\/+|\/+$/g, '');
+    subroute = afterAdmin.split('/')[0] || '';
+  }
+
+  return { isAdmin, subroute };
+};
+
 export default function App() {
-  const [currentView, setCurrentView] = useState('order'); // 'order' or 'admin'
+  const initialRoute = parseAdminRoute();
+  const initialToken = typeof window !== 'undefined' ? (sessionStorage.getItem('mani_admin_token') || '') : '';
+
+  const [currentView, setCurrentView] = useState(() => initialRoute.isAdmin ? 'admin' : 'order');
+  const [adminTab, setAdminTab] = useState(() => {
+    if (initialRoute.isAdmin && initialRoute.subroute) {
+      if (initialRoute.subroute === 'settings' || initialRoute.subroute === 'availability') return 'cutoff';
+      return initialRoute.subroute;
+    }
+    return 'cutoff';
+  });
+
   const [products, setProducts] = useState(() => {
     try {
       const savedProds = JSON.parse(localStorage.getItem('mani_products') || 'null');
@@ -29,8 +63,8 @@ export default function App() {
   });
   
   // Admin Authentication State
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [adminToken, setAdminToken] = useState(() => sessionStorage.getItem('mani_admin_token') || '');
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(() => initialRoute.isAdmin && !initialToken);
+  const [adminToken, setAdminToken] = useState(initialToken);
   const [adminUser, setAdminUser] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem('mani_admin_user') || 'null');
@@ -308,29 +342,141 @@ export default function App() {
     };
   }, []);
 
-  // Check auth if user tries to enter admin view
+  // Synchronize route & auth guard when URL or hash changes (browser Back/Forward/Manual navigation)
   useEffect(() => {
-    if (currentView === 'admin' && !adminToken) {
+    const handleLocationChange = () => {
+      const route = parseAdminRoute();
+      const token = sessionStorage.getItem('mani_admin_token') || '';
+
+      if (route.isAdmin) {
+        if (token) {
+          // Authenticated Admin access
+          setCurrentView('admin');
+          setIsLoginModalOpen(false);
+          if (route.subroute) {
+            const mappedTab = (route.subroute === 'settings' || route.subroute === 'availability') ? 'cutoff' : route.subroute;
+            setAdminTab(mappedTab);
+          }
+        } else {
+          // Unauthenticated Admin access: redirect/normalize subroutes to /admin and prompt login
+          const pathname = window.location.pathname.toLowerCase();
+          const adminPathIndex = pathname.indexOf('/admin');
+          if (route.subroute) {
+            if (window.location.hash.includes('admin')) {
+              window.history.replaceState(null, '', '#/admin');
+            } else if (adminPathIndex !== -1) {
+              const basePath = pathname.substring(0, adminPathIndex) || '';
+              window.history.replaceState(null, '', `${basePath}/admin`);
+            }
+          }
+          setCurrentView('admin');
+          setIsLoginModalOpen(true);
+        }
+      } else {
+        // Customer store view (100% guest-ordering)
+        setCurrentView('order');
+        setIsLoginModalOpen(false);
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
+
+  const navigateTo = (view, tab = '') => {
+    const isHashMode = window.location.hash.includes('admin') || (!window.location.pathname.includes('/admin') && Boolean(window.location.hash));
+
+    if (view === 'admin') {
+      const activeAdminTab = tab || adminTab || 'cutoff';
+      const sub = (activeAdminTab === 'cutoff' || activeAdminTab === 'settings') ? 'settings' : activeAdminTab;
+
+      if (adminToken) {
+        setCurrentView('admin');
+        setIsLoginModalOpen(false);
+        setAdminTab(activeAdminTab);
+        if (isHashMode) {
+          window.location.hash = `/admin/${sub}`;
+        } else {
+          window.history.pushState(null, '', `/admin/${sub}`);
+        }
+      } else {
+        // Unauthenticated access: prompt login modal at /admin
+        setCurrentView('admin');
+        setIsLoginModalOpen(true);
+        if (isHashMode) {
+          window.location.hash = '/admin';
+        } else {
+          window.history.pushState(null, '', '/admin');
+        }
+      }
+    } else {
+      // view === 'order' (customer guest store)
       setCurrentView('order');
-      setIsLoginModalOpen(true);
+      setIsLoginModalOpen(false);
+      if (window.location.hash) {
+        window.history.pushState(null, '', window.location.pathname || '/');
+      } else {
+        window.history.pushState(null, '', '/');
+      }
     }
-  }, [currentView, adminToken]);
+  };
+
+  const handleAdminTabChange = (tabId) => {
+    setAdminTab(tabId);
+    const routeSegment = tabId === 'cutoff' ? 'settings' : tabId;
+    const isHashMode = window.location.hash.includes('admin') || (!window.location.pathname.includes('/admin') && Boolean(window.location.hash));
+    if (isHashMode) {
+      window.location.hash = `/admin/${routeSegment}`;
+    } else {
+      window.history.pushState(null, '', `/admin/${routeSegment}`);
+    }
+  };
 
   const handleLoginSuccess = (token, user) => {
     setAdminToken(token);
     setAdminUser(user);
+    setIsLoginModalOpen(false);
     setCurrentView('admin');
+    const sub = (adminTab === 'cutoff' || adminTab === 'settings') ? 'settings' : adminTab;
+    const isHashMode = window.location.hash.includes('admin');
+    if (isHashMode) {
+      window.location.hash = `/admin/${sub}`;
+    } else {
+      window.history.replaceState(null, '', `/admin/${sub}`);
+    }
   };
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', { method: 'POST' });
+      await fetch('/api/admin/logout', { 
+        method: 'POST',
+        headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {}
+      });
     } catch (e) {}
     sessionStorage.removeItem('mani_admin_token');
     sessionStorage.removeItem('mani_admin_user');
     setAdminToken('');
     setAdminUser(null);
-    setCurrentView('order');
+    setCurrentView('admin');
+    setIsLoginModalOpen(true);
+    const isHashMode = window.location.hash.includes('admin');
+    if (isHashMode) {
+      window.location.hash = '/admin';
+    } else {
+      window.history.replaceState(null, '', '/admin');
+    }
+  };
+
+  const handleCloseLoginModal = () => {
+    setIsLoginModalOpen(false);
+    if (!adminToken) {
+      // If user closes admin login modal while unauthenticated, redirect to customer store
+      navigateTo('order');
+    }
   };
 
   const handleUpdateProducts = (newProducts) => {
@@ -596,11 +742,11 @@ export default function App() {
       <Header
         currentView={currentView}
         setCurrentView={setCurrentView}
+        onNavigate={navigateTo}
         totalItems={totalPacks}
         onOpenCart={() => setIsDrawerOpen(true)}
         isAdminAuthenticated={Boolean(adminToken)}
         adminUser={adminUser}
-        onOpenLoginModal={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
         cutoffInfo={cutoffInfo}
       />
@@ -618,7 +764,36 @@ export default function App() {
             onLogout={handleLogout}
             cutoffInfo={cutoffInfo}
             onRefreshCutoff={fetchCutoff}
+            activeTab={adminTab}
+            onTabChange={handleAdminTabChange}
           />
+        ) : currentView === 'admin' && !adminToken ? (
+          /* Dedicated unauthenticated /admin screen holding the AdminLoginModal */
+          <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4 animate-fade-in">
+            <div className="w-16 h-16 rounded-3xl bg-amber-100 text-amber-900 mx-auto flex items-center justify-center border border-amber-300 shadow-sm">
+              <Lock className="w-8 h-8 text-amber-700" />
+            </div>
+            <h2 className="text-2xl font-black text-mani-950">Admin Access Required</h2>
+            <p className="text-xs sm:text-sm text-mani-600 font-medium">
+              Please sign in with authorized administrator credentials to manage orders, products, and store settings.
+            </p>
+            <div className="pt-2 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsLoginModalOpen(true)}
+                className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer"
+              >
+                Open Admin Login
+              </button>
+              <button
+                type="button"
+                onClick={() => navigateTo('order')}
+                className="px-4 py-2.5 rounded-xl bg-white hover:bg-mani-100 text-mani-700 font-bold text-xs sm:text-sm border border-mani-200 transition-all cursor-pointer"
+              >
+                Return to Store
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
             {/* Friendly Hero Banner */}
@@ -881,7 +1056,7 @@ export default function App() {
       {/* Login Modal */}
       <AdminLoginModal
         isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
+        onClose={handleCloseLoginModal}
         onLoginSuccess={handleLoginSuccess}
       />
 

@@ -16,9 +16,19 @@ export default function AdminPortal({
   adminUser, 
   onLogout,
   cutoffInfo,
-  onRefreshCutoff
+  onRefreshCutoff,
+  activeTab: controlledTab,
+  onTabChange
 }) {
-  const [activeTab, setActiveTab] = useState('cutoff'); // 'cutoff', 'orders', 'summary', 'products', 'qrs', 'sheets'
+  const [internalTab, setInternalTab] = useState('cutoff');
+  const activeTab = controlledTab || internalTab;
+
+  const handleTabClick = (tabId) => {
+    setInternalTab(tabId);
+    if (onTabChange) {
+      onTabChange(tabId);
+    }
+  };
   const [orders, setOrders] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
   const [selectedDate, setSelectedDate] = useState('');
@@ -625,7 +635,7 @@ export default function AdminPortal({
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                 isActive
                   ? 'bg-mani-900 text-amber-200 shadow-sm shadow-mani-900/10'

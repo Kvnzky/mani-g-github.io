@@ -4,11 +4,11 @@ import { ShoppingBag, ShieldCheck, Sparkles, Lock, LogIn, LogOut, User, Clock } 
 export default function Header({ 
   currentView, 
   setCurrentView, 
+  onNavigate,
   totalItems, 
   onOpenCart,
   isAdminAuthenticated,
   adminUser,
-  onOpenLoginModal,
   onLogout,
   cutoffInfo
 }) {
@@ -45,7 +45,7 @@ export default function Header({
         <div className="flex items-center justify-between">
           {/* Logo & Branding */}
           <div 
-            onClick={() => setCurrentView('order')}
+            onClick={() => onNavigate ? onNavigate('order') : setCurrentView('order')}
             className="cursor-pointer flex items-center gap-2.5 sm:gap-3 group"
           >
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-50/90 flex items-center justify-center p-0.5 shadow-md shadow-amber-900/10 group-hover:scale-105 transition-transform duration-200 border border-amber-200 overflow-hidden shrink-0">
@@ -110,7 +110,7 @@ export default function Header({
             {isAdminAuthenticated ? (
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => setCurrentView(currentView === 'admin' ? 'order' : 'admin')}
+                  onClick={() => onNavigate ? onNavigate(currentView === 'admin' ? 'order' : 'admin') : setCurrentView(currentView === 'admin' ? 'order' : 'admin')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
                     currentView === 'admin'
                       ? 'bg-mani-900 text-amber-200 border-mani-900 shadow-inner'
@@ -131,17 +131,7 @@ export default function Header({
                   <span className="hidden md:inline">Logout</span>
                 </button>
               </div>
-            ) : (
-              /* If Not Authenticated: Show Login Button */
-              <button
-                onClick={onOpenLoginModal}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold text-mani-700 bg-cream-warm hover:bg-mani-100 border border-mani-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                title="Login"
-              >
-                <Lock className="w-3.5 h-3.5 text-amber-600" />
-                <span>Login</span>
-              </button>
-            )}
+            ) : null}
 
             {/* Customer Cart Button (only visible in ordering view) */}
             {currentView === 'order' && (
