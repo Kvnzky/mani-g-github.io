@@ -1100,7 +1100,7 @@ export default function AdminPortal({
                           </span>
                         </div>
                         <div className="text-[11px] text-mani-600 font-medium">
-                          {ord.totalPacks} pack{ord.totalPacks > 1 ? 's' : ''} total
+                          {ord.totalPacks} tub{ord.totalPacks > 1 ? 's' : ''} total
                         </div>
                       </div>
                     </div>
@@ -1154,7 +1154,7 @@ export default function AdminPortal({
               </div>
 
               <div className="p-4 rounded-2xl bg-orange-50 border border-orange-200">
-                <span className="text-xs font-bold text-orange-800 uppercase tracking-wider">Total Packs</span>
+                <span className="text-xs font-bold text-orange-800 uppercase tracking-wider">Total Tubs</span>
                 <div className="text-2xl sm:text-3xl font-black text-orange-950 mt-1">{dailySummary.totalPacks}</div>
               </div>
 
@@ -1181,7 +1181,7 @@ export default function AdminPortal({
             {/* Flavor breakdown count */}
             <div>
               <h4 className="text-xs font-extrabold uppercase tracking-wider text-mani-500 mb-2.5">
-                Packs by Flavor:
+                Tubs by Flavor:
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {[

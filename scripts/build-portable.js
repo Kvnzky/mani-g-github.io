@@ -236,7 +236,7 @@ const htmlTemplate = `<!DOCTYPE html>
           errs.paymentMethod = 'Please select a mode of payment';
         }
         if (totalPacks === 0) {
-          errs.items = 'Please select at least 1 pack of Mani';
+          errs.items = 'Please select at least 1 tub of Mani';
         }
         setErrors(errs);
         return Object.keys(errs).length === 0;
@@ -553,7 +553,7 @@ const htmlTemplate = `<!DOCTYPE html>
                           <div>
                             <span className="text-mani-500 block">Total & Payment:</span>
                             <span className="font-bold text-amber-800 text-sm">{formatPHP(ord.subtotal)}</span>
-                            <div className="text-mani-600">{ord.totalPacks} packs • {ord.paymentMethod}</div>
+                            <div className="text-mani-600">{ord.totalPacks} tubs • {ord.paymentMethod}</div>
                           </div>
                         </div>
 
@@ -601,7 +601,7 @@ const htmlTemplate = `<!DOCTYPE html>
                   <div className="lg:col-span-7 space-y-4">
                     <h3 className="text-sm font-extrabold text-mani-900 flex items-center justify-between">
                       <span className="flex items-center gap-1.5"><span>🥜</span> Available Flavors</span>
-                      <span className="text-xs text-amber-800 font-bold bg-amber-100 px-2.5 py-1 rounded-full border border-amber-200">{totalPacks} packs chosen</span>
+                      <span className="text-xs text-amber-800 font-bold bg-amber-100 px-2.5 py-1 rounded-full border border-amber-200">{totalPacks} tubs chosen</span>
                     </h3>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -637,7 +637,7 @@ const htmlTemplate = `<!DOCTYPE html>
                                 {!p.image && <span className="text-3xl">{p.icon}</span>}
                                 <div>
                                   <h4 className="font-extrabold text-base text-mani-900">{p.name}</h4>
-                                  <span className="text-xs font-bold text-amber-800">{formatPHP(p.price)} / pack</span>
+                                  <span className="text-xs font-bold text-amber-800">{formatPHP(p.price)} / tub</span>
                                 </div>
                               </div>
                               {!isAvail ? (
@@ -897,7 +897,7 @@ const htmlTemplate = `<!DOCTYPE html>
                 <div className="bg-cream p-5 rounded-3xl border border-mani-200 shadow-warm space-y-4">
                   <div className="flex justify-between items-center border-b border-mani-200 pb-2">
                     <h3 className="font-black text-sm text-mani-900 uppercase tracking-wider">Order Summary</h3>
-                    <span className="text-xs text-mani-600 font-bold">{totalPacks} packs total</span>
+                    <span className="text-xs text-mani-600 font-bold">{totalPacks} tubs total</span>
                   </div>
 
                   {totalPacks === 0 ? (
@@ -920,11 +920,11 @@ const htmlTemplate = `<!DOCTYPE html>
                   <button
                     disabled={submitting || totalPacks === 0}
                     onClick={handleSubmitOrder}
-                    className={\`w-full py-3.5 rounded-2xl font-black text-sm transition-all shadow-md \${
+                    className={` + "`" + `w-full py-3.5 rounded-2xl font-black text-sm transition-all shadow-md \${
                       submitting || totalPacks === 0
                         ? 'bg-mani-200 text-mani-400 cursor-not-allowed'
                         : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white active:scale-98'
-                    }\`}
+                    }` + "`" + `}
                   >
                     {submitting ? 'Submitting Order...' : 'Place Order Now 🥜'}
                   </button>
@@ -939,7 +939,7 @@ const htmlTemplate = `<!DOCTYPE html>
           {view === 'order' && totalPacks > 0 && (
             <div className="fixed bottom-0 left-0 right-0 z-30 bg-cream/95 backdrop-blur-md border-t border-amber-200 px-4 py-3 shadow-2xl lg:hidden flex items-center justify-between animate-fade-in">
               <div>
-                <div className="text-[11px] font-bold text-mani-600">{totalPacks} pack{totalPacks > 1 ? 's' : ''} in cart</div>
+                <div className="text-[11px] font-bold text-mani-600">{totalPacks} tub{totalPacks > 1 ? 's' : ''} in cart</div>
                 <div className="text-base font-black text-amber-900">{formatPHP(grandTotal)}</div>
               </div>
               <button
@@ -988,8 +988,8 @@ const htmlTemplate = `<!DOCTYPE html>
                     <span className="font-bold text-amber-900">{confirmedOrder.paymentMethod}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-mani-500">Total Packs:</span>
-                    <span className="font-bold">{confirmedOrder.totalPacks} packs</span>
+                    <span className="text-mani-500">Total Tubs:</span>
+                    <span className="font-bold">{confirmedOrder.totalPacks} tubs</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-mani-500">Total Amount:</span>

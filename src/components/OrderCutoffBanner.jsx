@@ -112,7 +112,7 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
               Order Cutoff Has Ended for Current Batch
             </h3>
             <p className="text-xs sm:text-sm text-stone-600 font-medium">
-              We are roasting and packing active orders for delivery on{' '}
+              We are roasting and preparing active orders for delivery on{' '}
               <span className="font-bold text-stone-900">{cutoffInfo?.deliveryDay || 'Wednesday'}</span>.
             </p>
           </div>

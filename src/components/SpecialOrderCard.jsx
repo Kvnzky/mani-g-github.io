@@ -31,7 +31,7 @@ export default function SpecialOrderCard({ specialOrders = [], onAddSpecialOrder
     }
 
     if (quantity < 1) {
-      setError('Please specify at least 1 pack.');
+      setError('Please specify at least 1 tub.');
       return;
     }
 
@@ -108,7 +108,7 @@ export default function SpecialOrderCard({ specialOrders = [], onAddSpecialOrder
                       {sp.name}
                     </span>
                     <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full shrink-0">
-                      × {sp.quantity} packs
+                      × {sp.quantity} tubs
                     </span>
                   </div>
                   <p className="text-xs text-mani-600 mt-0.5">
@@ -145,7 +145,7 @@ export default function SpecialOrderCard({ specialOrders = [], onAddSpecialOrder
               Customize Your Flavor & Blend
             </h4>
             <span className="text-xs font-bold text-amber-800">
-              {formatPHP(SPECIAL_ORDER_DEFAULT_PRICE)} / pack
+              {formatPHP(SPECIAL_ORDER_DEFAULT_PRICE)} / tub
             </span>
           </div>
 
@@ -193,7 +193,8 @@ export default function SpecialOrderCard({ specialOrders = [], onAddSpecialOrder
           </div>
 
           {/* Name & Quantity */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Custom Flavor Name */}
             <div>
               <label className="block text-xs font-bold text-mani-800 mb-1">
                 Custom Name (Optional)
@@ -209,7 +210,7 @@ export default function SpecialOrderCard({ specialOrders = [], onAddSpecialOrder
 
             <div>
               <label className="block text-xs font-bold text-mani-800 mb-1">
-                Quantity (Packs) <span className="text-red-500">*</span>
+                Quantity (Tubs) <span className="text-red-500">*</span>
               </label>
               <div className="flex items-center gap-2 bg-mani-50 p-1 rounded-xl border border-mani-200 max-w-[160px]">
                 <button

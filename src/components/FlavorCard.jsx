@@ -75,7 +75,7 @@ export default function FlavorCard({ product, quantity, onQuantityChange }) {
                 )}
               </div>
               <span className="text-xs font-bold text-amber-800">
-                {formatPHP(product.price || 50)} <span className="font-normal text-mani-500">/ pack</span>
+                {formatPHP(product.price || 50)} <span className="font-normal text-mani-500">/ tub</span>
               </span>
             </div>
           </div>

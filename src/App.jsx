@@ -688,6 +688,7 @@ export default function App() {
         items: orderedItems,
         flavorQuantities: { ...quantities },
         totalPacks,
+        totalTubs: totalPacks,
         subtotal,
         deliveryFee: 0,
         discount: 0,
@@ -849,7 +850,7 @@ export default function App() {
                     </div>
                     {totalPacks > 0 && (
                       <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full border border-amber-200">
-                        {totalPacks} pack{totalPacks > 1 ? 's' : ''} in cart
+                        {totalPacks} tub{totalPacks > 1 ? 's' : ''} in cart
                       </span>
                     )}
                   </div>
@@ -933,7 +934,7 @@ export default function App() {
                               <div className="flex items-center gap-2">
                                 <span>{p.icon || '🥜'}</span>
                                 <span className="font-extrabold text-mani-900">{p.name}</span>
-                                <span className="text-mani-600 font-medium">× {quantities[p.id]} pack(s)</span>
+                                <span className="text-mani-600 font-medium">× {quantities[p.id]} tub(s)</span>
                               </div>
                               <span className="font-bold text-mani-900">
                                 {formatPHP(quantities[p.id] * (p.price || 50))}
@@ -945,7 +946,7 @@ export default function App() {
                       <div className="pt-3 border-t border-mani-200 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="text-xs text-mani-600 font-semibold">
-                            Total Packs: <span className="text-mani-900 font-black">{totalPacks}</span>
+                            Total Tubs: <span className="text-mani-900 font-black">{totalPacks}</span>
                           </div>
                           <div className="text-xl sm:text-2xl font-black text-amber-900">
                             {formatPHP(subtotal)}
@@ -997,7 +998,7 @@ export default function App() {
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-cream/95 backdrop-blur-md border-t border-amber-200 px-4 py-3 shadow-2xl lg:hidden animate-fade-in flex items-center justify-between">
           <div>
             <div className="text-[11px] font-bold text-mani-600 flex items-center gap-1.5">
-              <span>{totalPacks} pack{totalPacks > 1 ? 's' : ''} in cart</span>
+              <span>{totalPacks} tub{totalPacks > 1 ? 's' : ''} in cart</span>
               {cutoffInfo?.isOpen && cutoffInfo?.enabled && (
                 <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
                   ⏰ Cutoff {cutoffInfo.cutoffTime || '23:59'}

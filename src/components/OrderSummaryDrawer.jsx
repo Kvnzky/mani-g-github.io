@@ -38,7 +38,7 @@ export default function OrderSummaryDrawer({
           >
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-4 h-4" />
-              <span>{hasItems ? `${totalPacks} Packs` : 'Your Cart'}</span>
+              <span>{hasItems ? `${totalPacks} Tubs` : 'Your Cart'}</span>
             </div>
             <span className="bg-mani-900/20 px-2.5 py-0.5 rounded-lg text-amber-100 font-black">
               {formatPHP(subtotal)}
@@ -72,7 +72,7 @@ export default function OrderSummaryDrawer({
                 Your MANI G? Order
               </h3>
               <p className="text-xs text-mani-600 font-medium">
-                {totalPacks} {totalPacks === 1 ? 'pack' : 'packs'} selected
+                {totalPacks} {totalPacks === 1 ? 'tub' : 'tubs'} selected
               </p>
             </div>
           </div>
@@ -232,8 +232,8 @@ export default function OrderSummaryDrawer({
           {/* Totals */}
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between text-mani-600 text-xs">
-              <span>Total Packs:</span>
-              <span className="font-bold text-mani-900">{totalPacks} packs</span>
+              <span>Total Tubs:</span>
+              <span className="font-bold text-mani-900">{totalPacks} tubs</span>
             </div>
             <div className="flex justify-between text-base font-extrabold text-mani-900 pt-1 border-t border-mani-200">
               <span>Total Amount:</span>

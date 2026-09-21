@@ -21,10 +21,10 @@ Payment Method: ${order.paymentMethod}
 *Items Ordered:*
 ${(order.items || [])
   .filter((it) => (it.quantity || 0) > 0)
-  .map((it) => `• ${it.name} × ${it.quantity} pack(s) (₱${it.price * it.quantity})`)
+  .map((it) => `• ${it.name} × ${it.quantity} tub(s) (₱${it.price * it.quantity})`)
   .join('\n')}
 
-*Total Packs:* ${order.totalPacks}
+*Total Tubs:* ${order.totalPacks}
 *Total Amount:* ${formatPHP(order.subtotal)}
 Status: ${order.status || 'New'}
 
@@ -129,7 +129,7 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
                 ))}
 
               <div className="pt-2 mt-2 border-t border-mani-200 flex justify-between font-extrabold text-sm text-mani-900">
-                <span>Total ({order.totalPacks} packs):</span>
+                <span>Total ({order.totalPacks} tubs):</span>
                 <span className="text-amber-700 font-black">{formatPHP(order.subtotal)}</span>
               </div>
             </div>
