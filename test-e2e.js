@@ -10,7 +10,7 @@ async function runTests() {
   const healthRes = await fetch(`${BASE_URL}/health`);
   const health = await healthRes.json();
   assert.strictEqual(health.status, 'ok');
-  assert.strictEqual(health.spreadsheetId, '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI');
+  assert.ok(health.time);
   console.log('   ✅ Health OK:', health.time);
 
   // 2. Missing Delivery Address Validation

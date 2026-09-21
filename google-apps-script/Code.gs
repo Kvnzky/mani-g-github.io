@@ -426,6 +426,7 @@ function handleGetOrders(ss, dateFilter) {
         'bawang-only': bawangOnly
       },
       totalPacks: totalPacks,
+      totalTubs: totalPacks,
       subtotal: subtotal,
       status: status
     });
@@ -1360,7 +1361,7 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
       if (q > 0) {
         var p = Number(it.price || 50);
         itemsList.push({
-          name: it.name || it.productId || it.id || 'Mani Pack',
+          name: it.name || it.productId || it.id || 'Mani Tub',
           quantity: q,
           price: p,
           subtotal: q * p
