@@ -42,11 +42,15 @@ export default function FlavorCard({ product, quantity, onQuantityChange }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
-          {product.badge && (
+          {!isAvailable ? (
+            <span className="absolute top-2.5 left-2.5 text-[10px] uppercase font-black tracking-wider px-2.5 py-1 rounded-full shadow-md bg-red-600 text-white flex items-center gap-1 z-10">
+              🔴 Unavailable
+            </span>
+          ) : product.badge ? (
             <span className={`absolute top-2.5 right-2.5 text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full shadow-sm backdrop-blur-xs ${product.accentColor || 'bg-amber-100 text-amber-900'}`}>
               {product.badge}
             </span>
-          )}
+          ) : null}
         </div>
       )}
 

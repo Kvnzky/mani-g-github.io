@@ -177,6 +177,9 @@ const evaluateCutoff = () => {
   const now = new Date();
   const { dateStr, timeStr } = getPhilippineDateTime(now);
 
+  const deliveryDay = settings.deliveryDay || cutoff.deliveryDay || 'Wednesday';
+  const flavorAvailability = settings.flavorAvailability || null;
+
   if (!cutoff.enabled || !cutoff.date || !cutoff.time) {
     return {
       enabled: false,
@@ -184,6 +187,8 @@ const evaluateCutoff = () => {
       status: 'OPEN',
       cutoffDate: cutoff.date || dateStr,
       cutoffTime: cutoff.time || '23:59',
+      deliveryDay,
+      flavorAvailability,
       timezone: TIMEZONE,
       serverTime: now.toISOString(),
       currentPhilippineDate: dateStr,
@@ -209,6 +214,8 @@ const evaluateCutoff = () => {
     status,
     cutoffDate: cutoff.date,
     cutoffTime: cutoff.time,
+    deliveryDay,
+    flavorAvailability,
     timezone: TIMEZONE,
     serverTime: now.toISOString(),
     currentPhilippineDate: dateStr,
@@ -305,7 +312,7 @@ app.get('/api/cutoff', (req, res) => {
 
 // Admin Cutoff Update (Protected)
 app.post('/api/admin/cutoff', requireAdminAuth, (req, res) => {
-  const { enabled, date, time } = req.body || {};
+  const { enabled, date, time, deliveryDay, flavorAvailability } = req.body || {};
 
   if (enabled !== undefined) {
     settings.cutoff.enabled = Boolean(enabled);
@@ -325,6 +332,18 @@ app.post('/api/admin/cutoff', requireAdminAuth, (req, res) => {
     settings.cutoff.time = time.slice(0, 5);
   }
 
+  if (deliveryDay !== undefined) {
+    settings.deliveryDay = String(deliveryDay).trim();
+    settings.cutoff.deliveryDay = String(deliveryDay).trim();
+  }
+
+  if (flavorAvailability && typeof flavorAvailability === 'object') {
+    settings.flavorAvailability = {
+      ...(settings.flavorAvailability || {}),
+      ...flavorAvailability
+    };
+  }
+
   saveSettings();
   const updatedCutoff = evaluateCutoff();
 
@@ -332,6 +351,28 @@ app.post('/api/admin/cutoff', requireAdminAuth, (req, res) => {
     success: true,
     message: 'Cutoff settings updated successfully.',
     cutoff: updatedCutoff
+  });
+});
+
+// Admin Flavor Availability Update (Protected)
+app.post('/api/admin/flavor-availability', requireAdminAuth, (req, res) => {
+  const { flavorAvailability } = req.body || {};
+
+  if (!flavorAvailability || typeof flavorAvailability !== 'object') {
+    return res.status(400).json({ error: 'Invalid flavorAvailability payload.' });
+  }
+
+  settings.flavorAvailability = {
+    ...(settings.flavorAvailability || {}),
+    ...flavorAvailability
+  };
+
+  saveSettings();
+
+  res.json({
+    success: true,
+    message: 'Flavor availability updated successfully.',
+    flavorAvailability: settings.flavorAvailability
   });
 });
 
@@ -535,6 +576,20 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
     const totalPacks = items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
     if (totalPacks <= 0) {
       return res.status(400).json({ error: 'Please select at least one Mani flavor.' });
+    }
+
+    // Enforce flavor availability: reject order if any requested flavor is currently marked unavailable
+    if (settings.flavorAvailability) {
+      for (const item of items) {
+        const key = item.productId || item.id;
+        const qty = Number(item.quantity) || 0;
+        if (qty > 0 && settings.flavorAvailability[key] === false) {
+          return res.status(400).json({
+            error: `The flavor "${item.name || key}" is currently unavailable for ordering.`,
+            code: 'FLAVOR_UNAVAILABLE'
+          });
+        }
+      }
     }
 
     const subtotal = items.reduce((sum, item) => sum + ((Number(item.quantity) || 0) * (Number(item.price) || 50)), 0);
