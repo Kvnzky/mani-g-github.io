@@ -790,30 +790,31 @@ export default function AdminPortal({
                     <span>🚚</span>
                     Delivery Day <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={deliveryDay}
                     onChange={(e) => setDeliveryDay(e.target.value)}
-                    placeholder="e.g., Wednesday"
-                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white font-semibold"
-                  />
-                  {/* Preset quick pills */}
-                  <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                    {['Wednesday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                      <button
-                        key={day}
-                        type="button"
-                        onClick={() => setDeliveryDay(day)}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
-                          deliveryDay === day
-                            ? 'bg-amber-600 text-white border-amber-600'
-                            : 'bg-white text-mani-700 border-mani-200 hover:border-amber-400'
-                        }`}
-                      >
+                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white font-bold text-mani-900 cursor-pointer shadow-2xs"
+                  >
+                    {[
+                      'Monday',
+                      'Tuesday',
+                      'Wednesday',
+                      'Thursday',
+                      'Friday',
+                      'Saturday',
+                      'Sunday'
+                    ].map((day) => (
+                      <option key={day} value={day}>
                         {day}
-                      </button>
+                      </option>
                     ))}
-                  </div>
+                    {!['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].includes(deliveryDay) && deliveryDay && (
+                      <option value={deliveryDay}>{deliveryDay}</option>
+                    )}
+                  </select>
+                  <p className="text-[11px] text-mani-500 mt-1 font-medium">
+                    Select the upcoming delivery day (Monday – Sunday).
+                  </p>
                 </div>
               </div>
 
