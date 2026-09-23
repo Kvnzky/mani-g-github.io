@@ -40,3 +40,13 @@
 button, input, select, textarea {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* Hide number input spinners globally for crisp quantity controls */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
