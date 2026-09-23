@@ -711,19 +711,19 @@ app.get('/api/orders', requireAdminAuth, (req, res) => {
   const { date, status, startDate, endDate } = req.query;
   let filtered = [...orders];
 
-  if (date) {
-    filtered = filtered.filter(o => o.orderDate === date);
+  if (typeof date === 'string' && date.trim()) {
+    filtered = filtered.filter(o => o.orderDate === date.trim());
   } else {
-    if (startDate) {
-      filtered = filtered.filter(o => o.orderDate >= startDate);
+    if (typeof startDate === 'string' && startDate.trim()) {
+      filtered = filtered.filter(o => o.orderDate >= startDate.trim());
     }
-    if (endDate) {
-      filtered = filtered.filter(o => o.orderDate <= endDate);
+    if (typeof endDate === 'string' && endDate.trim()) {
+      filtered = filtered.filter(o => o.orderDate <= endDate.trim());
     }
   }
 
-  if (status && status !== 'all') {
-    filtered = filtered.filter(o => o.status.toLowerCase() === status.toLowerCase());
+  if (typeof status === 'string' && status.trim() && status.toLowerCase() !== 'all') {
+    filtered = filtered.filter(o => (o.status || '').toLowerCase() === status.trim().toLowerCase());
   }
 
   const todayDateStr = getPhilippineDateTime().dateStr;

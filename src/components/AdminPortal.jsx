@@ -84,8 +84,12 @@ const getPresetDateRange = (preset) => {
 const formatDateDisplay = (dateStr) => {
   if (!dateStr) return '';
   try {
-    const [y, m, d] = dateStr.split('-').map(Number);
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const [y, m, d] = parts.map(Number);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return dateStr;
     const dateObj = new Date(Date.UTC(y, m - 1, d));
+    if (isNaN(dateObj.getTime())) return dateStr;
     return dateObj.toLocaleDateString('en-US', {
       timeZone: 'UTC',
       month: 'short',
@@ -466,8 +470,12 @@ export default function AdminPortal({
   const rangeDaysCount = useMemo(() => {
     if (!summaryStartDate || !summaryEndDate) return 1;
     try {
-      const [y1, m1, d1] = summaryStartDate.split('-').map(Number);
-      const [y2, m2, d2] = summaryEndDate.split('-').map(Number);
+      const parts1 = summaryStartDate.split('-');
+      const parts2 = summaryEndDate.split('-');
+      if (parts1.length !== 3 || parts2.length !== 3) return 1;
+      const [y1, m1, d1] = parts1.map(Number);
+      const [y2, m2, d2] = parts2.map(Number);
+      if (isNaN(y1) || isNaN(m1) || isNaN(d1) || isNaN(y2) || isNaN(m2) || isNaN(d2)) return 1;
       const t1 = Date.UTC(y1, m1 - 1, d1);
       const t2 = Date.UTC(y2, m2 - 1, d2);
       const diff = Math.round((t2 - t1) / 86400000) + 1;

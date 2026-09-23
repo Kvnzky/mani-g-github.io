@@ -1,4 +1,4 @@
-﻿# Dependencies
+# Dependencies
 node_modules/
 /.pnp
 .pnp.js
@@ -29,3 +29,4 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+scratch/
