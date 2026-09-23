@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ShieldCheck, RefreshCw, Search, Calendar, 
-  Settings, ExternalLink, Plus, Edit2, Check, Package, DollarSign, QrCode, Upload, Copy, Phone, MapPin, CreditCard,
-  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, User, Power, BarChart3, TrendingUp, CalendarRange, Filter
+  Settings, ExternalLink, Plus, Edit2, Edit3, Check, Package, DollarSign, QrCode, Upload, Copy, Phone, MapPin, CreditCard,
+  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, User, Power, BarChart3, TrendingUp, CalendarRange, Filter, X
 } from 'lucide-react';
 import { formatPHP } from '../config/products';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from '../config/sheetsConfig';
@@ -203,6 +203,13 @@ export default function AdminPortal({
   const [newFlavorName, setNewFlavorName] = useState('');
   const [newFlavorPrice, setNewFlavorPrice] = useState('50');
   const [newFlavorDesc, setNewFlavorDesc] = useState('');
+
+  // Product details editing state (Name & Description modal)
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editProductName, setEditProductName] = useState('');
+  const [editProductDesc, setEditProductDesc] = useState('');
+  const [editProductError, setEditProductError] = useState('');
+  const [productSaveMsg, setProductSaveMsg] = useState({ msg: '', type: '' });
 
   const STATUS_CONFIG = {
     New: { label: 'New', color: 'bg-amber-100 text-amber-900 border-amber-300', dot: '🟡' },
@@ -879,6 +886,62 @@ export default function AdminPortal({
     onUpdateProducts(updated);
     setEditingPriceId(null);
   };
+
+  const handleStartEditProduct = (product) => {
+    setEditingProduct(product);
+    setEditProductName(product.name || '');
+    setEditProductDesc(product.description || '');
+    setEditProductError('');
+  };
+
+  const handleCancelEditProduct = () => {
+    setEditingProduct(null);
+    setEditProductName('');
+    setEditProductDesc('');
+    setEditProductError('');
+  };
+
+  const handleSaveEditProduct = (e) => {
+    if (e) e.preventDefault();
+    const trimmedName = editProductName.trim();
+    if (!trimmedName) {
+      setEditProductError('Product Name cannot be empty.');
+      return;
+    }
+
+    if (!editingProduct) return;
+
+    const updated = products.map((p) =>
+      p.id === editingProduct.id
+        ? {
+            ...p,
+            name: trimmedName,
+            description: editProductDesc.trim()
+          }
+        : p
+    );
+
+    onUpdateProducts(updated);
+    setEditingProduct(null);
+    setEditProductName('');
+    setEditProductDesc('');
+    setEditProductError('');
+
+    setProductSaveMsg({ msg: 'Product updated successfully.', type: 'success' });
+    setTimeout(() => {
+      setProductSaveMsg({ msg: '', type: '' });
+    }, 4000);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && editingProduct) {
+        handleCancelEditProduct();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editingProduct]);
 
   const handleAddNewFlavor = (e) => {
     e.preventDefault();
@@ -1960,9 +2023,37 @@ export default function AdminPortal({
                 Flavors & Pricing Manager
               </h3>
               <p className="text-xs text-mani-600">
-                Adjust prices and toggle stock availability in real-time.
+                Update product names, descriptions, adjust prices, and toggle stock availability in real-time.
               </p>
             </div>
+
+            {/* Product Update Feedback Banner */}
+            {productSaveMsg.msg && (
+              <div
+                className={`p-3.5 rounded-2xl text-xs sm:text-sm font-bold border flex items-center justify-between gap-2 shadow-xs transition-all ${
+                  productSaveMsg.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                    : 'bg-red-50 text-red-900 border-red-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {productSaveMsg.type === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  )}
+                  <span>{productSaveMsg.msg}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setProductSaveMsg({ msg: '', type: '' })}
+                  className="p-1 text-mani-400 hover:text-mani-800 rounded-lg cursor-pointer"
+                  title="Dismiss"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
 
             <div className="grid gap-3">
               {products.map((p) => (
@@ -1985,7 +2076,19 @@ export default function AdminPortal({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 self-end sm:self-auto">
+                  <div className="flex items-center gap-2.5 flex-wrap self-end sm:self-auto">
+                    {/* Edit Product Name & Description button */}
+                    <button
+                      type="button"
+                      onClick={() => handleStartEditProduct(p)}
+                      className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-amber-50 text-amber-900 border border-mani-200 hover:border-amber-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-98"
+                      title={`Edit ${p.name} details`}
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Edit</span>
+                    </button>
+
+                    {/* Price edit */}
                     {editingPriceId === p.id ? (
                       <div className="flex items-center gap-1">
                         <span className="text-xs font-bold text-mani-700">₱</span>
@@ -2022,6 +2125,7 @@ export default function AdminPortal({
                       </div>
                     )}
 
+                    {/* Availability Toggle */}
                     <button
                       type="button"
                       onClick={() => handleToggleFlavorAvailability(p.id)}
@@ -2037,6 +2141,133 @@ export default function AdminPortal({
                 </div>
               ))}
             </div>
+
+            {/* Edit Product Modal */}
+            {editingProduct && (
+              <div 
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-mani-950/60 backdrop-blur-xs animate-fade-in"
+                onClick={handleCancelEditProduct}
+              >
+                <div 
+                  className="relative w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-mani-200 overflow-hidden space-y-5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Modal Header */}
+                  <div className="flex items-center justify-between pb-3.5 border-b border-mani-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center text-xl shadow-md shadow-amber-900/10">
+                        {editingProduct.icon || '🥜'}
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-black text-mani-950">
+                          Edit Product Details
+                        </h3>
+                        <p className="text-xs text-mani-500 font-medium">
+                          Update flavor display name and customer-facing description
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleCancelEditProduct}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-mani-400 hover:text-mani-800 hover:bg-mani-100 transition-colors cursor-pointer"
+                      title="Cancel"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Validation Error Banner */}
+                  {editProductError && (
+                    <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-xs font-bold text-red-700 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                      <span>{editProductError}</span>
+                    </div>
+                  )}
+
+                  {/* Edit Form */}
+                  <form onSubmit={handleSaveEditProduct} className="space-y-4">
+                    {/* Product Name */}
+                    <div>
+                      <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <span>🏷️</span>
+                          Product Name <span className="text-red-500">*</span>
+                        </span>
+                        <span className="text-[11px] font-normal text-mani-400">Displayed in catalog & cart</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editProductName}
+                        onChange={(e) => {
+                          setEditProductName(e.target.value);
+                          if (editProductError && e.target.value.trim()) {
+                            setEditProductError('');
+                          }
+                        }}
+                        placeholder="e.g., Salted, Spicy Mani, Truffle"
+                        autoFocus
+                        className={`w-full text-sm px-4 py-2.5 rounded-xl border bg-cream focus:bg-white outline-none transition-all ${
+                          editProductError
+                            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                            : 'border-mani-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200'
+                        }`}
+                      />
+                    </div>
+
+                    {/* Product Description */}
+                    <div>
+                      <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <span>📝</span>
+                          Product Description
+                        </span>
+                        <span className="text-[11px] font-normal text-mani-400">Visible on product cards</span>
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={editProductDesc}
+                        onChange={(e) => setEditProductDesc(e.target.value)}
+                        placeholder="Describe the flavor, crunch, seasoning, or ingredients..."
+                        className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 bg-cream focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all resize-y min-h-[80px]"
+                      />
+                    </div>
+
+                    {/* Product Summary Preview Box */}
+                    <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-xs space-y-1">
+                      <div className="flex items-center justify-between font-bold text-amber-950">
+                        <span>Price: {formatPHP(editingProduct.price || 50)}</span>
+                        <span className={editingProduct.available !== false ? 'text-emerald-700' : 'text-red-700'}>
+                          {editingProduct.available !== false ? '🟢 Currently Available' : '🔴 Out of Stock'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-mani-600">
+                        Note: Price and availability can be adjusted anytime via their dedicated controls in the products table.
+                      </p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="pt-2 border-t border-mani-100 flex items-center justify-end gap-2.5">
+                      <button
+                        type="button"
+                        onClick={handleCancelEditProduct}
+                        className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-mani-700 bg-mani-100 hover:bg-mani-200 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 shadow-sm hover:shadow transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span>Save Changes</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleAddNewFlavor} className="p-4 rounded-2xl bg-mani-50 border border-dashed border-mani-300 space-y-3 pt-4 mt-4">
               <h4 className="text-xs font-extrabold uppercase tracking-wider text-mani-700 flex items-center gap-1">
