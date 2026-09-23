@@ -1,11 +1,121 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ShieldCheck, RefreshCw, Search, Calendar, 
   Settings, ExternalLink, Plus, Edit2, Check, Package, DollarSign, QrCode, Upload, Copy, Phone, MapPin, CreditCard,
-  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, User, Power
+  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, User, Power, BarChart3, TrendingUp, CalendarRange, Filter
 } from 'lucide-react';
 import { formatPHP } from '../config/products';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from '../config/sheetsConfig';
+
+// Asia/Manila (PHT, UTC+8) Date Preset Helpers
+const getManilaTodayObj = () => {
+  const now = new Date();
+  const manilaStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(now);
+  const [y, m, d] = manilaStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+};
+
+const formatUtcYMD = (utcDate) => {
+  const y = utcDate.getUTCFullYear();
+  const m = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(utcDate.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const getPresetDateRange = (preset) => {
+  const todayObj = getManilaTodayObj();
+  const todayStr = formatUtcYMD(todayObj);
+
+  switch (preset) {
+    case 'today':
+      return { start: todayStr, end: todayStr };
+
+    case 'yesterday': {
+      const yestObj = new Date(todayObj.getTime() - 86400000);
+      const yestStr = formatUtcYMD(yestObj);
+      return { start: yestStr, end: yestStr };
+    }
+
+    case 'this-week': {
+      // Monday to Sunday of the current week in Manila
+      const dayOfWeek = todayObj.getUTCDay();
+      const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monObj = new Date(todayObj.getTime() + diffToMon * 86400000);
+      const sunObj = new Date(monObj.getTime() + 6 * 86400000);
+      return { start: formatUtcYMD(monObj), end: formatUtcYMD(sunObj) };
+    }
+
+    case 'last-week': {
+      // Monday to Sunday of the previous week
+      const dayOfWeek = todayObj.getUTCDay();
+      const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const thisMonObj = new Date(todayObj.getTime() + diffToMon * 86400000);
+      const lastMonObj = new Date(thisMonObj.getTime() - 7 * 86400000);
+      const lastSunObj = new Date(thisMonObj.getTime() - 1 * 86400000);
+      return { start: formatUtcYMD(lastMonObj), end: formatUtcYMD(lastSunObj) };
+    }
+
+    case 'this-month': {
+      const year = todayObj.getUTCFullYear();
+      const month = todayObj.getUTCMonth();
+      const startStr = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      const nextMonthObj = new Date(Date.UTC(year, month + 1, 1));
+      const endObj = new Date(nextMonthObj.getTime() - 86400000);
+      return { start: startStr, end: formatUtcYMD(endObj) };
+    }
+
+    case 'last-month': {
+      const year = todayObj.getUTCFullYear();
+      const month = todayObj.getUTCMonth();
+      const lastMonthObj = new Date(Date.UTC(year, month - 1, 1));
+      const lmYear = lastMonthObj.getUTCFullYear();
+      const lmMonth = lastMonthObj.getUTCMonth();
+      const startStr = `${lmYear}-${String(lmMonth + 1).padStart(2, '0')}-01`;
+      const thisMonthObj = new Date(Date.UTC(year, month, 1));
+      const endObj = new Date(thisMonthObj.getTime() - 86400000);
+      return { start: startStr, end: formatUtcYMD(endObj) };
+    }
+
+    default:
+      return { start: todayStr, end: todayStr };
+  }
+};
+
+const formatDateDisplay = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+    return dateObj.toLocaleDateString('en-US', {
+      timeZone: 'UTC',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch (e) {
+    return dateStr;
+  }
+};
+
+const FLAVOR_THEME = {
+  salted: { bar: 'bg-amber-500', text: 'text-amber-800', light: 'bg-amber-50', border: 'border-amber-200' },
+  unsalted: { bar: 'bg-stone-500', text: 'text-stone-800', light: 'bg-stone-50', border: 'border-stone-200' },
+  spicy: { bar: 'bg-red-500', text: 'text-red-800', light: 'bg-red-50', border: 'border-red-200' },
+  bbq: { bar: 'bg-orange-600', text: 'text-orange-800', light: 'bg-orange-50', border: 'border-orange-200' },
+  'sour-cream': { bar: 'bg-teal-500', text: 'text-teal-800', light: 'bg-teal-50', border: 'border-teal-200' },
+  cheese: { bar: 'bg-yellow-500', text: 'text-yellow-800', light: 'bg-yellow-50', border: 'border-yellow-200' },
+  'bawang-only': { bar: 'bg-purple-600', text: 'text-purple-800', light: 'bg-purple-50', border: 'border-purple-200' }
+};
+
+const PRESET_OPTIONS = [
+  { id: 'today', label: 'Today' },
+  { id: 'yesterday', label: 'Yesterday' },
+  { id: 'this-week', label: 'This Week' },
+  { id: 'last-week', label: 'Last Week' },
+  { id: 'this-month', label: 'This Month' },
+  { id: 'last-month', label: 'Last Month' },
+  { id: 'custom', label: 'Custom Range' },
+];
 
 export default function AdminPortal({ 
   products, 
@@ -30,6 +140,7 @@ export default function AdminPortal({
     }
   };
   const [orders, setOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
   const [dailySummary, setDailySummary] = useState(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -37,6 +148,13 @@ export default function AdminPortal({
   const [isLoading, setIsLoading] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
+
+  // Order Summary (Date Range Analytics) State
+  const initialPreset = 'this-month';
+  const initialRange = getPresetDateRange(initialPreset);
+  const [summaryPreset, setSummaryPreset] = useState(initialPreset);
+  const [summaryStartDate, setSummaryStartDate] = useState(initialRange.start);
+  const [summaryEndDate, setSummaryEndDate] = useState(initialRange.end);
 
   // Cutoff Form State
   const [cutoffEnabled, setCutoffEnabled] = useState(cutoffInfo?.enabled || false);
@@ -112,6 +230,11 @@ export default function AdminPortal({
         const data = await res.json();
         if (data && data.orders) {
           setOrders(data.orders);
+          if (Array.isArray(data.allOrders)) {
+            setAllOrders(data.allOrders);
+          } else {
+            setAllOrders((prev) => (prev.length > 0 ? prev : data.orders));
+          }
           setDailySummary(data.dailySummary);
           if (!selectedDate && data.todayDate) {
             setSelectedDate(data.todayDate);
@@ -139,6 +262,7 @@ export default function AdminPortal({
                 filtered = filtered.filter(o => o.status === statusFilter);
               }
               setOrders(filtered);
+              setAllOrders(cloudData.orders);
               if (cloudData.dailySummary) {
                 setDailySummary(cloudData.dailySummary);
               }
@@ -162,6 +286,7 @@ export default function AdminPortal({
                   filtered = filtered.filter(o => o.status === statusFilter);
                 }
                 setOrders(filtered);
+                setAllOrders(cloudData.orders);
                 if (cloudData.dailySummary) {
                   setDailySummary(cloudData.dailySummary);
                 }
@@ -187,9 +312,170 @@ export default function AdminPortal({
     if (!ordersFetched) {
       const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
       setOrders(local);
+      setAllOrders(local);
     }
     setIsLoading(false);
   };
+
+  const fetchAllOrders = async () => {
+    try {
+      const res = await fetch('/api/orders', { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data) {
+          if (Array.isArray(data.allOrders)) {
+            setAllOrders(data.allOrders);
+          } else if (Array.isArray(data.orders)) {
+            setAllOrders(data.orders);
+          }
+          if (orders.length === 0 && Array.isArray(data.orders)) {
+            setOrders(data.orders);
+          }
+        }
+      }
+    } catch (e) {}
+  };
+
+  // Order Summary Presets & Calculations
+  const handleSelectPreset = (presetId) => {
+    setSummaryPreset(presetId);
+    if (presetId !== 'custom') {
+      const range = getPresetDateRange(presetId);
+      setSummaryStartDate(range.start);
+      setSummaryEndDate(range.end);
+    }
+  };
+
+  // Active non-cancelled orders filtered by inclusive date range
+  const activeOrdersForSummary = useMemo(() => {
+    const source = allOrders.length > 0 ? allOrders : orders;
+    const seenIds = new Set();
+    return source.filter((o) => {
+      const id = o.orderId || o.id;
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+
+      // Exclude cancelled orders from summary totals
+      if ((o.status || '').toLowerCase() === 'cancelled') return false;
+
+      // Inclusive date range filter
+      const orderDate = o.orderDate || '';
+      if (summaryStartDate && orderDate < summaryStartDate) return false;
+      if (summaryEndDate && orderDate > summaryEndDate) return false;
+
+      return true;
+    });
+  }, [allOrders, orders, summaryStartDate, summaryEndDate]);
+
+  // High-level KPI metrics
+  const summaryKpis = useMemo(() => {
+    const totalOrders = activeOrdersForSummary.length;
+    const totalTubs = activeOrdersForSummary.reduce((sum, o) => {
+      const tubs = o.totalTubs !== undefined ? Number(o.totalTubs) : (Number(o.totalPacks) || 0);
+      return sum + (isNaN(tubs) ? 0 : tubs);
+    }, 0);
+    const totalRevenue = activeOrdersForSummary.reduce((sum, o) => {
+      const rev = Number(o.subtotal) || Number(o.totalAmount) || 0;
+      return sum + (isNaN(rev) ? 0 : rev);
+    }, 0);
+
+    return { totalOrders, totalTubs, totalRevenue };
+  }, [activeOrdersForSummary]);
+
+  // Detailed breakdown per flavor (including 0-order flavors & availability)
+  const flavorStats = useMemo(() => {
+    const map = {};
+
+    // 1. Seed with catalog products
+    products.forEach((p) => {
+      map[p.id] = {
+        id: p.id,
+        name: p.name,
+        icon: p.icon || '🥜',
+        available: p.available !== false,
+        price: Number(p.price) || 50,
+        quantity: 0,
+        sales: 0
+      };
+    });
+
+    // 2. Aggregate quantities and sales from matching orders
+    activeOrdersForSummary.forEach((o) => {
+      if (Array.isArray(o.items) && o.items.length > 0) {
+        o.items.forEach((it) => {
+          const id = it.id || it.productId || it.name?.toLowerCase().replace(/\s+/g, '-');
+          const q = Number(it.quantity) || 0;
+          const p = Number(it.price) || (map[id]?.price || 50);
+          if (!map[id]) {
+            map[id] = {
+              id,
+              name: it.name || id,
+              icon: '🥜',
+              available: true,
+              price: p,
+              quantity: 0,
+              sales: 0
+            };
+          }
+          map[id].quantity += q;
+          map[id].sales += q * p;
+        });
+      } else if (o.flavorQuantities) {
+        Object.entries(o.flavorQuantities).forEach(([flavorId, qty]) => {
+          const q = Number(qty) || 0;
+          if (q > 0) {
+            if (!map[flavorId]) {
+              map[flavorId] = {
+                id: flavorId,
+                name: flavorId.charAt(0).toUpperCase() + flavorId.slice(1).replace(/-/g, ' '),
+                icon: '🥜',
+                available: true,
+                price: 50,
+                quantity: 0,
+                sales: 0
+              };
+            }
+            map[flavorId].quantity += q;
+            map[flavorId].sales += q * map[flavorId].price;
+          }
+        });
+      }
+    });
+
+    const list = Object.values(map);
+    const totalTubsCount = list.reduce((sum, f) => sum + f.quantity, 0);
+
+    return list.map((f) => ({
+      ...f,
+      sharePercent: totalTubsCount > 0 ? ((f.quantity / totalTubsCount) * 100).toFixed(1) : '0.0'
+    }));
+  }, [products, activeOrdersForSummary]);
+
+  const distinctFlavorsOrdered = useMemo(() => {
+    return flavorStats.filter((f) => f.quantity > 0).length;
+  }, [flavorStats]);
+
+  const maxChartQty = useMemo(() => {
+    return Math.max(...flavorStats.map((f) => f.quantity), 1);
+  }, [flavorStats]);
+
+  const chartFlavors = useMemo(() => {
+    return [...flavorStats].sort((a, b) => b.quantity - a.quantity);
+  }, [flavorStats]);
+
+  const rangeDaysCount = useMemo(() => {
+    if (!summaryStartDate || !summaryEndDate) return 1;
+    try {
+      const [y1, m1, d1] = summaryStartDate.split('-').map(Number);
+      const [y2, m2, d2] = summaryEndDate.split('-').map(Number);
+      const t1 = Date.UTC(y1, m1 - 1, d1);
+      const t2 = Date.UTC(y2, m2 - 1, d2);
+      const diff = Math.round((t2 - t1) / 86400000) + 1;
+      return diff > 0 ? diff : 1;
+    } catch (e) {
+      return 1;
+    }
+  }, [summaryStartDate, summaryEndDate]);
 
   const fetchSettings = async () => {
     try {
@@ -422,6 +708,7 @@ export default function AdminPortal({
     const updated = local.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
     localStorage.setItem('mani_orders', JSON.stringify(updated));
     setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
+    setAllOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
     setUpdatingOrderId(null);
   };
 
@@ -453,6 +740,7 @@ export default function AdminPortal({
     const updated = local.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o);
     localStorage.setItem('mani_orders', JSON.stringify(updated));
     setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
+    setAllOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
     setUpdatingPaymentId(null);
   };
 
@@ -625,7 +913,8 @@ export default function AdminPortal({
         {[
           { id: 'cutoff', label: '⏰ Cutoff & Availability', icon: Clock },
           { id: 'orders', label: '📦 Orders Manager', icon: Package },
-          { id: 'summary', label: '📊 Daily Summary', icon: DollarSign },
+          { id: 'order-summary', label: '📊 Order Summary', icon: BarChart3 },
+          { id: 'summary', label: '📅 Daily Summary', icon: DollarSign },
           { id: 'products', label: '🥜 Products & Pricing', icon: Settings },
           { id: 'qrs', label: '💳 Payment QRs', icon: QrCode },
           { id: 'sheets', label: '⚙️ Integration', icon: ExternalLink }
@@ -1121,6 +1410,369 @@ export default function AdminPortal({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 2.5. ORDER SUMMARY TAB (DATE RANGE & FLAVOR BREAKDOWN)    */}
+      {/* ========================================================= */}
+      {activeTab === 'order-summary' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Main Controls Card */}
+          <div className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-6">
+            <div className="border-b border-mani-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-mani-900 flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-amber-600" />
+                  Order Summary & Flavor Performance
+                </h3>
+                <p className="text-xs sm:text-sm text-mani-600">
+                  Interactive sales breakdown and volume metrics across customizable date ranges.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={fetchAllOrders}
+                  className="px-3 py-1.5 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-800 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Reload all order records"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                  <span>Refresh Data</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Date Range Selection & Quick Presets */}
+            <div className="space-y-3.5">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                {/* 1-Click Preset Buttons */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {PRESET_OPTIONS.map((opt) => {
+                    const isSelected = summaryPreset === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => handleSelectPreset(opt.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-amber-600 text-white shadow-xs scale-102'
+                            : 'bg-cream text-mani-700 hover:bg-mani-100 border border-mani-200/80 hover:text-mani-900'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Date Pickers */}
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  <div className="flex items-center gap-1.5 bg-cream px-3 py-1.5 rounded-xl border border-mani-200">
+                    <span className="text-[11px] font-bold text-mani-500 uppercase tracking-wider">Start</span>
+                    <input
+                      type="date"
+                      value={summaryStartDate}
+                      onChange={(e) => {
+                        setSummaryStartDate(e.target.value);
+                        setSummaryPreset('custom');
+                      }}
+                      className="text-xs font-bold text-mani-900 bg-transparent outline-none cursor-pointer"
+                    />
+                  </div>
+
+                  <span className="text-mani-400 font-bold text-xs">to</span>
+
+                  <div className="flex items-center gap-1.5 bg-cream px-3 py-1.5 rounded-xl border border-mani-200">
+                    <span className="text-[11px] font-bold text-mani-500 uppercase tracking-wider">End</span>
+                    <input
+                      type="date"
+                      value={summaryEndDate}
+                      onChange={(e) => {
+                        setSummaryEndDate(e.target.value);
+                        setSummaryPreset('custom');
+                      }}
+                      className="text-xs font-bold text-mani-900 bg-transparent outline-none cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Date Range Display Banner */}
+              <div className="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-amber-50 to-orange-50/60 p-3 sm:px-4 rounded-2xl border border-amber-200/80 text-xs">
+                <div className="flex items-center gap-2 text-mani-900 font-bold flex-wrap">
+                  <CalendarRange className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span>
+                    Selected Range: <span className="font-black text-amber-950">{formatDateDisplay(summaryStartDate)}</span> to <span className="font-black text-amber-950">{formatDateDisplay(summaryEndDate)}</span>
+                  </span>
+                  <span className="text-mani-300">•</span>
+                  <span className="text-amber-800 font-black">
+                    {rangeDaysCount} day{rangeDaysCount > 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 font-bold">
+                  <span className="text-mani-600">Matching Orders:</span>
+                  <span className="px-2 py-0.5 rounded-lg bg-amber-500 text-white font-black text-xs">
+                    {activeOrdersForSummary.length}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Highlights / KPI Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              {/* Total Orders Placed */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/80 border border-amber-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-xs font-extrabold text-amber-900 uppercase tracking-wider">
+                  <span>Total Orders</span>
+                  <Package className="w-4 h-4 text-amber-700" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-amber-950 mt-1">
+                  {summaryKpis.totalOrders}
+                </div>
+                <p className="text-[11px] text-mani-600 font-medium">
+                  Non-cancelled orders in period
+                </p>
+              </div>
+
+              {/* Total Tubs Sold */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-orange-50/80 border border-orange-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-xs font-extrabold text-orange-900 uppercase tracking-wider">
+                  <span>Total Tubs Sold</span>
+                  <span className="text-base">🥜</span>
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-orange-950 mt-1">
+                  {summaryKpis.totalTubs}
+                </div>
+                <p className="text-[11px] text-mani-600 font-medium">
+                  Total tubs across all flavors
+                </p>
+              </div>
+
+              {/* Distinct Flavors Ordered */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/80 border border-blue-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-xs font-extrabold text-blue-900 uppercase tracking-wider">
+                  <span>Flavors Ordered</span>
+                  <TrendingUp className="w-4 h-4 text-blue-700" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-blue-950 mt-1">
+                  {distinctFlavorsOrdered} <span className="text-xs sm:text-sm font-bold text-blue-700">/ {flavorStats.length}</span>
+                </div>
+                <p className="text-[11px] text-mani-600 font-medium">
+                  Distinct flavors with volume
+                </p>
+              </div>
+
+              {/* Total Revenue */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/80 border border-emerald-200 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-xs font-extrabold text-emerald-900 uppercase tracking-wider">
+                  <span>Total Revenue</span>
+                  <DollarSign className="w-4 h-4 text-emerald-700" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-emerald-950 mt-1">
+                  {formatPHP(summaryKpis.totalRevenue)}
+                </div>
+                <p className="text-[11px] text-mani-600 font-medium">
+                  Gross sales for selected range
+                </p>
+              </div>
+            </div>
+
+            {/* Empty State Banner if no orders in selected period */}
+            {activeOrdersForSummary.length === 0 && (
+              <div className="p-8 sm:p-12 text-center rounded-2xl bg-cream/70 border border-dashed border-mani-300 text-mani-500 space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-800 mx-auto flex items-center justify-center text-2xl border border-amber-200">
+                  📦
+                </div>
+                <div className="space-y-1 max-w-md mx-auto">
+                  <h4 className="text-base font-black text-mani-900">
+                    No orders found for the selected date range.
+                  </h4>
+                  <p className="text-xs text-mani-600">
+                    No orders exist between <span className="font-bold text-mani-900">{formatDateDisplay(summaryStartDate)}</span> and <span className="font-bold text-mani-900">{formatDateDisplay(summaryEndDate)}</span>. Try choosing a different preset below:
+                  </p>
+                </div>
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectPreset('this-month')}
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition-colors cursor-pointer"
+                  >
+                    Select This Month
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectPreset('this-week')}
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-mani-100 hover:bg-mani-200 text-mani-800 transition-colors cursor-pointer"
+                  >
+                    Select This Week
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectPreset('today')}
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-mani-100 hover:bg-mani-200 text-mani-800 transition-colors cursor-pointer"
+                  >
+                    Reset to Today
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Visual Summary: Flavor vs Quantity Bar Chart */}
+            <div className="space-y-4 pt-2">
+              <div className="border-b border-mani-100 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <div>
+                  <h4 className="text-sm font-black text-mani-900 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-amber-600" />
+                    Visual Breakdown: Flavor vs. Quantity Sold
+                  </h4>
+                  <p className="text-xs text-mani-600">
+                    Ranked by highest quantity ordered (tubs) within selected range
+                  </p>
+                </div>
+                <span className="text-[11px] font-bold text-mani-500 self-start sm:self-auto">
+                  {summaryKpis.totalTubs} Total Tubs
+                </span>
+              </div>
+
+              <div className="space-y-3 bg-cream/50 p-4 sm:p-5 rounded-2xl border border-mani-200/80">
+                {chartFlavors.map((f) => {
+                  const theme = FLAVOR_THEME[f.id] || { bar: 'bg-amber-500', text: 'text-amber-800', light: 'bg-amber-50' };
+                  const barWidthPercent = maxChartQty > 0
+                    ? Math.max(f.quantity > 0 ? 4 : 0, (f.quantity / maxChartQty) * 100)
+                    : 0;
+
+                  return (
+                    <div key={f.id} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 font-bold text-mani-900">
+                          <span className="text-base">{f.icon}</span>
+                          <span className="font-extrabold">{f.name}</span>
+                          {!f.available && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-red-100 text-red-700 border border-red-200">
+                              Out of stock
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-mani-950 text-xs sm:text-sm">
+                            {f.quantity} {f.quantity === 1 ? 'tub' : 'tubs'}
+                          </span>
+                          <span className="text-[11px] text-mani-500 font-semibold w-12 text-right">
+                            ({f.sharePercent}%)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Bar Track */}
+                      <div className="h-4 sm:h-5 bg-white rounded-full overflow-hidden p-0.5 border border-mani-200/90 shadow-inner">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${theme.bar}`}
+                          style={{ width: `${barWidthPercent}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Flavor Summary Table */}
+            <div className="space-y-3 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-mani-100 pb-2">
+                <div>
+                  <h4 className="text-sm font-black text-mani-900 flex items-center gap-2">
+                    <span>📋</span> Detailed Flavor Breakdown Table
+                  </h4>
+                  <p className="text-xs text-mani-600">
+                    Comprehensive table including stock status, unit pricing, sales volume, and portfolio share
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-mani-200 shadow-xs">
+                <table className="w-full text-left text-xs sm:text-sm border-collapse bg-white">
+                  <thead>
+                    <tr className="border-b-2 border-mani-200 bg-amber-50/70 text-mani-800">
+                      <th className="py-3 px-3.5 font-black uppercase text-[11px] tracking-wider">Flavor</th>
+                      <th className="py-3 px-3.5 font-black uppercase text-[11px] tracking-wider text-center">Status</th>
+                      <th className="py-3 px-3.5 font-black uppercase text-[11px] tracking-wider text-right">Quantity Ordered</th>
+                      <th className="py-3 px-3.5 font-black uppercase text-[11px] tracking-wider text-right">Unit Price</th>
+                      <th className="py-3 px-3.5 font-black uppercase text-[11px] tracking-wider text-right">Total Sales</th>
+                      <th className="py-3 px-3.5 font-black uppercase text-[11px] tracking-wider text-right">Share (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-mani-100">
+                    {flavorStats.map((f) => (
+                      <tr key={f.id} className="hover:bg-amber-50/40 transition-colors">
+                        <td className="py-3 px-3.5 font-bold text-mani-900">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xl shrink-0">{f.icon}</span>
+                            <span className="font-extrabold text-mani-950">{f.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3.5 text-center whitespace-nowrap">
+                          {f.available ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Available
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> Out of Stock
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3.5 text-right whitespace-nowrap">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-lg font-black ${
+                            f.quantity > 0 
+                              ? 'bg-amber-100 text-amber-950 border border-amber-300/70' 
+                              : 'text-mani-400 bg-mani-50'
+                          }`}>
+                            {f.quantity} {f.quantity === 1 ? 'tub' : 'tubs'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3.5 text-right text-mani-700 font-semibold whitespace-nowrap">
+                          {formatPHP(f.price)}
+                        </td>
+                        <td className="py-3 px-3.5 text-right font-black text-amber-950 whitespace-nowrap">
+                          {formatPHP(f.sales)}
+                        </td>
+                        <td className="py-3 px-3.5 text-right text-mani-700 font-bold whitespace-nowrap">
+                          {f.sharePercent}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-amber-300 bg-gradient-to-r from-amber-100/90 to-orange-100/80 font-black text-mani-950">
+                      <td className="py-3.5 px-3.5 font-black tracking-wide text-mani-950">
+                        TOTAL SUMMARY
+                      </td>
+                      <td className="py-3.5 px-3.5 text-center text-xs text-mani-700 font-bold">
+                        {distinctFlavorsOrdered} of {flavorStats.length} ordered
+                      </td>
+                      <td className="py-3.5 px-3.5 text-right text-sm sm:text-base text-amber-950 font-black whitespace-nowrap">
+                        {summaryKpis.totalTubs} tubs
+                      </td>
+                      <td className="py-3.5 px-3.5 text-right text-mani-400 font-normal">
+                        —
+                      </td>
+                      <td className="py-3.5 px-3.5 text-right text-sm sm:text-base text-amber-950 font-black whitespace-nowrap">
+                        {formatPHP(summaryKpis.totalRevenue)}
+                      </td>
+                      <td className="py-3.5 px-3.5 text-right font-black text-amber-950 whitespace-nowrap">
+                        {summaryKpis.totalTubs > 0 ? '100.0%' : '0.0%'}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

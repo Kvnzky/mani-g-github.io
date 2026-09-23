@@ -43,6 +43,7 @@ export default function App() {
   const [adminTab, setAdminTab] = useState(() => {
     if (initialRoute.isAdmin && initialRoute.subroute) {
       if (initialRoute.subroute === 'settings' || initialRoute.subroute === 'availability') return 'cutoff';
+      if (initialRoute.subroute === 'order-summary' || initialRoute.subroute === 'ordersummary') return 'order-summary';
       return initialRoute.subroute;
     }
     return 'cutoff';
@@ -354,7 +355,9 @@ export default function App() {
           setCurrentView('admin');
           setIsLoginModalOpen(false);
           if (route.subroute) {
-            const mappedTab = (route.subroute === 'settings' || route.subroute === 'availability') ? 'cutoff' : route.subroute;
+            let mappedTab = route.subroute;
+            if (route.subroute === 'settings' || route.subroute === 'availability') mappedTab = 'cutoff';
+            if (route.subroute === 'order-summary' || route.subroute === 'ordersummary') mappedTab = 'order-summary';
             setAdminTab(mappedTab);
           }
         } else {

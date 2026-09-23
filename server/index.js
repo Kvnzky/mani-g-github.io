@@ -708,11 +708,18 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
 
 // API: Get Orders (Protected)
 app.get('/api/orders', requireAdminAuth, (req, res) => {
-  const { date, status } = req.query;
+  const { date, status, startDate, endDate } = req.query;
   let filtered = [...orders];
 
   if (date) {
     filtered = filtered.filter(o => o.orderDate === date);
+  } else {
+    if (startDate) {
+      filtered = filtered.filter(o => o.orderDate >= startDate);
+    }
+    if (endDate) {
+      filtered = filtered.filter(o => o.orderDate <= endDate);
+    }
   }
 
   if (status && status !== 'all') {
@@ -745,6 +752,7 @@ app.get('/api/orders', requireAdminAuth, (req, res) => {
 
   res.json({
     orders: filtered,
+    allOrders: orders,
     totalCount: orders.length,
     dailySummary,
     todayDate: todayDateStr
