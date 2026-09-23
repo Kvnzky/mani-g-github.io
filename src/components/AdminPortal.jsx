@@ -23,10 +23,16 @@ const formatUtcYMD = (utcDate) => {
 };
 
 const getPresetDateRange = (preset) => {
+  if (preset === 'all-time') {
+    return { start: '', end: '' };
+  }
   const todayObj = getManilaTodayObj();
   const todayStr = formatUtcYMD(todayObj);
 
   switch (preset) {
+    case 'all-time':
+      return { start: '', end: '' };
+
     case 'today':
       return { start: todayStr, end: todayStr };
 
@@ -112,6 +118,7 @@ const FLAVOR_THEME = {
 };
 
 const PRESET_OPTIONS = [
+  { id: 'all-time', label: 'All Time (Master List)' },
   { id: 'today', label: 'Today' },
   { id: 'yesterday', label: 'Yesterday' },
   { id: 'this-week', label: 'This Week' },
@@ -154,7 +161,7 @@ export default function AdminPortal({
   const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
 
   // Order Summary (Date Range Analytics) State
-  const initialPreset = 'this-month';
+  const initialPreset = 'all-time';
   const initialRange = getPresetDateRange(initialPreset);
   const [summaryPreset, setSummaryPreset] = useState(initialPreset);
   const [summaryStartDate, setSummaryStartDate] = useState(initialRange.start);
@@ -266,7 +273,9 @@ export default function AdminPortal({
                 filtered = filtered.filter(o => o.status === statusFilter);
               }
               setOrders(filtered);
-              setAllOrders(cloudData.orders);
+              if (!qDate || allOrders.length === 0) {
+                setAllOrders(cloudData.orders);
+              }
               if (cloudData.dailySummary) {
                 setDailySummary(cloudData.dailySummary);
               }
@@ -290,7 +299,9 @@ export default function AdminPortal({
                   filtered = filtered.filter(o => o.status === statusFilter);
                 }
                 setOrders(filtered);
-                setAllOrders(cloudData.orders);
+                if (!qDate || allOrders.length === 0) {
+                  setAllOrders(cloudData.orders);
+                }
                 if (cloudData.dailySummary) {
                   setDailySummary(cloudData.dailySummary);
                 }
@@ -316,28 +327,77 @@ export default function AdminPortal({
     if (!ordersFetched) {
       const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
       setOrders(local);
-      setAllOrders(local);
+      if (allOrders.length === 0) {
+        setAllOrders(local);
+      }
     }
     setIsLoading(false);
   };
 
   const fetchAllOrders = async () => {
+    let fetched = false;
     try {
       const res = await fetch('/api/orders', { headers: getAuthHeaders() });
       if (res.ok) {
-        const data = await res.json();
-        if (data) {
-          if (Array.isArray(data.allOrders)) {
-            setAllOrders(data.allOrders);
-          } else if (Array.isArray(data.orders)) {
-            setAllOrders(data.orders);
-          }
-          if (orders.length === 0 && Array.isArray(data.orders)) {
-            setOrders(data.orders);
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data) {
+            const list = Array.isArray(data.allOrders) && data.allOrders.length > 0 
+              ? data.allOrders 
+              : (Array.isArray(data.orders) ? data.orders : []);
+            if (list.length > 0) {
+              setAllOrders(list);
+              fetched = true;
+            }
           }
         }
       }
     } catch (e) {}
+
+    // Cloud fallback to Google Apps Script Master list for GitHub Pages / static
+    if (!fetched) {
+      const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+      if (appsUrl) {
+        try {
+          const res = await fetch(`${appsUrl}?action=getOrders`, { mode: 'cors' });
+          if (res.ok) {
+            const cloudData = await res.json();
+            if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
+              setAllOrders(cloudData.orders);
+              fetched = true;
+            }
+          }
+        } catch (cloudErr) {
+          // JSONP fallback
+          try {
+            const cbName = `mani_all_orders_${Date.now()}`;
+            const script = document.createElement('script');
+            window[cbName] = (cloudData) => {
+              if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
+                setAllOrders(cloudData.orders);
+              }
+              delete window[cbName];
+              script.remove();
+            };
+            script.src = `${appsUrl}?action=getOrders&callback=${cbName}`;
+            script.onerror = () => {
+              delete window[cbName];
+              script.remove();
+            };
+            document.head.appendChild(script);
+            fetched = true;
+          } catch (jpErr) {}
+        }
+      }
+    }
+
+    if (!fetched) {
+      const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+      if (local.length > 0) {
+        setAllOrders(local);
+      }
+    }
   };
 
   // Order Summary Presets & Calculations
@@ -353,11 +413,12 @@ export default function AdminPortal({
   // Active non-cancelled orders filtered by inclusive date range
   const activeOrdersForSummary = useMemo(() => {
     const source = allOrders.length > 0 ? allOrders : orders;
-    const seenIds = new Set();
-    return source.filter((o) => {
-      const id = o.orderId || o.id;
-      if (seenIds.has(id)) return false;
-      seenIds.add(id);
+    const seenKeys = new Set();
+    return source.filter((o, idx) => {
+      // Use composite unique key so distinct orders sharing an orderId prefix are NOT dropped
+      const uniqueKey = o.id || `${o.orderId || 'ord'}_${o.orderDate || ''}_${o.orderTime || ''}_${o.customerName || ''}_${o.subtotal || o.totalAmount || 0}_${idx}`;
+      if (seenKeys.has(uniqueKey)) return false;
+      seenKeys.add(uniqueKey);
 
       // Exclude cancelled orders from summary totals
       if ((o.status || '').toLowerCase() === 'cancelled') return false;
@@ -397,7 +458,7 @@ export default function AdminPortal({
         name: p.name,
         icon: p.icon || '🥜',
         available: p.available !== false,
-        price: Number(p.price) || 50,
+        price: Number(p.price) || (p.id === 'bawang-only' ? 60 : 50),
         quantity: 0,
         sales: 0
       };
@@ -409,7 +470,8 @@ export default function AdminPortal({
         o.items.forEach((it) => {
           const id = it.id || it.productId || it.name?.toLowerCase().replace(/\s+/g, '-');
           const q = Number(it.quantity) || 0;
-          const p = Number(it.price) || (map[id]?.price || 50);
+          const defaultPrice = id === 'bawang-only' ? 60 : (map[id]?.price || 50);
+          const p = Number(it.price) || defaultPrice;
           if (!map[id]) {
             map[id] = {
               id,
@@ -428,19 +490,20 @@ export default function AdminPortal({
         Object.entries(o.flavorQuantities).forEach(([flavorId, qty]) => {
           const q = Number(qty) || 0;
           if (q > 0) {
+            const unitPrice = flavorId === 'bawang-only' ? 60 : (map[flavorId]?.price || 50);
             if (!map[flavorId]) {
               map[flavorId] = {
                 id: flavorId,
                 name: flavorId.charAt(0).toUpperCase() + flavorId.slice(1).replace(/-/g, ' '),
                 icon: '🥜',
                 available: true,
-                price: 50,
+                price: unitPrice,
                 quantity: 0,
                 sales: 0
               };
             }
             map[flavorId].quantity += q;
-            map[flavorId].sales += q * map[flavorId].price;
+            map[flavorId].sales += q * unitPrice;
           }
         });
       }
@@ -468,7 +531,7 @@ export default function AdminPortal({
   }, [flavorStats]);
 
   const rangeDaysCount = useMemo(() => {
-    if (!summaryStartDate || !summaryEndDate) return 1;
+    if (!summaryStartDate || !summaryEndDate) return 0;
     try {
       const parts1 = summaryStartDate.split('-');
       const parts2 = summaryEndDate.split('-');
@@ -513,8 +576,15 @@ export default function AdminPortal({
 
   useEffect(() => {
     fetchOrders();
+    fetchAllOrders();
     fetchSettings();
   }, [selectedDate, statusFilter]);
+
+  useEffect(() => {
+    if (activeTab === 'order-summary') {
+      fetchAllOrders();
+    }
+  }, [activeTab]);
 
   // Handle Flavor Availability Toggle
   const handleToggleFlavorAvailability = async (id) => {
@@ -1512,12 +1582,20 @@ export default function AdminPortal({
               <div className="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-amber-50 to-orange-50/60 p-3 sm:px-4 rounded-2xl border border-amber-200/80 text-xs">
                 <div className="flex items-center gap-2 text-mani-900 font-bold flex-wrap">
                   <CalendarRange className="w-4 h-4 text-amber-700 shrink-0" />
-                  <span>
-                    Selected Range: <span className="font-black text-amber-950">{formatDateDisplay(summaryStartDate)}</span> to <span className="font-black text-amber-950">{formatDateDisplay(summaryEndDate)}</span>
-                  </span>
+                  {summaryPreset === 'all-time' || (!summaryStartDate && !summaryEndDate) ? (
+                    <span>
+                      Selected Range: <span className="font-black text-amber-950">All Time (Full Google Sheet Master List)</span>
+                    </span>
+                  ) : (
+                    <span>
+                      Selected Range: <span className="font-black text-amber-950">{formatDateDisplay(summaryStartDate)}</span> to <span className="font-black text-amber-950">{formatDateDisplay(summaryEndDate)}</span>
+                    </span>
+                  )}
                   <span className="text-mani-300">•</span>
                   <span className="text-amber-800 font-black">
-                    {rangeDaysCount} day{rangeDaysCount > 1 ? 's' : ''}
+                    {summaryPreset === 'all-time' || (!summaryStartDate && !summaryEndDate) 
+                      ? 'Full Master Record' 
+                      : `${rangeDaysCount} day${rangeDaysCount > 1 ? 's' : ''}`}
                   </span>
                 </div>
 
@@ -1600,23 +1678,27 @@ export default function AdminPortal({
                     No orders found for the selected date range.
                   </h4>
                   <p className="text-xs text-mani-600">
-                    No orders exist between <span className="font-bold text-mani-900">{formatDateDisplay(summaryStartDate)}</span> and <span className="font-bold text-mani-900">{formatDateDisplay(summaryEndDate)}</span>. Try choosing a different preset below:
+                    {summaryPreset === 'all-time' || (!summaryStartDate && !summaryEndDate)
+                      ? 'No orders are currently recorded in the system.'
+                      : (
+                        <>No orders exist between <span className="font-bold text-mani-900">{formatDateDisplay(summaryStartDate)}</span> and <span className="font-bold text-mani-900">{formatDateDisplay(summaryEndDate)}</span>. Try choosing a different preset below:</>
+                      )}
                   </p>
                 </div>
                 <div className="pt-2 flex flex-wrap items-center justify-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handleSelectPreset('this-month')}
+                    onClick={() => handleSelectPreset('all-time')}
                     className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-xs transition-colors cursor-pointer"
                   >
-                    Select This Month
+                    View All Time (Master List)
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleSelectPreset('this-week')}
+                    onClick={() => handleSelectPreset('this-month')}
                     className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-mani-100 hover:bg-mani-200 text-mani-800 transition-colors cursor-pointer"
                   >
-                    Select This Week
+                    Select This Month
                   </button>
                   <button
                     type="button"

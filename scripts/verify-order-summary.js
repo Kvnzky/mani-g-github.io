@@ -69,10 +69,18 @@ const getPresetDateRange = (preset) => {
       return { start: startStr, end: formatUtcYMD(endObj) };
     }
 
+    case 'all-time':
+      return { start: '', end: '' };
+
     default:
       return { start: todayStr, end: todayStr };
   }
 };
+
+const allTimeRange = getPresetDateRange('all-time');
+assert.strictEqual(allTimeRange.start, '');
+assert.strictEqual(allTimeRange.end, '');
+console.log('Preset [all-time]:', allTimeRange);
 
 const presets = ['today', 'yesterday', 'this-week', 'last-week', 'this-month', 'last-month'];
 presets.forEach(p => {
@@ -243,3 +251,139 @@ assert.strictEqual(emptyRes.totalTubs, 0, 'Should have 0 tubs in empty period');
 assert.strictEqual(emptyRes.totalRevenue, 0, 'Should have 0 revenue in empty period');
 
 console.log('✓ All aggregation, filtering, deduplication, and zero-order tests passed successfully!');
+
+console.log('\n--- 3. Testing Real Google Sheet Master List Verification ---');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { DEFAULT_PRODUCTS } from '../src/config/products.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ordersFilePath = path.join(__dirname, '..', 'server', 'data', 'orders.json');
+const rawOrders = JSON.parse(fs.readFileSync(ordersFilePath, 'utf8'));
+
+console.log(`Loaded ${rawOrders.length} orders from ${ordersFilePath}`);
+
+// Filter and aggregate using the exact logic from AdminPortal.jsx
+const masterFilterAndAggregate = (orders, startDate, endDate, products) => {
+  const seenKeys = new Set();
+  const activeOrders = orders.filter((o, idx) => {
+    const uniqueKey = o.id || `${o.orderId || 'ord'}_${o.orderDate || ''}_${o.orderTime || ''}_${o.customerName || ''}_${o.subtotal || o.totalAmount || 0}_${idx}`;
+    if (seenKeys.has(uniqueKey)) return false;
+    seenKeys.add(uniqueKey);
+
+    if ((o.status || '').toLowerCase() === 'cancelled') return false;
+    const orderDate = o.orderDate || '';
+    if (startDate && orderDate < startDate) return false;
+    if (endDate && orderDate > endDate) return false;
+    return true;
+  });
+
+  const totalOrders = activeOrders.length;
+  const totalTubs = activeOrders.reduce((sum, o) => {
+    const tubs = o.totalTubs !== undefined ? Number(o.totalTubs) : (Number(o.totalPacks) || 0);
+    return sum + (isNaN(tubs) ? 0 : tubs);
+  }, 0);
+  const totalRevenue = activeOrders.reduce((sum, o) => {
+    const rev = Number(o.subtotal) || Number(o.totalAmount) || 0;
+    return sum + (isNaN(rev) ? 0 : rev);
+  }, 0);
+
+  const map = {};
+  products.forEach((p) => {
+    map[p.id] = {
+      id: p.id,
+      name: p.name,
+      available: p.available !== false,
+      price: Number(p.price) || (p.id === 'bawang-only' ? 60 : 50),
+      quantity: 0,
+      sales: 0
+    };
+  });
+
+  activeOrders.forEach((o) => {
+    if (Array.isArray(o.items) && o.items.length > 0) {
+      o.items.forEach((it) => {
+        const id = it.id || it.productId || it.name?.toLowerCase().replace(/\s+/g, '-');
+        const q = Number(it.quantity) || 0;
+        const defaultPrice = id === 'bawang-only' ? 60 : (map[id]?.price || 50);
+        const p = Number(it.price) || defaultPrice;
+        if (!map[id]) {
+          map[id] = { id, name: it.name || id, available: true, price: p, quantity: 0, sales: 0 };
+        }
+        map[id].quantity += q;
+        map[id].sales += q * p;
+      });
+    } else if (o.flavorQuantities) {
+      Object.entries(o.flavorQuantities).forEach(([flavorId, qty]) => {
+        const q = Number(qty) || 0;
+        if (q > 0) {
+          const unitPrice = flavorId === 'bawang-only' ? 60 : (map[flavorId]?.price || 50);
+          if (!map[flavorId]) {
+            map[flavorId] = {
+              id: flavorId,
+              name: flavorId.charAt(0).toUpperCase() + flavorId.slice(1).replace(/-/g, ' '),
+              available: true,
+              price: unitPrice,
+              quantity: 0,
+              sales: 0
+            };
+          }
+          map[flavorId].quantity += q;
+          map[flavorId].sales += q * unitPrice;
+        }
+      });
+    }
+  });
+
+  const list = Object.values(map);
+  return { activeOrders, totalOrders, totalTubs, totalRevenue, flavorList: list };
+};
+
+// Test All-Time (Google Sheet Master List)
+const masterAllTime = masterFilterAndAggregate(rawOrders, '', '', DEFAULT_PRODUCTS);
+console.log('--- All Time Master List Summary ---');
+console.log('Total Orders:', masterAllTime.totalOrders);
+console.log('Total Tubs:', masterAllTime.totalTubs);
+console.log('Total Revenue: ₱' + masterAllTime.totalRevenue);
+
+assert.strictEqual(masterAllTime.totalOrders, 10, 'Master List must have exactly 10 orders');
+assert.strictEqual(masterAllTime.totalTubs, 37, 'Master List must have exactly 37 tubs');
+assert.strictEqual(masterAllTime.totalRevenue, 1910, 'Master List must have exactly ₱1,910 total revenue');
+
+console.log('\nFlavor Breakdown:');
+masterAllTime.flavorList.forEach(f => {
+  console.log(` - ${f.name} (${f.id}): ${f.quantity} tubs (₱${f.sales})`);
+});
+
+const salted = masterAllTime.flavorList.find(f => f.id === 'salted');
+assert.strictEqual(salted.quantity, 11, 'Salted must have 11 tubs');
+assert.strictEqual(salted.sales, 550, 'Salted sales must be ₱550');
+
+const bbq = masterAllTime.flavorList.find(f => f.id === 'bbq');
+assert.strictEqual(bbq.quantity, 10, 'BBQ must have 10 tubs');
+assert.strictEqual(bbq.sales, 500, 'BBQ sales must be ₱500');
+
+const bawang = masterAllTime.flavorList.find(f => f.id === 'bawang-only');
+assert.strictEqual(bawang.quantity, 6, 'Bawang Only must have 6 tubs');
+assert.strictEqual(bawang.sales, 360, 'Bawang Only sales must be ₱360 (6 * ₱60)');
+
+const spicy = masterAllTime.flavorList.find(f => f.id === 'spicy');
+assert.strictEqual(spicy.quantity, 4, 'Spicy must have 4 tubs');
+assert.strictEqual(spicy.sales, 200, 'Spicy sales must be ₱200');
+
+const sourCream = masterAllTime.flavorList.find(f => f.id === 'sour-cream');
+assert.strictEqual(sourCream.quantity, 4, 'Sour Cream must have 4 tubs');
+assert.strictEqual(sourCream.sales, 200, 'Sour Cream sales must be ₱200');
+
+const unsalted = masterAllTime.flavorList.find(f => f.id === 'unsalted');
+assert.strictEqual(unsalted.quantity, 2, 'Unsalted must have 2 tubs');
+assert.strictEqual(unsalted.sales, 100, 'Unsalted sales must be ₱100');
+
+const cheese = masterAllTime.flavorList.find(f => f.id === 'cheese');
+assert.strictEqual(cheese.quantity, 0, 'Cheese must have 0 tubs');
+assert.strictEqual(cheese.sales, 0, 'Cheese sales must be ₱0');
+
+console.log('\n✅ All Google Sheet Master List checks (10 orders, 37 tubs, ₱1,910) PASSED PERFECTLY!');
+

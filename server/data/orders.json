@@ -1,181 +1,85 @@
 [
   {
-    "id": "ord_1790142004675_u37lyh",
-    "orderId": "MANI-20260923-009",
-    "orderDate": "2026-09-23",
-    "orderTime": "01:40:04 PM",
-    "customerName": "Cheese Test Customer",
-    "mobileNumber": "09181234567",
-    "deliveryAddress": "Cheese Test Address",
+    "orderId": "MANI-20260920-003",
+    "orderDate": "2026-09-20",
+    "orderTime": "6:09:32 PM",
+    "customerName": "Extra",
+    "mobileNumber": "9172582581",
     "paymentMethod": "Cash on Delivery",
-    "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "cheese",
-        "name": "Cheese",
-        "quantity": 3,
-        "price": 50
-      }
-    ],
+    "deliveryAddress": "Extra",
+    "paymentStatus": "Paid",
+    "flavorQuantities": {
+      "salted": 2,
+      "unsalted": 0,
+      "spicy": 0,
+      "bbq": 2,
+      "sour-cream": 0,
+      "cheese": 0,
+      "bawang-only": 0
+    },
+    "totalPacks": 4,
+    "subtotal": 200,
+    "status": "Completed",
+    "id": "ord_sheet_1_MANI-20260920-003",
+    "totalTubs": 4
+  },
+  {
+    "orderId": "MANI-20260920-002",
+    "orderDate": "2026-09-20",
+    "orderTime": "5:42:21 PM",
+    "customerName": "Chris",
+    "mobileNumber": "9191234567",
+    "paymentMethod": "Cash on Delivery",
+    "deliveryAddress": "RCBC",
+    "paymentStatus": "Paid",
     "flavorQuantities": {
       "salted": 0,
       "unsalted": 0,
       "spicy": 0,
-      "bbq": 0,
+      "bbq": 1,
       "sour-cream": 0,
-      "cheese": 3,
+      "cheese": 0,
       "bawang-only": 0
     },
-    "totalPacks": 3,
-    "totalTubs": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-23T05:40:04.675Z",
-    "syncedToGoogleSheets": false
+    "totalPacks": 1,
+    "subtotal": 50,
+    "status": "Completed",
+    "id": "ord_sheet_2_MANI-20260920-002",
+    "totalTubs": 1
   },
   {
-    "id": "ord_1790142004630_uh65el",
-    "orderId": "MANI-20260923-008",
-    "orderDate": "2026-09-23",
-    "orderTime": "01:40:04 PM",
-    "customerName": "Test Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Test Unit 102, Manila",
-    "paymentMethod": "GCash",
-    "paymentStatus": "Pending – Awaiting GCash Payment",
-    "items": [
-      {
-        "id": "salted",
-        "name": "Salted Mani",
-        "quantity": 2,
-        "price": 50
-      },
-      {
-        "id": "spicy",
-        "name": "Spicy Mani",
-        "quantity": 1,
-        "price": 50
-      }
-    ],
+    "orderId": "MANI-20260920-001",
+    "orderDate": "2026-09-20",
+    "orderTime": "5:18:27 PM",
+    "customerName": "Kaye Ramirez",
+    "mobileNumber": "+639171082735",
+    "paymentMethod": "Cash on Delivery",
+    "deliveryAddress": "313 A. Mabini Street Brgy. Sto. Nino Cainta Rizal",
+    "paymentStatus": "Pending – Cash on Delivery",
     "flavorQuantities": {
-      "salted": 2,
-      "unsalted": 0,
+      "salted": 5,
+      "unsalted": 2,
       "spicy": 1,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 0,
-      "bawang-only": 0
-    },
-    "totalPacks": 3,
-    "totalTubs": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-23T05:40:04.630Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1790142004489_y03lbx",
-    "orderId": "MANI-20260923-007",
-    "orderDate": "2026-09-23",
-    "orderTime": "01:40:04 PM",
-    "customerName": "Test Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Unit 102, Manila Building",
-    "paymentMethod": "Cash on Delivery",
-    "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "salted",
-        "quantity": 2,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 2,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 0,
-      "bawang-only": 0
-    },
-    "totalPacks": 2,
-    "totalTubs": 2,
-    "subtotal": 100,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 100,
-    "status": "New",
-    "createdAt": "2026-09-23T05:40:04.489Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1790137946298_vaip5p",
-    "orderId": "MANI-20260923-006",
-    "orderDate": "2026-09-23",
-    "orderTime": "12:32:26 PM",
-    "customerName": "Pedro Penduko",
-    "mobileNumber": "09229998888",
-    "deliveryAddress": "789 Mabini St, Manila",
-    "paymentMethod": "Maribank",
-    "paymentStatus": "Pending – Awaiting Maribank Payment",
-    "items": [
-      {
-        "id": "sour-cream",
-        "name": "Sour Cream",
-        "quantity": 2,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
+      "bbq": 2,
       "sour-cream": 2,
       "cheese": 0,
-      "bawang-only": 0
+      "bawang-only": 4
     },
-    "totalPacks": 2,
-    "totalTubs": 2,
-    "subtotal": 100,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 100,
+    "totalPacks": 16,
+    "subtotal": 840,
     "status": "New",
-    "createdAt": "2026-09-23T04:32:26.298Z",
-    "syncedToGoogleSheets": true
+    "id": "ord_sheet_3_MANI-20260920-001",
+    "totalTubs": 16
   },
   {
-    "id": "ord_1790137942601_liqfud",
-    "orderId": "MANI-20260923-005",
-    "orderDate": "2026-09-23",
-    "orderTime": "12:32:22 PM",
-    "customerName": "Maria Santos",
-    "mobileNumber": "09189876543",
-    "deliveryAddress": "Block 12 Lot 5 Golden Hills, Antipolo, Rizal",
-    "paymentMethod": "GCash",
-    "paymentStatus": "Pending – Awaiting GCash Payment",
-    "items": [
-      {
-        "id": "bbq",
-        "name": "BBQ",
-        "quantity": 2,
-        "price": 50
-      },
-      {
-        "id": "bawang-only",
-        "name": "Bawang Only",
-        "quantity": 1,
-        "price": 60
-      }
-    ],
+    "orderId": "MANI-20260918-001",
+    "orderDate": "2026-09-18",
+    "orderTime": "8:03:57 PM",
+    "customerName": "Hana",
+    "mobileNumber": "9981501378",
+    "paymentMethod": "Cash on Delivery",
+    "deliveryAddress": "RCBC",
+    "paymentStatus": "Paid",
     "flavorQuantities": {
       "salted": 0,
       "unsalted": 0,
@@ -183,272 +87,47 @@
       "bbq": 2,
       "sour-cream": 0,
       "cheese": 0,
-      "bawang-only": 1
-    },
-    "totalPacks": 3,
-    "totalTubs": 3,
-    "subtotal": 160,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 160,
-    "status": "New",
-    "createdAt": "2026-09-23T04:32:22.601Z",
-    "syncedToGoogleSheets": true
-  },
-  {
-    "id": "ord_1790137938082_6xbvlv",
-    "orderId": "MANI-20260923-004",
-    "orderDate": "2026-09-23",
-    "orderTime": "12:32:18 PM",
-    "customerName": "Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Unit 4B Sunrise Condominium, Ortigas Center, Pasig City",
-    "paymentMethod": "Cash on Delivery",
-    "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "salted",
-        "name": "Salted",
-        "quantity": 2,
-        "price": 50
-      },
-      {
-        "id": "spicy",
-        "name": "Spicy",
-        "quantity": 1,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 2,
-      "unsalted": 0,
-      "spicy": 1,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 0,
       "bawang-only": 0
     },
-    "totalPacks": 3,
-    "totalTubs": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-23T04:32:18.082Z",
-    "syncedToGoogleSheets": true
+    "totalPacks": 2,
+    "subtotal": 100,
+    "status": "Completed",
+    "id": "ord_sheet_4_MANI-20260918-001",
+    "totalTubs": 2
   },
   {
-    "id": "ord_1790137926641_d67wzh",
-    "orderId": "MANI-20260923-003",
-    "orderDate": "2026-09-23",
-    "orderTime": "12:32:06 PM",
-    "customerName": "Cheese Test Customer",
-    "mobileNumber": "09181234567",
-    "deliveryAddress": "Cheese Test Address",
-    "paymentMethod": "Cash on Delivery",
-    "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "cheese",
-        "name": "Cheese",
-        "quantity": 3,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 3,
-      "bawang-only": 0
-    },
-    "totalPacks": 3,
-    "totalTubs": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-23T04:32:06.641Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1790137926594_o0xboh",
-    "orderId": "MANI-20260923-002",
-    "orderDate": "2026-09-23",
-    "orderTime": "12:32:06 PM",
-    "customerName": "Test Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Test Unit 102, Manila",
+    "orderId": "MANI-20260918-005",
+    "orderDate": "2026-09-18",
+    "orderTime": "10:00:00 AM",
+    "customerName": "Mermer",
+    "mobileNumber": "9171234567",
     "paymentMethod": "GCash",
-    "paymentStatus": "Pending – Awaiting GCash Payment",
-    "items": [
-      {
-        "id": "salted",
-        "name": "Salted Mani",
-        "quantity": 2,
-        "price": 50
-      },
-      {
-        "id": "spicy",
-        "name": "Spicy Mani",
-        "quantity": 1,
-        "price": 50
-      }
-    ],
+    "deliveryAddress": "Vista Verde",
+    "paymentStatus": "Paid",
     "flavorQuantities": {
-      "salted": 2,
+      "salted": 1,
       "unsalted": 0,
       "spicy": 1,
-      "bbq": 0,
-      "sour-cream": 0,
+      "bbq": 1,
+      "sour-cream": 1,
       "cheese": 0,
       "bawang-only": 0
     },
-    "totalPacks": 3,
-    "totalTubs": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-23T04:32:06.594Z",
-    "syncedToGoogleSheets": false
+    "totalPacks": 4,
+    "subtotal": 200,
+    "status": "Completed",
+    "id": "ord_sheet_5_MANI-20260918-005",
+    "totalTubs": 4
   },
   {
-    "id": "ord_1790137926486_xyzw2b",
     "orderId": "MANI-20260923-001",
     "orderDate": "2026-09-23",
-    "orderTime": "12:32:06 PM",
-    "customerName": "Test Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Unit 102, Manila Building",
+    "orderTime": "3:06:13 AM",
+    "customerName": "Kenny",
+    "mobileNumber": "9172345678",
     "paymentMethod": "Cash on Delivery",
+    "deliveryAddress": "Mega Tower",
     "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "salted",
-        "quantity": 2,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 2,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 0,
-      "bawang-only": 0
-    },
-    "totalPacks": 2,
-    "totalTubs": 2,
-    "subtotal": 100,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 100,
-    "status": "New",
-    "createdAt": "2026-09-23T04:32:06.486Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789965221466_uh3imj",
-    "orderId": "MANI-20260921-010",
-    "orderDate": "2026-09-21",
-    "orderTime": "12:33:41 PM",
-    "customerName": "Cheese Test Customer",
-    "mobileNumber": "09181234567",
-    "deliveryAddress": "Cheese Test Address",
-    "paymentMethod": "Cash on Delivery",
-    "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "cheese",
-        "name": "Cheese",
-        "quantity": 3,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 3,
-      "bawang-only": 0
-    },
-    "totalPacks": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-21T04:33:41.466Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789965221435_shhelq",
-    "orderId": "MANI-20260921-009",
-    "orderDate": "2026-09-21",
-    "orderTime": "12:33:41 PM",
-    "customerName": "Test Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Test Unit 102, Manila",
-    "paymentMethod": "GCash",
-    "paymentStatus": "Pending – Awaiting GCash Payment",
-    "items": [
-      {
-        "id": "salted",
-        "name": "Salted Mani",
-        "quantity": 2,
-        "price": 50
-      },
-      {
-        "id": "spicy",
-        "name": "Spicy Mani",
-        "quantity": 1,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 2,
-      "unsalted": 0,
-      "spicy": 1,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 0,
-      "bawang-only": 0
-    },
-    "totalPacks": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-21T04:33:41.435Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789965221329_ro0ru4",
-    "orderId": "MANI-20260921-008",
-    "orderDate": "2026-09-21",
-    "orderTime": "12:33:41 PM",
-    "customerName": "Test Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Unit 102, Manila Building",
-    "paymentMethod": "Cash on Delivery",
-    "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "salted",
-        "quantity": 2,
-        "price": 50
-      }
-    ],
     "flavorQuantities": {
       "salted": 2,
       "unsalted": 0,
@@ -460,520 +139,104 @@
     },
     "totalPacks": 2,
     "subtotal": 100,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 100,
     "status": "New",
-    "createdAt": "2026-09-21T04:33:41.329Z",
-    "syncedToGoogleSheets": false
+    "id": "ord_sheet_6_MANI-20260923-001",
+    "totalTubs": 2
   },
   {
-    "id": "ord_1789958294795_wfa22v",
-    "orderId": "MANI-20260921-007",
-    "orderDate": "2026-09-21",
-    "orderTime": "10:38:14 AM",
-    "customerName": "Cheese Test Customer",
-    "mobileNumber": "09181234567",
-    "deliveryAddress": "Cheese Test Address",
+    "orderId": "MANI-20260922-001",
+    "orderDate": "2026-09-22",
+    "orderTime": "8:58:04 PM",
+    "customerName": "Kaye Ramirez",
+    "mobileNumber": "+639171082735",
     "paymentMethod": "Cash on Delivery",
+    "deliveryAddress": "313 A. Mabini Street Brgy. Sto. Nino Cainta Rizal",
     "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "cheese",
-        "name": "Cheese",
-        "quantity": 3,
-        "price": 50
-      }
-    ],
     "flavorQuantities": {
       "salted": 0,
       "unsalted": 0,
       "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 3,
-      "bawang-only": 0
-    },
-    "totalPacks": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-21T02:38:14.795Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789958294780_iqjt2z",
-    "orderId": "MANI-20260921-006",
-    "orderDate": "2026-09-21",
-    "orderTime": "10:38:14 AM",
-    "customerName": "Test Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Test Unit 102, Manila",
-    "paymentMethod": "GCash",
-    "paymentStatus": "Pending – Awaiting GCash Payment",
-    "items": [
-      {
-        "id": "salted",
-        "name": "Salted Mani",
-        "quantity": 2,
-        "price": 50
-      },
-      {
-        "id": "spicy",
-        "name": "Spicy Mani",
-        "quantity": 1,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 2,
-      "unsalted": 0,
-      "spicy": 1,
-      "bbq": 0,
-      "sour-cream": 0,
+      "bbq": 1,
+      "sour-cream": 1,
       "cheese": 0,
-      "bawang-only": 0
-    },
-    "totalPacks": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-21T02:38:14.780Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789958294655_b6ijbd",
-    "orderId": "MANI-20260921-005",
-    "orderDate": "2026-09-21",
-    "orderTime": "10:38:14 AM",
-    "customerName": "Test Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Unit 102, Manila Building",
-    "paymentMethod": "Cash on Delivery",
-    "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "salted",
-        "quantity": 2,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 2,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 0,
-      "bawang-only": 0
-    },
-    "totalPacks": 2,
-    "subtotal": 100,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 100,
-    "status": "New",
-    "createdAt": "2026-09-21T02:38:14.655Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789957761612_la0vl0",
-    "orderId": "MANI-20260921-004",
-    "orderDate": "2026-09-21",
-    "orderTime": "10:29:21 AM",
-    "customerName": "Test Customer",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "123 Test St",
-    "paymentMethod": "Cash on Delivery",
-    "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "productId": "spicy",
-        "name": "Spicy",
-        "quantity": 2,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 2,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 0,
-      "bawang-only": 0
-    },
-    "totalPacks": 2,
-    "subtotal": 100,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 100,
-    "status": "New",
-    "createdAt": "2026-09-21T02:29:21.612Z",
-    "syncedToGoogleSheets": true
-  },
-  {
-    "id": "ord_1789957708975_efd6zi",
-    "orderId": "MANI-20260921-003",
-    "orderDate": "2026-09-21",
-    "orderTime": "10:28:28 AM",
-    "customerName": "Cheese Test Customer",
-    "mobileNumber": "09181234567",
-    "deliveryAddress": "Cheese Test Address",
-    "paymentMethod": "Cash on Delivery",
-    "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "cheese",
-        "name": "Cheese",
-        "quantity": 3,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 3,
-      "bawang-only": 0
-    },
-    "totalPacks": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-21T02:28:28.975Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789957708930_misad0",
-    "orderId": "MANI-20260921-002",
-    "orderDate": "2026-09-21",
-    "orderTime": "10:28:28 AM",
-    "customerName": "Test Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Test Unit 102, Manila",
-    "paymentMethod": "GCash",
-    "paymentStatus": "Pending – Awaiting GCash Payment",
-    "items": [
-      {
-        "id": "salted",
-        "name": "Salted Mani",
-        "quantity": 2,
-        "price": 50
-      },
-      {
-        "id": "spicy",
-        "name": "Spicy Mani",
-        "quantity": 1,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 2,
-      "unsalted": 0,
-      "spicy": 1,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 0,
-      "bawang-only": 0
-    },
-    "totalPacks": 3,
-    "subtotal": 150,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 150,
-    "status": "New",
-    "createdAt": "2026-09-21T02:28:28.930Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789957708726_uaaf0e",
-    "orderId": "MANI-20260921-001",
-    "orderDate": "2026-09-21",
-    "orderTime": "10:28:28 AM",
-    "customerName": "Test Juan Dela Cruz",
-    "mobileNumber": "09171234567",
-    "deliveryAddress": "Unit 102, Manila Building",
-    "paymentMethod": "Cash on Delivery",
-    "paymentStatus": "Pending – Cash on Delivery",
-    "items": [
-      {
-        "id": "salted",
-        "quantity": 2,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 2,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 0,
-      "cheese": 0,
-      "bawang-only": 0
-    },
-    "totalPacks": 2,
-    "subtotal": 100,
-    "deliveryFee": 0,
-    "discount": 0,
-    "totalAmount": 100,
-    "status": "New",
-    "createdAt": "2026-09-21T02:28:28.726Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789611719041_zu5hhk",
-    "orderId": "MANI-20260917-012",
-    "orderDate": "2026-09-17",
-    "orderTime": "10:21:59 AM",
-    "customerName": "Pedro Penduko",
-    "mobileNumber": "09229998888",
-    "deliveryAddress": "789 Mabini St, Manila",
-    "paymentMethod": "Maribank",
-    "items": [
-      {
-        "id": "sour-cream",
-        "name": "Sour Cream",
-        "quantity": 2,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 2,
-      "bawang-only": 0
-    },
-    "totalPacks": 2,
-    "subtotal": 100,
-    "status": "New",
-    "createdAt": "2026-09-17T02:21:59.041Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789611719034_h2dmnm",
-    "orderId": "MANI-20260917-011",
-    "orderDate": "2026-09-17",
-    "orderTime": "10:21:59 AM",
-    "customerName": "Maria Santos",
-    "mobileNumber": "09189876543",
-    "deliveryAddress": "Block 12 Lot 5 Golden Hills, Antipolo, Rizal",
-    "paymentMethod": "GCash",
-    "items": [
-      {
-        "id": "bbq",
-        "name": "BBQ",
-        "quantity": 2,
-        "price": 50
-      },
-      {
-        "id": "bawang-only",
-        "name": "Bawang Only",
-        "quantity": 1,
-        "price": 60
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 2,
-      "sour-cream": 0,
-      "bawang-only": 1
-    },
-    "totalPacks": 3,
-    "subtotal": 160,
-    "status": "New",
-    "createdAt": "2026-09-17T02:21:59.034Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789609472696_thhnk4",
-    "orderId": "MANI-20260917-009",
-    "orderDate": "2026-09-17",
-    "orderTime": "09:44:32 AM",
-    "customerName": "Pedro Penduko",
-    "mobileNumber": "09229998888",
-    "deliveryAddress": "789 Mabini St, Manila",
-    "paymentMethod": "Maribank",
-    "items": [
-      {
-        "id": "sour-cream",
-        "name": "Sour Cream",
-        "quantity": 2,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 2,
-      "bawang-only": 0
-    },
-    "totalPacks": 2,
-    "subtotal": 100,
-    "status": "New",
-    "createdAt": "2026-09-17T01:44:32.696Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789609472681_roml1c",
-    "orderId": "MANI-20260917-008",
-    "orderDate": "2026-09-17",
-    "orderTime": "09:44:32 AM",
-    "customerName": "Maria Santos",
-    "mobileNumber": "09189876543",
-    "deliveryAddress": "Block 12 Lot 5 Golden Hills, Antipolo, Rizal",
-    "paymentMethod": "GCash",
-    "items": [
-      {
-        "id": "bbq",
-        "name": "BBQ",
-        "quantity": 2,
-        "price": 50
-      },
-      {
-        "id": "bawang-only",
-        "name": "Bawang Only",
-        "quantity": 1,
-        "price": 60
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 2,
-      "sour-cream": 0,
-      "bawang-only": 1
-    },
-    "totalPacks": 3,
-    "subtotal": 160,
-    "status": "New",
-    "createdAt": "2026-09-17T01:44:32.681Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789606810511_lb8qpk",
-    "orderId": "MANI-20260917-006",
-    "orderDate": "2026-09-17",
-    "orderTime": "09:00:10 AM",
-    "customerName": "Pedro Penduko",
-    "mobileNumber": "09229998888",
-    "deliveryAddress": "789 Mabini St, Manila",
-    "paymentMethod": "Maribank",
-    "items": [
-      {
-        "id": "sour-cream",
-        "name": "Sour Cream",
-        "quantity": 2,
-        "price": 50
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 2,
-      "bawang-only": 0
-    },
-    "totalPacks": 2,
-    "subtotal": 100,
-    "status": "New",
-    "createdAt": "2026-09-17T01:00:10.511Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789606810505_zg3d0w",
-    "orderId": "MANI-20260917-005",
-    "orderDate": "2026-09-17",
-    "orderTime": "09:00:10 AM",
-    "customerName": "Maria Santos",
-    "mobileNumber": "09189876543",
-    "deliveryAddress": "Block 12 Lot 5 Golden Hills, Antipolo, Rizal",
-    "paymentMethod": "GCash",
-    "items": [
-      {
-        "id": "bbq",
-        "name": "BBQ",
-        "quantity": 2,
-        "price": 50
-      },
-      {
-        "id": "bawang-only",
-        "name": "Bawang Only",
-        "quantity": 1,
-        "price": 60
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 2,
-      "sour-cream": 0,
-      "bawang-only": 1
-    },
-    "totalPacks": 3,
-    "subtotal": 160,
-    "status": "New",
-    "createdAt": "2026-09-17T01:00:10.505Z",
-    "syncedToGoogleSheets": false
-  },
-  {
-    "id": "ord_1789599300985_ffl98s",
-    "orderId": "MANI-20260917-002",
-    "orderDate": "2026-09-17",
-    "orderTime": "06:55:00 AM",
-    "customerName": "Maria Clara",
-    "mobileNumber": "09189876543",
-    "orderType": "Delivery",
-    "address": "456 Mabini Street, Barangay Maligaya, Quezon City",
-    "notes": "Please ring bell",
-    "items": [
-      {
-        "id": "bawang-only",
-        "name": "Bawang Only",
-        "quantity": 2,
-        "price": 60
-      }
-    ],
-    "specialOrders": [
-      {
-        "name": "Custom Spicy Garlic",
-        "flavor": "Garlic + extra spicy",
-        "instructions": "Less salt, crispy roast",
-        "quantity": 1,
-        "price": 55
-      }
-    ],
-    "flavorQuantities": {
-      "salted": 0,
-      "unsalted": 0,
-      "spicy": 0,
-      "bbq": 0,
-      "sour-cream": 0,
       "bawang-only": 2
     },
-    "specialOrderDesc": "Custom Spicy Garlic (Garlic + extra spicy - Less salt, crispy roast)",
-    "specialOrderQty": 1,
-    "totalPacks": 3,
-    "subtotal": 175,
+    "totalPacks": 4,
+    "subtotal": 220,
     "status": "New",
-    "createdAt": "2026-09-16T22:55:00.985Z",
-    "syncedToGoogleSheets": false
+    "id": "ord_sheet_7_MANI-20260922-001",
+    "totalTubs": 4
+  },
+  {
+    "orderId": "MANI-20260922-001",
+    "orderDate": "2026-09-22",
+    "orderTime": "8:19:09 AM",
+    "customerName": "Robin",
+    "mobileNumber": "9123456789",
+    "paymentMethod": "Cash on Delivery",
+    "deliveryAddress": "RCBC",
+    "paymentStatus": "Paid",
+    "flavorQuantities": {
+      "salted": 0,
+      "unsalted": 0,
+      "spicy": 1,
+      "bbq": 0,
+      "sour-cream": 0,
+      "cheese": 0,
+      "bawang-only": 0
+    },
+    "totalPacks": 1,
+    "subtotal": 50,
+    "status": "Confirmed",
+    "id": "ord_sheet_8_MANI-20260922-001",
+    "totalTubs": 1
+  },
+  {
+    "orderId": "MANI-20260921-001",
+    "orderDate": "2026-09-21",
+    "orderTime": "9:00:51 PM",
+    "customerName": "Sheila",
+    "mobileNumber": "9998765432",
+    "paymentMethod": "Cash on Delivery",
+    "deliveryAddress": "Mega Tower",
+    "paymentStatus": "Pending – Cash on Delivery",
+    "flavorQuantities": {
+      "salted": 1,
+      "unsalted": 0,
+      "spicy": 0,
+      "bbq": 0,
+      "sour-cream": 0,
+      "cheese": 0,
+      "bawang-only": 0
+    },
+    "totalPacks": 1,
+    "subtotal": 50,
+    "status": "New",
+    "id": "ord_sheet_9_MANI-20260921-001",
+    "totalTubs": 1
+  },
+  {
+    "orderId": "MANI-20260921-001",
+    "orderDate": "2026-09-21",
+    "orderTime": "8:22:15 PM",
+    "customerName": "Kaye Ramirez",
+    "mobileNumber": "+639171082735",
+    "paymentMethod": "Cash on Delivery",
+    "deliveryAddress": "313 A. Mabini Street Brgy. Sto. Nino Cainta Rizal",
+    "paymentStatus": "Pending – Cash on Delivery",
+    "flavorQuantities": {
+      "salted": 0,
+      "unsalted": 0,
+      "spicy": 1,
+      "bbq": 1,
+      "sour-cream": 0,
+      "cheese": 0,
+      "bawang-only": 0
+    },
+    "totalPacks": 2,
+    "subtotal": 100,
+    "status": "New",
+    "id": "ord_sheet_10_MANI-20260921-001",
+    "totalTubs": 2
   }
 ]

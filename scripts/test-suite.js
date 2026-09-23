@@ -1,27 +1,37 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ORDERS_FILE = path.join(__dirname, '..', 'server', 'data', 'orders.json');
+const SETTINGS_FILE = path.join(__dirname, '..', 'server', 'data', 'settings.json');
 
 const BASE_URL = 'http://127.0.0.1:3001';
 
 async function runTests() {
-  console.log('🥜 Starting Comprehensive MANI G? Security & Cutoff Test Suite...\n');
-  let passed = 0;
-  let failed = 0;
+  const initialOrders = fs.existsSync(ORDERS_FILE) ? fs.readFileSync(ORDERS_FILE, 'utf8') : null;
+  const initialSettings = fs.existsSync(SETTINGS_FILE) ? fs.readFileSync(SETTINGS_FILE, 'utf8') : null;
 
-  function assert(condition, message) {
-    if (condition) {
-      console.log(`✅ PASS: ${message}`);
-      passed++;
-    } else {
-      console.error(`❌ FAIL: ${message}`);
-      failed++;
+  try {
+    console.log('🥜 Starting Comprehensive MANI G? Security & Cutoff Test Suite...\n');
+    let passed = 0;
+    let failed = 0;
+
+    function assert(condition, message) {
+      if (condition) {
+        console.log(`✅ PASS: ${message}`);
+        passed++;
+      } else {
+        console.error(`❌ FAIL: ${message}`);
+        failed++;
+      }
     }
-  }
 
-  // -------------------------------------------------------------
-  // 1. AUTHENTICATION TESTS
-  // -------------------------------------------------------------
-  console.log('\n--- 1. AUTHENTICATION TESTS ---');
+    // -------------------------------------------------------------
+    // 1. AUTHENTICATION TESTS
+    // -------------------------------------------------------------
+    console.log('\n--- 1. AUTHENTICATION TESTS ---');
 
   // Test 1.1: Login with incorrect password
   try {
@@ -334,6 +344,14 @@ async function runTests() {
 
   if (failed > 0) {
     process.exit(1);
+  }
+  } finally {
+    if (initialOrders !== null) {
+      fs.writeFileSync(ORDERS_FILE, initialOrders, 'utf8');
+    }
+    if (initialSettings !== null) {
+      fs.writeFileSync(SETTINGS_FILE, initialSettings, 'utf8');
+    }
   }
 }
 
