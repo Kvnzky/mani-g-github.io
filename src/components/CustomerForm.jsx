@@ -32,6 +32,8 @@ export default function CustomerForm({
   const isMaribankEnabled = paymentMethods?.maribank !== false;
   const isGcashEnabled = paymentMethods?.gcash !== false;
   const hasAnyPaymentMethod = isCodEnabled || isMaribankEnabled || isGcashEnabled;
+  const enabledCount = [isCodEnabled, isMaribankEnabled, isGcashEnabled].filter(Boolean).length;
+  const gridColsClass = enabledCount === 1 ? 'grid-cols-1' : enabledCount === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-3';
 
   return (
     <div className="space-y-6">
@@ -144,133 +146,93 @@ export default function CustomerForm({
         )}
 
         {/* Payment Options Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Option 1: Cash on Delivery */}
-          <button
-            type="button"
-            disabled={!isCodEnabled}
-            onClick={() => isCodEnabled && handleInputChange('paymentMethod', 'Cash on Delivery')}
-            className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between ${
-              !isCodEnabled
-                ? 'bg-mani-100/50 text-mani-400 border-mani-200 cursor-not-allowed opacity-60'
-                : formData.paymentMethod === 'Cash on Delivery'
-                ? 'bg-amber-500 text-white border-amber-600 shadow-md ring-2 ring-amber-300'
-                : 'bg-mani-50/70 text-mani-900 border-mani-200 hover:bg-mani-100/70 cursor-pointer'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full mb-2">
-              <span className={`p-2 rounded-xl text-xl ${formData.paymentMethod === 'Cash on Delivery' && isCodEnabled ? 'bg-white/20' : 'bg-mani-200/50'}`}>💵</span>
-              <div className="flex items-center gap-1.5">
-                {!isCodEnabled && (
-                  <span className="text-[10px] font-black bg-red-100 text-red-700 px-2 py-0.5 rounded-full border border-red-200">
-                    Unavailable
+        {hasAnyPaymentMethod && (
+          <div className={`grid ${gridColsClass} gap-3`}>
+            {/* Option 1: Cash on Delivery */}
+            {isCodEnabled && (
+              <button
+                type="button"
+                onClick={() => handleInputChange('paymentMethod', 'Cash on Delivery')}
+                className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
+                  formData.paymentMethod === 'Cash on Delivery'
+                    ? 'bg-amber-500 text-white border-amber-600 shadow-md ring-2 ring-amber-300'
+                    : 'bg-mani-50/70 text-mani-900 border-mani-200 hover:bg-mani-100/70'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full mb-2">
+                  <span className={`p-2 rounded-xl text-xl ${formData.paymentMethod === 'Cash on Delivery' ? 'bg-white/20' : 'bg-mani-200/50'}`}>💵</span>
+                  <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    formData.paymentMethod === 'Cash on Delivery' ? 'border-white bg-white' : 'border-mani-300'
+                  }`}>
+                    {formData.paymentMethod === 'Cash on Delivery' && <span className="w-2 h-2 rounded-full bg-amber-600" />}
                   </span>
-                )}
-                <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                  formData.paymentMethod === 'Cash on Delivery' && isCodEnabled ? 'border-white bg-white' : 'border-mani-300'
-                }`}>
-                  {formData.paymentMethod === 'Cash on Delivery' && isCodEnabled && <span className="w-2 h-2 rounded-full bg-amber-600" />}
-                </span>
-              </div>
-            </div>
-            <div>
-              <div className="font-extrabold text-sm sm:text-base">Cash on Delivery</div>
-              <div className={`text-xs mt-0.5 ${
-                !isCodEnabled 
-                  ? 'text-red-500 font-semibold' 
-                  : formData.paymentMethod === 'Cash on Delivery' 
-                  ? 'text-amber-100' 
-                  : 'text-mani-500'
-              }`}>
-                {isCodEnabled ? 'Pay when delivered' : 'Temporarily unavailable'}
-              </div>
-            </div>
-          </button>
+                </div>
+                <div>
+                  <div className="font-extrabold text-sm sm:text-base">Cash on Delivery</div>
+                  <div className={`text-xs mt-0.5 ${formData.paymentMethod === 'Cash on Delivery' ? 'text-amber-100' : 'text-mani-500'}`}>
+                    Pay when delivered
+                  </div>
+                </div>
+              </button>
+            )}
 
-          {/* Option 2: Maribank */}
-          <button
-            type="button"
-            disabled={!isMaribankEnabled}
-            onClick={() => isMaribankEnabled && handleInputChange('paymentMethod', 'Maribank')}
-            className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between ${
-              !isMaribankEnabled
-                ? 'bg-mani-100/50 text-mani-400 border-mani-200 cursor-not-allowed opacity-60'
-                : formData.paymentMethod === 'Maribank'
-                ? 'bg-orange-600 text-white border-orange-700 shadow-md ring-2 ring-orange-300'
-                : 'bg-mani-50/70 text-mani-900 border-mani-200 hover:bg-mani-100/70 cursor-pointer'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full mb-2">
-              <span className={`p-2 rounded-xl text-xl ${formData.paymentMethod === 'Maribank' && isMaribankEnabled ? 'bg-white/20' : 'bg-mani-200/50'}`}>🏦</span>
-              <div className="flex items-center gap-1.5">
-                {!isMaribankEnabled && (
-                  <span className="text-[10px] font-black bg-red-100 text-red-700 px-2 py-0.5 rounded-full border border-red-200">
-                    Unavailable
+            {/* Option 2: Maribank */}
+            {isMaribankEnabled && (
+              <button
+                type="button"
+                onClick={() => handleInputChange('paymentMethod', 'Maribank')}
+                className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
+                  formData.paymentMethod === 'Maribank'
+                    ? 'bg-orange-600 text-white border-orange-700 shadow-md ring-2 ring-orange-300'
+                    : 'bg-mani-50/70 text-mani-900 border-mani-200 hover:bg-mani-100/70'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full mb-2">
+                  <span className={`p-2 rounded-xl text-xl ${formData.paymentMethod === 'Maribank' ? 'bg-white/20' : 'bg-mani-200/50'}`}>🏦</span>
+                  <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    formData.paymentMethod === 'Maribank' ? 'border-white bg-white' : 'border-mani-300'
+                  }`}>
+                    {formData.paymentMethod === 'Maribank' && <span className="w-2 h-2 rounded-full bg-orange-700" />}
                   </span>
-                )}
-                <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                  formData.paymentMethod === 'Maribank' && isMaribankEnabled ? 'border-white bg-white' : 'border-mani-300'
-                }`}>
-                  {formData.paymentMethod === 'Maribank' && isMaribankEnabled && <span className="w-2 h-2 rounded-full bg-orange-700" />}
-                </span>
-              </div>
-            </div>
-            <div>
-              <div className="font-extrabold text-sm sm:text-base">Maribank</div>
-              <div className={`text-xs mt-0.5 ${
-                !isMaribankEnabled 
-                  ? 'text-red-500 font-semibold' 
-                  : formData.paymentMethod === 'Maribank' 
-                  ? 'text-orange-100' 
-                  : 'text-mani-500'
-              }`}>
-                {isMaribankEnabled ? 'Scan to pay via QR' : 'Temporarily unavailable'}
-              </div>
-            </div>
-          </button>
+                </div>
+                <div>
+                  <div className="font-extrabold text-sm sm:text-base">Maribank</div>
+                  <div className={`text-xs mt-0.5 ${formData.paymentMethod === 'Maribank' ? 'text-orange-100' : 'text-mani-500'}`}>
+                    Scan to pay via QR
+                  </div>
+                </div>
+              </button>
+            )}
 
-          {/* Option 3: GCash */}
-          <button
-            type="button"
-            disabled={!isGcashEnabled}
-            onClick={() => isGcashEnabled && handleInputChange('paymentMethod', 'GCash')}
-            className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between ${
-              !isGcashEnabled
-                ? 'bg-mani-100/50 text-mani-400 border-mani-200 cursor-not-allowed opacity-60'
-                : formData.paymentMethod === 'GCash'
-                ? 'bg-blue-600 text-white border-blue-700 shadow-md ring-2 ring-blue-300'
-                : 'bg-mani-50/70 text-mani-900 border-mani-200 hover:bg-mani-100/70 cursor-pointer'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full mb-2">
-              <span className={`p-2 rounded-xl text-xl ${formData.paymentMethod === 'GCash' && isGcashEnabled ? 'bg-white/20' : 'bg-mani-200/50'}`}>📱</span>
-              <div className="flex items-center gap-1.5">
-                {!isGcashEnabled && (
-                  <span className="text-[10px] font-black bg-red-100 text-red-700 px-2 py-0.5 rounded-full border border-red-200">
-                    Unavailable
+            {/* Option 3: GCash */}
+            {isGcashEnabled && (
+              <button
+                type="button"
+                onClick={() => handleInputChange('paymentMethod', 'GCash')}
+                className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
+                  formData.paymentMethod === 'GCash'
+                    ? 'bg-blue-600 text-white border-blue-700 shadow-md ring-2 ring-blue-300'
+                    : 'bg-mani-50/70 text-mani-900 border-mani-200 hover:bg-mani-100/70'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full mb-2">
+                  <span className={`p-2 rounded-xl text-xl ${formData.paymentMethod === 'GCash' ? 'bg-white/20' : 'bg-mani-200/50'}`}>📱</span>
+                  <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    formData.paymentMethod === 'GCash' ? 'border-white bg-white' : 'border-mani-300'
+                  }`}>
+                    {formData.paymentMethod === 'GCash' && <span className="w-2 h-2 rounded-full bg-blue-700" />}
                   </span>
-                )}
-                <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                  formData.paymentMethod === 'GCash' && isGcashEnabled ? 'border-white bg-white' : 'border-mani-300'
-                }`}>
-                  {formData.paymentMethod === 'GCash' && isGcashEnabled && <span className="w-2 h-2 rounded-full bg-blue-700" />}
-                </span>
-              </div>
-            </div>
-            <div>
-              <div className="font-extrabold text-sm sm:text-base">GCash</div>
-              <div className={`text-xs mt-0.5 ${
-                !isGcashEnabled 
-                  ? 'text-red-500 font-semibold' 
-                  : formData.paymentMethod === 'GCash' 
-                  ? 'text-blue-100' 
-                  : 'text-mani-500'
-              }`}>
-                {isGcashEnabled ? 'QR Code & Number' : 'Temporarily unavailable'}
-              </div>
-            </div>
-          </button>
-        </div>
+                </div>
+                <div>
+                  <div className="font-extrabold text-sm sm:text-base">GCash</div>
+                  <div className={`text-xs mt-0.5 ${formData.paymentMethod === 'GCash' ? 'text-blue-100' : 'text-mani-500'}`}>
+                    QR Code & Number
+                  </div>
+                </div>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Dynamic Payment Details Display with ENLARGED QR CODES */}
         <div className="pt-2">
