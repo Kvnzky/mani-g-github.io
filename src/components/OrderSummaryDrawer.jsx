@@ -15,15 +15,18 @@ export default function OrderSummaryDrawer({
   isSubmitting,
   validationErrors,
   isOrdersClosed,
-  cutoffInfo
+  cutoffInfo,
+  paymentMethods = { cod: true, maribank: true, gcash: true }
 }) {
   const hasItems = totalPacks > 0;
+  const hasAnyPaymentMethod = Object.values(paymentMethods).some(Boolean);
   const isFormIncomplete = Boolean(
     !customerData.customerName?.trim() ||
     !customerData.mobileNumber?.trim() ||
     !customerData.deliveryAddress?.trim() ||
     !customerData.paymentMethod?.trim() ||
-    !hasItems
+    !hasItems ||
+    !hasAnyPaymentMethod
   );
 
   return (

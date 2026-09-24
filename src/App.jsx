@@ -10,6 +10,7 @@ import OrderCutoffBanner from './components/OrderCutoffBanner';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
+import { DEFAULT_PAYMENT_METHODS, getPaymentMethodIdByName, isPaymentMethodEnabled } from './config/paymentConfig';
 import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock, Clock } from 'lucide-react';
 
 // Helper to detect if current URL or hash targets the admin route
@@ -142,6 +143,31 @@ export default function App() {
     };
   });
 
+  // Mode of Payment Availability: { cod: true, maribank: true, gcash: true }
+  const [paymentMethods, setPaymentMethods] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mani_payment_methods');
+      if (saved) {
+        return { ...DEFAULT_PAYMENT_METHODS, ...JSON.parse(saved) };
+      }
+    } catch (e) {}
+    return { ...DEFAULT_PAYMENT_METHODS };
+  });
+
+  // Automatically update customer paymentMethod if the selected method is disabled
+  useEffect(() => {
+    if (customerData.paymentMethod) {
+      const currentId = getPaymentMethodIdByName(customerData.paymentMethod);
+      if (paymentMethods[currentId] === false) {
+        const fallback = paymentMethods.cod ? 'Cash on Delivery'
+          : paymentMethods.gcash ? 'GCash'
+          : paymentMethods.maribank ? 'Maribank'
+          : '';
+        setCustomerData((prev) => ({ ...prev, paymentMethod: fallback }));
+      }
+    }
+  }, [paymentMethods, customerData.paymentMethod]);
+
   // Validation & UI State
   const [validationErrors, setValidationErrors] = useState({});
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -218,10 +244,23 @@ export default function App() {
       setCustomQrs((prev) => ({ ...prev, ...settings.qrs }));
       localStorage.setItem('mani_qr_config_v2', JSON.stringify(settings.qrs));
     }
+
+    // 5. Synchronize Mode of Payment Availability
+    if (settings.paymentMethods && typeof settings.paymentMethods === 'object') {
+      setPaymentMethods((prev) => ({ ...prev, ...settings.paymentMethods }));
+      localStorage.setItem('mani_payment_methods', JSON.stringify(settings.paymentMethods));
+    }
   };
 
   // Fallback to local storage cache if completely offline
   const applyLocalStorageFallback = () => {
+    try {
+      const savedPM = JSON.parse(localStorage.getItem('mani_payment_methods') || 'null');
+      if (savedPM && typeof savedPM === 'object') {
+        setPaymentMethods((prev) => ({ ...prev, ...savedPM }));
+      }
+    } catch (e) {}
+
     try {
       const saved = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
       if (saved) {
@@ -269,6 +308,10 @@ export default function App() {
                 return p;
               })
             );
+          }
+          if (data.paymentMethods && typeof data.paymentMethods === 'object') {
+            setPaymentMethods((prev) => ({ ...prev, ...data.paymentMethods }));
+            localStorage.setItem('mani_payment_methods', JSON.stringify(data.paymentMethods));
           }
           return;
         }
@@ -530,6 +573,39 @@ export default function App() {
     }
   };
 
+  const handleUpdatePaymentMethods = (newMethods) => {
+    setPaymentMethods(newMethods);
+    localStorage.setItem('mani_payment_methods', JSON.stringify(newMethods));
+
+    // 1. Sync to local backend server if running
+    try {
+      if (adminToken) {
+        fetch('/api/admin/payment-methods', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({ paymentMethods: newMethods })
+        }).catch(() => {});
+      }
+    } catch (err) {}
+
+    // 2. Sync to Google Apps Script Cloud so mobile immediately receives updated payment methods
+    const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      fetch(appsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveSettings',
+          settings: { paymentMethods: newMethods }
+        })
+      }).catch(() => {});
+    }
+  };
+
   const handleQuantityChange = (productId, newQty) => {
     const prod = products.find((p) => p.id === productId);
     if (prod && prod.available === false && newQty > 0) {
@@ -578,8 +654,16 @@ export default function App() {
       errors.deliveryAddress = 'Delivery address is required.';
     }
 
-    if (!customerData.paymentMethod) {
+    const hasAnyPaymentMethod = Object.values(paymentMethods).some(Boolean);
+    if (!hasAnyPaymentMethod) {
+      errors.paymentMethod = 'All payment methods are temporarily disabled. Please contact us to order.';
+    } else if (!customerData.paymentMethod) {
       errors.paymentMethod = 'Please select a mode of payment.';
+    } else {
+      const pmId = getPaymentMethodIdByName(customerData.paymentMethod);
+      if (paymentMethods[pmId] === false) {
+        errors.paymentMethod = `${customerData.paymentMethod} is currently unavailable. Please choose another payment option.`;
+      }
     }
 
     if (totalPacks <= 0) {
@@ -594,6 +678,12 @@ export default function App() {
   const handleSubmitOrder = async () => {
     if (isOrdersClosed) {
       setSubmissionError('Orders are now closed. The cutoff time for accepting orders has ended.');
+      return;
+    }
+
+    const hasAnyPaymentMethod = Object.values(paymentMethods).some(Boolean);
+    if (!hasAnyPaymentMethod) {
+      setSubmissionError('Payment options are temporarily disabled by the administrator. Orders cannot be placed at this time.');
       return;
     }
 
@@ -763,6 +853,8 @@ export default function App() {
             onUpdateProducts={handleUpdateProducts}
             customQrs={customQrs}
             onUpdateQrs={handleUpdateQrs}
+            paymentMethods={paymentMethods}
+            onUpdatePaymentMethods={handleUpdatePaymentMethods}
             adminToken={adminToken}
             adminUser={adminUser}
             onLogout={handleLogout}
@@ -881,6 +973,7 @@ export default function App() {
                     onChange={setCustomerData}
                     errors={validationErrors}
                     customQrs={customQrs}
+                    paymentMethods={paymentMethods}
                   />
                 </section>
 
@@ -1047,6 +1140,7 @@ export default function App() {
         validationErrors={validationErrors}
         isOrdersClosed={isOrdersClosed}
         cutoffInfo={cutoffInfo}
+        paymentMethods={paymentMethods}
       />
 
       {/* Order Confirmation Modal */}

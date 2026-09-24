@@ -293,6 +293,13 @@ function handleGetSettings() {
       time: '23:59'
     };
   }
+  if (!settings.paymentMethods) {
+    settings.paymentMethods = {
+      cod: true,
+      maribank: true,
+      gcash: true
+    };
+  }
 
   return {
     success: true,
@@ -319,6 +326,7 @@ function handleSaveSettings(newSettings) {
   if (payload.cutoff) existing.cutoff = payload.cutoff;
   if (payload.products) existing.products = payload.products;
   if (payload.qrs) existing.qrs = payload.qrs;
+  if (payload.paymentMethods) existing.paymentMethods = payload.paymentMethods;
 
   props.setProperty('MANI_SETTINGS', JSON.stringify(existing));
 

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { formatPHP } from '../config/products';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from '../config/sheetsConfig';
+import { DEFAULT_PAYMENT_METHODS, PAYMENT_METHOD_METADATA } from '../config/paymentConfig';
 
 // Asia/Manila (PHT, UTC+8) Date Preset Helpers
 const getManilaTodayObj = () => {
@@ -133,6 +134,8 @@ export default function AdminPortal({
   onUpdateProducts, 
   customQrs, 
   onUpdateQrs, 
+  paymentMethods = DEFAULT_PAYMENT_METHODS,
+  onUpdatePaymentMethods,
   adminToken, 
   adminUser, 
   onLogout,
@@ -210,6 +213,47 @@ export default function AdminPortal({
   const [editProductDesc, setEditProductDesc] = useState('');
   const [editProductError, setEditProductError] = useState('');
   const [productSaveMsg, setProductSaveMsg] = useState({ msg: '', type: '' });
+
+  // Mode of Payment Availability state & handlers
+  const [paymentSaveMsg, setPaymentSaveMsg] = useState({ msg: '', type: '' });
+
+  const handleTogglePaymentMethod = (id) => {
+    const currentStatus = paymentMethods[id] !== false;
+    const updated = {
+      ...paymentMethods,
+      [id]: !currentStatus
+    };
+    if (onUpdatePaymentMethods) {
+      onUpdatePaymentMethods(updated);
+    }
+    const target = PAYMENT_METHOD_METADATA.find((p) => p.id === id);
+    const newStatusLabel = !currentStatus ? 'Enabled' : 'Disabled';
+    setPaymentSaveMsg({
+      msg: `${target?.name || id} is now ${newStatusLabel}.`,
+      type: 'success'
+    });
+    setTimeout(() => {
+      setPaymentSaveMsg({ msg: '', type: '' });
+    }, 4000);
+  };
+
+  const handleBulkPaymentMethods = (enable) => {
+    const updated = {
+      cod: enable,
+      maribank: enable,
+      gcash: enable
+    };
+    if (onUpdatePaymentMethods) {
+      onUpdatePaymentMethods(updated);
+    }
+    setPaymentSaveMsg({
+      msg: enable ? 'All payment methods enabled successfully.' : 'All payment methods disabled.',
+      type: enable ? 'success' : 'info'
+    });
+    setTimeout(() => {
+      setPaymentSaveMsg({ msg: '', type: '' });
+    }, 4000);
+  };
 
   const STATUS_CONFIG = {
     New: { label: 'New', color: 'bg-amber-100 text-amber-900 border-amber-300', dot: '🟡' },
@@ -1057,7 +1101,7 @@ export default function AdminPortal({
           { id: 'order-summary', label: '📊 Order Summary', icon: BarChart3 },
           { id: 'summary', label: '📅 Daily Summary', icon: DollarSign },
           { id: 'products', label: '🥜 Products & Pricing', icon: Settings },
-          { id: 'qrs', label: '💳 Payment QRs', icon: QrCode },
+          { id: 'qrs', label: '💳 Payment Options & QRs', icon: CreditCard },
           { id: 'sheets', label: '⚙️ Integration', icon: ExternalLink }
         ].map((tab) => {
           const Icon = tab.icon;
@@ -1348,6 +1392,102 @@ export default function AdminPortal({
                           </button>
                           <span className="text-[9px] font-black tracking-wider uppercase text-mani-600">
                             {isAvail ? 'ON' : 'OFF'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Mode of Payment Availability Controls */}
+              <div className="p-5 rounded-2xl bg-cream border border-mani-200/90 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-mani-200/70 pb-3">
+                  <div>
+                    <h4 className="text-sm font-black text-mani-900 flex items-center gap-2">
+                      <span>💳</span> Mode of Payment Availability Controls
+                    </h4>
+                    <p className="text-xs text-mani-600 font-medium">
+                      Enable or disable payment options in real time. Disabled methods cannot be chosen by customers at checkout.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleBulkPaymentMethods(true)}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold hover:bg-emerald-100 transition-colors cursor-pointer text-xs"
+                    >
+                      🟢 Enable All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkPaymentMethods(false)}
+                      className="px-2.5 py-1 rounded-lg bg-red-50 text-red-800 border border-red-300 font-bold hover:bg-red-100 transition-colors cursor-pointer text-xs"
+                    >
+                      🔴 Disable All
+                    </button>
+                  </div>
+                </div>
+
+                {paymentSaveMsg.msg && (
+                  <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 animate-fade-in ${
+                    paymentSaveMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-300'
+                  }`}>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{paymentSaveMsg.msg}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {PAYMENT_METHOD_METADATA.map((method) => {
+                    const isEnabled = paymentMethods[method.id] !== false;
+                    return (
+                      <div
+                        key={method.id}
+                        className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                          isEnabled
+                            ? 'bg-white border-mani-200 shadow-xs'
+                            : 'bg-red-50/50 border-red-200/90'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-2xl shrink-0">{method.icon}</span>
+                          <div className="min-w-0">
+                            <span className="font-extrabold text-sm text-mani-900 truncate block">
+                              {method.name}
+                            </span>
+                            <span
+                              className={`text-[10px] font-black px-2 py-0.5 rounded-full border inline-flex items-center gap-1 mt-0.5 ${
+                                isEnabled
+                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                  : 'bg-red-100 text-red-800 border-red-300'
+                              }`}
+                            >
+                              <span>{isEnabled ? '🟢 Available' : '🔴 Disabled'}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Individual Toggle Switch */}
+                        <div className="flex flex-col items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePaymentMethod(method.id)}
+                            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                              isEnabled ? 'bg-emerald-600' : 'bg-red-400'
+                            }`}
+                            title={`Click to mark ${method.name} as ${isEnabled ? 'Disabled' : 'Enabled'}`}
+                            aria-label={`Toggle ${method.name}`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                isEnabled ? 'translate-x-5' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+                          <span className="text-[9px] font-black tracking-wider uppercase text-mani-600">
+                            {isEnabled ? 'ON' : 'OFF'}
                           </span>
                         </div>
                       </div>
@@ -2311,10 +2451,117 @@ export default function AdminPortal({
       )}
 
       {/* ========================================================= */}
-      {/* 5. PAYMENT QRS TAB                                        */}
+      {/* 5. PAYMENT OPTIONS & QRS TAB                              */}
       {/* ========================================================= */}
       {activeTab === 'qrs' && (
         <div className="space-y-6">
+          {/* Mode of Payment Availability Controls */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-mani-200/90 shadow-warm space-y-5">
+            <div className="border-b border-mani-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-extrabold text-mani-900 flex items-center gap-2">
+                  <span>💳</span> Mode of Payment Availability Controls
+                </h3>
+                <p className="text-xs text-mani-600">
+                  Enable or disable individual payment options. Disabled options cannot be selected by customers at checkout.
+                </p>
+              </div>
+
+              {/* Bulk Quick Actions */}
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => handleBulkPaymentMethods(true)}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold hover:bg-emerald-100 transition-colors cursor-pointer"
+                >
+                  🟢 Enable All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkPaymentMethods(false)}
+                  className="px-3 py-1.5 rounded-xl bg-red-50 text-red-800 border border-red-300 text-xs font-bold hover:bg-red-100 transition-colors cursor-pointer"
+                >
+                  🔴 Disable All
+                </button>
+              </div>
+            </div>
+
+            {paymentSaveMsg.msg && (
+              <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 animate-fade-in ${
+                paymentSaveMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-300'
+              }`}>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{paymentSaveMsg.msg}</span>
+              </div>
+            )}
+
+            {/* Payment Method Toggle Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {PAYMENT_METHOD_METADATA.map((method) => {
+                const isEnabled = paymentMethods[method.id] !== false;
+                return (
+                  <div
+                    key={method.id}
+                    className={`p-4 rounded-2xl border transition-all flex flex-col justify-between gap-4 ${
+                      isEnabled
+                        ? 'bg-white border-mani-200 shadow-xs'
+                        : 'bg-red-50/40 border-red-200/90'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="p-2.5 rounded-xl bg-cream border border-mani-200 text-2xl shrink-0">
+                          {method.icon}
+                        </span>
+                        <div>
+                          <div className="font-extrabold text-sm text-mani-900">
+                            {method.name}
+                          </div>
+                          <div className="text-xs text-mani-500 mt-0.5">
+                            {method.description}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-mani-100">
+                      <span
+                        className={`text-[10px] font-black px-2.5 py-1 rounded-full border flex items-center gap-1 ${
+                          isEnabled
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300'
+                        }`}
+                      >
+                        {isEnabled ? '🟢 Available' : '🔴 Disabled'}
+                      </span>
+
+                      {/* Individual Toggle Switch */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePaymentMethod(method.id)}
+                          className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            isEnabled ? 'bg-emerald-600' : 'bg-red-400'
+                          }`}
+                          title={`Click to ${isEnabled ? 'disable' : 'enable'} ${method.name}`}
+                          aria-label={`Toggle ${method.name}`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                              isEnabled ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                        <span className="text-[10px] font-black tracking-wider uppercase text-mani-700 min-w-7">
+                          {isEnabled ? 'ON' : 'OFF'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-mani-200/90 shadow-warm space-y-5">
             <div className="border-b border-mani-100 pb-3">
               <h3 className="text-base sm:text-lg font-extrabold text-mani-900">

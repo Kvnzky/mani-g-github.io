@@ -77,6 +77,11 @@ let settings = {
   spreadsheetId: process.env.GOOGLE_SHEET_ID || '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI',
   appsScriptUrl: process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec',
   timezone: TIMEZONE,
+  paymentMethods: {
+    cod: true,
+    maribank: true,
+    gcash: true
+  },
   cutoff: {
     enabled: false,
     date: '2026-09-17',
@@ -90,6 +95,12 @@ if (fs.existsSync(SETTINGS_FILE)) {
     settings = {
       ...settings,
       ...loaded,
+      paymentMethods: {
+        cod: true,
+        maribank: true,
+        gcash: true,
+        ...(loaded.paymentMethods || {})
+      },
       cutoff: {
         ...settings.cutoff,
         ...(loaded.cutoff || {})
@@ -189,6 +200,7 @@ const evaluateCutoff = () => {
       cutoffTime: cutoff.time || '23:59',
       deliveryDay,
       flavorAvailability,
+      paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
       timezone: TIMEZONE,
       serverTime: now.toISOString(),
       currentPhilippineDate: dateStr,
@@ -216,6 +228,7 @@ const evaluateCutoff = () => {
     cutoffTime: cutoff.time,
     deliveryDay,
     flavorAvailability,
+    paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
     timezone: TIMEZONE,
     serverTime: now.toISOString(),
     currentPhilippineDate: dateStr,
@@ -373,6 +386,29 @@ app.post('/api/admin/flavor-availability', requireAdminAuth, (req, res) => {
     success: true,
     message: 'Flavor availability updated successfully.',
     flavorAvailability: settings.flavorAvailability
+  });
+});
+
+// Admin Payment Methods Availability Update (Protected)
+app.post('/api/admin/payment-methods', requireAdminAuth, (req, res) => {
+  const { paymentMethods } = req.body || {};
+
+  if (!paymentMethods || typeof paymentMethods !== 'object') {
+    return res.status(400).json({ error: 'Invalid paymentMethods payload.' });
+  }
+
+  settings.paymentMethods = {
+    cod: paymentMethods.cod !== undefined ? Boolean(paymentMethods.cod) : (settings.paymentMethods?.cod ?? true),
+    maribank: paymentMethods.maribank !== undefined ? Boolean(paymentMethods.maribank) : (settings.paymentMethods?.maribank ?? true),
+    gcash: paymentMethods.gcash !== undefined ? Boolean(paymentMethods.gcash) : (settings.paymentMethods?.gcash ?? true)
+  };
+
+  saveSettings();
+
+  res.json({
+    success: true,
+    message: 'Payment methods availability updated successfully.',
+    paymentMethods: settings.paymentMethods
   });
 });
 
@@ -571,7 +607,19 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
     }
 
     const validPaymentMethods = ['Cash on Delivery', 'Maribank', 'GCash'];
-    const chosenPayment = validPaymentMethods.includes(paymentMethod) ? paymentMethod : 'Cash on Delivery';
+    if (!validPaymentMethods.includes(paymentMethod)) {
+      return res.status(400).json({ error: 'Please select a valid payment method.' });
+    }
+    const chosenPayment = paymentMethod;
+
+    // Enforce mode of payment availability: reject order if the chosen payment method is disabled by admin
+    const paymentKey = chosenPayment === 'Cash on Delivery' ? 'cod' : chosenPayment.toLowerCase();
+    if (settings.paymentMethods && settings.paymentMethods[paymentKey] === false) {
+      return res.status(400).json({
+        error: `The payment method "${chosenPayment}" is currently unavailable for ordering.`,
+        code: 'PAYMENT_METHOD_UNAVAILABLE'
+      });
+    }
 
     const totalPacks = items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
     if (totalPacks <= 0) {
@@ -843,15 +891,23 @@ app.get('/api/settings', requireAdminAuth, (req, res) => {
     spreadsheetId: settings.spreadsheetId,
     appsScriptUrl: settings.appsScriptUrl,
     timezone: settings.timezone,
+    paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
     cutoff: evaluateCutoff()
   });
 });
 
 // API: Update Settings (Protected)
 app.post('/api/settings', requireAdminAuth, (req, res) => {
-  const { appsScriptUrl, spreadsheetId } = req.body;
+  const { appsScriptUrl, spreadsheetId, paymentMethods } = req.body;
   if (appsScriptUrl !== undefined) settings.appsScriptUrl = appsScriptUrl.trim();
   if (spreadsheetId !== undefined) settings.spreadsheetId = spreadsheetId.trim();
+  if (paymentMethods && typeof paymentMethods === 'object') {
+    settings.paymentMethods = {
+      cod: paymentMethods.cod !== undefined ? Boolean(paymentMethods.cod) : (settings.paymentMethods?.cod ?? true),
+      maribank: paymentMethods.maribank !== undefined ? Boolean(paymentMethods.maribank) : (settings.paymentMethods?.maribank ?? true),
+      gcash: paymentMethods.gcash !== undefined ? Boolean(paymentMethods.gcash) : (settings.paymentMethods?.gcash ?? true)
+    };
+  }
   saveSettings();
   res.json({ success: true, settings });
 });
