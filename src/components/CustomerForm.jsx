@@ -35,6 +35,20 @@ export default function CustomerForm({
   const enabledCount = [isCodEnabled, isMaribankEnabled, isGcashEnabled].filter(Boolean).length;
   const gridColsClass = enabledCount === 1 ? 'grid-cols-1' : enabledCount === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-3';
 
+  // Auto-switch customer paymentMethod if the currently selected method is disabled
+  React.useEffect(() => {
+    let isValid = false;
+    if (formData.paymentMethod === 'Cash on Delivery' && isCodEnabled) isValid = true;
+    if (formData.paymentMethod === 'Maribank' && isMaribankEnabled) isValid = true;
+    if (formData.paymentMethod === 'GCash' && isGcashEnabled) isValid = true;
+
+    if (!isValid && hasAnyPaymentMethod) {
+      if (isCodEnabled) handleInputChange('paymentMethod', 'Cash on Delivery');
+      else if (isMaribankEnabled) handleInputChange('paymentMethod', 'Maribank');
+      else if (isGcashEnabled) handleInputChange('paymentMethod', 'GCash');
+    }
+  }, [paymentMethods, formData.paymentMethod, isCodEnabled, isMaribankEnabled, isGcashEnabled, hasAnyPaymentMethod]);
+
   return (
     <div className="space-y-6">
       {/* 1. Customer Information & Delivery Address */}

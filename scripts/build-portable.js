@@ -143,6 +143,38 @@ const htmlTemplate = `<!DOCTYPE html>
         paymentMethod: 'Cash on Delivery' // 'Cash on Delivery', 'Maribank', 'GCash'
       });
 
+      // Mode of Payment Availability: { cod: true, maribank: true, gcash: true }
+      const [paymentMethods, setPaymentMethods] = useState(() => {
+        try {
+          const saved = localStorage.getItem('mani_payment_methods');
+          if (saved) return JSON.parse(saved);
+        } catch (e) {}
+        return { cod: true, maribank: true, gcash: true };
+      });
+
+      useEffect(() => {
+        localStorage.setItem('mani_payment_methods', JSON.stringify(paymentMethods));
+      }, [paymentMethods]);
+
+      // Auto-switch customer paymentMethod if the selected method gets disabled
+      useEffect(() => {
+        const isCod = paymentMethods.cod !== false;
+        const isMaribank = paymentMethods.maribank !== false;
+        const isGcash = paymentMethods.gcash !== false;
+
+        let isValid = false;
+        if (customer.paymentMethod === 'Cash on Delivery' && isCod) isValid = true;
+        if (customer.paymentMethod === 'Maribank' && isMaribank) isValid = true;
+        if (customer.paymentMethod === 'GCash' && isGcash) isValid = true;
+
+        if (!isValid) {
+          if (isCod) setCustomer(prev => ({ ...prev, paymentMethod: 'Cash on Delivery' }));
+          else if (isMaribank) setCustomer(prev => ({ ...prev, paymentMethod: 'Maribank' }));
+          else if (isGcash) setCustomer(prev => ({ ...prev, paymentMethod: 'GCash' }));
+          else setCustomer(prev => ({ ...prev, paymentMethod: '' }));
+        }
+      }, [paymentMethods, customer.paymentMethod]);
+
       const [customQrs, setCustomQrs] = useState(() => {
         const saved = localStorage.getItem('mani_qr_config_v2');
         if (saved) {
@@ -320,7 +352,6 @@ const htmlTemplate = `<!DOCTYPE html>
                 </div>
                 <div>
                   <h1 className="text-lg sm:text-xl font-black text-mani-900 leading-none tracking-tight">Mani Wandering</h1>
-                  <p className="text-xs text-mani-600 font-medium italic">“Wondering where your money went? We know.” 👀🥜</p>
                 </div>
               </div>
 
@@ -356,6 +387,91 @@ const htmlTemplate = `<!DOCTYPE html>
                   <div>
                     <h2 className="text-xl font-black text-mani-900">MANI G? Seller Dashboard</h2>
                     <p className="text-xs text-mani-600">Review orders, update status, and manage payment QR codes.</p>
+                  </div>
+                </div>
+
+                {/* Mode of Payment Controls Card */}
+                <div className="bg-white rounded-3xl p-5 border border-mani-200 shadow-sm space-y-4">
+                  <div className="flex justify-between items-center border-b border-mani-100 pb-2">
+                    <div>
+                      <h3 className="text-sm font-bold text-mani-900">💳 Mode of Payment Controls</h3>
+                      <p className="text-xs text-mani-600">Enable or disable payment methods accepted from customers.</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setPaymentMethods({ cod: true, maribank: true, gcash: true });
+                        setQrSaveMsg('All payment methods enabled!');
+                        setTimeout(() => setQrSaveMsg(''), 2500);
+                      }}
+                      className="px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-lg text-[11px] font-bold"
+                    >
+                      🟢 Enable All
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    {/* COD */}
+                    <div className="p-3 rounded-2xl border flex items-center justify-between bg-mani-50/50">
+                      <div>
+                        <div className="font-extrabold text-mani-900">💵 COD</div>
+                        <div className="text-[10px] text-mani-500">Cash on Delivery</div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const nextVal = !(paymentMethods.cod !== false);
+                          if (!nextVal && !paymentMethods.maribank && !paymentMethods.gcash) {
+                            alert('At least one payment method must remain active.');
+                            return;
+                          }
+                          setPaymentMethods(prev => ({ ...prev, cod: nextVal }));
+                        }}
+                        className={"text-[11px] font-black px-2 py-1 rounded-md border cursor-pointer " + (paymentMethods.cod !== false ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-stone-200 text-stone-600 border-stone-300")}
+                      >
+                        {paymentMethods.cod !== false ? "🟢 ON" : "⚪ OFF"}
+                      </button>
+                    </div>
+
+                    {/* Maribank */}
+                    <div className="p-3 rounded-2xl border flex items-center justify-between bg-orange-50/50">
+                      <div>
+                        <div className="font-extrabold text-orange-950">🏦 Maribank</div>
+                        <div className="text-[10px] text-mani-500">QR Code</div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const nextVal = !(paymentMethods.maribank !== false);
+                          if (!nextVal && !paymentMethods.cod && !paymentMethods.gcash) {
+                            alert('At least one payment method must remain active.');
+                            return;
+                          }
+                          setPaymentMethods(prev => ({ ...prev, maribank: nextVal }));
+                        }}
+                        className={"text-[11px] font-black px-2 py-1 rounded-md border cursor-pointer " + (paymentMethods.maribank !== false ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-stone-200 text-stone-600 border-stone-300")}
+                      >
+                        {paymentMethods.maribank !== false ? "🟢 ON" : "⚪ OFF"}
+                      </button>
+                    </div>
+
+                    {/* GCash */}
+                    <div className="p-3 rounded-2xl border flex items-center justify-between bg-blue-50/50">
+                      <div>
+                        <div className="font-extrabold text-blue-950">📱 GCash</div>
+                        <div className="text-[10px] text-mani-500">QR & Number</div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const nextVal = !(paymentMethods.gcash !== false);
+                          if (!nextVal && !paymentMethods.cod && !paymentMethods.maribank) {
+                            alert('At least one payment method must remain active.');
+                            return;
+                          }
+                          setPaymentMethods(prev => ({ ...prev, gcash: nextVal }));
+                        }}
+                        className={"text-[11px] font-black px-2 py-1 rounded-md border cursor-pointer " + (paymentMethods.gcash !== false ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-stone-200 text-stone-600 border-stone-300")}
+                      >
+                        {paymentMethods.gcash !== false ? "🟢 ON" : "⚪ OFF"}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -584,9 +700,6 @@ const htmlTemplate = `<!DOCTYPE html>
                   <h2 className="text-3xl sm:text-4xl font-black text-mani-900 mt-2 tracking-tight">
                     Mani Wandering
                   </h2>
-                  <p className="text-sm sm:text-base text-amber-900 mt-1 font-bold italic">
-                    “Wondering where your money went? We know.” 👀🥜
-                  </p>
                 </div>
 
                 {errors.items && (
@@ -746,151 +859,170 @@ const htmlTemplate = `<!DOCTYPE html>
                   )}
 
                   {/* Payment Selection Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* Cash on Delivery */}
-                    <button
-                      type="button"
-                      onClick={() => setCustomer({ ...customer, paymentMethod: 'Cash on Delivery' })}
-                      className={\`p-3.5 rounded-2xl border text-left transition-all \${
-                        customer.paymentMethod === 'Cash on Delivery'
-                          ? 'bg-amber-500 text-white border-amber-600 shadow-md ring-2 ring-amber-300'
-                          : 'bg-mani-50 text-mani-900 border-mani-200'
-                      }\`}
-                    >
-                      <div className="text-xl mb-1">💵</div>
-                      <div className="font-extrabold text-xs sm:text-sm">Cash on Delivery</div>
-                      <div className={\`text-[11px] \${customer.paymentMethod === 'Cash on Delivery' ? 'text-amber-100' : 'text-mani-500'}\`}>
-                        Pay upon arrival
-                      </div>
-                    </button>
+                  {(() => {
+                    const isCod = paymentMethods.cod !== false;
+                    const isMaribank = paymentMethods.maribank !== false;
+                    const isGcash = paymentMethods.gcash !== false;
+                    const enabledCount = (isCod ? 1 : 0) + (isMaribank ? 1 : 0) + (isGcash ? 1 : 0);
 
-                    {/* Maribank */}
-                    <button
-                      type="button"
-                      onClick={() => setCustomer({ ...customer, paymentMethod: 'Maribank' })}
-                      className={\`p-3.5 rounded-2xl border text-left transition-all \${
-                        customer.paymentMethod === 'Maribank'
-                          ? 'bg-orange-600 text-white border-orange-700 shadow-md ring-2 ring-orange-300'
-                          : 'bg-mani-50 text-mani-900 border-mani-200'
-                      }\`}
-                    >
-                      <div className="text-xl mb-1">🏦</div>
-                      <div className="font-extrabold text-xs sm:text-sm">Maribank</div>
-                      <div className={\`text-[11px] \${customer.paymentMethod === 'Maribank' ? 'text-orange-100' : 'text-mani-500'}\`}>
-                        Scan to pay via QR
-                      </div>
-                    </button>
+                    return (
+                      <>
+                        <div className={\`grid grid-cols-1 \${
+                          enabledCount === 3 ? 'sm:grid-cols-3' : enabledCount === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-1'
+                        } gap-3\`}>
+                          {/* Cash on Delivery */}
+                          {isCod && (
+                            <button
+                              type="button"
+                              onClick={() => setCustomer({ ...customer, paymentMethod: 'Cash on Delivery' })}
+                              className={\`p-3.5 rounded-2xl border text-left transition-all \${
+                                customer.paymentMethod === 'Cash on Delivery'
+                                  ? 'bg-amber-500 text-white border-amber-600 shadow-md ring-2 ring-amber-300'
+                                  : 'bg-mani-50 text-mani-900 border-mani-200'
+                              }\`}
+                            >
+                              <div className="text-xl mb-1">💵</div>
+                              <div className="font-extrabold text-xs sm:text-sm">Cash on Delivery</div>
+                              <div className={\`text-[11px] \${customer.paymentMethod === 'Cash on Delivery' ? 'text-amber-100' : 'text-mani-500'}\`}>
+                                Pay upon arrival
+                              </div>
+                            </button>
+                          )}
 
-                    {/* GCash */}
-                    <button
-                      type="button"
-                      onClick={() => setCustomer({ ...customer, paymentMethod: 'GCash' })}
-                      className={\`p-3.5 rounded-2xl border text-left transition-all \${
-                        customer.paymentMethod === 'GCash'
-                          ? 'bg-blue-600 text-white border-blue-700 shadow-md ring-2 ring-blue-300'
-                          : 'bg-mani-50 text-mani-900 border-mani-200'
-                      }\`}
-                    >
-                      <div className="text-xl mb-1">📱</div>
-                      <div className="font-extrabold text-xs sm:text-sm">GCash</div>
-                      <div className={\`text-[11px] \${customer.paymentMethod === 'GCash' ? 'text-blue-100' : 'text-mani-500'}\`}>
-                        QR code & number
-                      </div>
-                    </button>
-                  </div>
+                          {/* Maribank */}
+                          {isMaribank && (
+                            <button
+                              type="button"
+                              onClick={() => setCustomer({ ...customer, paymentMethod: 'Maribank' })}
+                              className={\`p-3.5 rounded-2xl border text-left transition-all \${
+                                customer.paymentMethod === 'Maribank'
+                                  ? 'bg-orange-600 text-white border-orange-700 shadow-md ring-2 ring-orange-300'
+                                  : 'bg-mani-50 text-mani-900 border-mani-200'
+                              }\`}
+                            >
+                              <div className="text-xl mb-1">🏦</div>
+                              <div className="font-extrabold text-xs sm:text-sm">Maribank</div>
+                              <div className={\`text-[11px] \${customer.paymentMethod === 'Maribank' ? 'text-orange-100' : 'text-mani-500'}\`}>
+                                Scan to pay via QR
+                              </div>
+                            </button>
+                          )}
 
-                  {/* Dynamic Details */}
-                  <div className="pt-2">
-                    {customer.paymentMethod === 'Cash on Delivery' && (
-                      <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 animate-fade-in flex items-center gap-3">
-                        <span className="text-2xl">💵</span>
-                        <div>
-                          <span className="font-bold block">Cash on Delivery</span>
-                          Payment will be collected upon delivery.
+                          {/* GCash */}
+                          {isGcash && (
+                            <button
+                              type="button"
+                              onClick={() => setCustomer({ ...customer, paymentMethod: 'GCash' })}
+                              className={\`p-3.5 rounded-2xl border text-left transition-all \${
+                                customer.paymentMethod === 'GCash'
+                                  ? 'bg-blue-600 text-white border-blue-700 shadow-md ring-2 ring-blue-300'
+                                  : 'bg-mani-50 text-mani-900 border-mani-200'
+                              }\`}
+                            >
+                              <div className="text-xl mb-1">📱</div>
+                              <div className="font-extrabold text-xs sm:text-sm">GCash</div>
+                              <div className={\`text-[11px] \${customer.paymentMethod === 'GCash' ? 'text-blue-100' : 'text-mani-500'}\`}>
+                                QR code & number
+                              </div>
+                            </button>
+                          )}
                         </div>
-                      </div>
-                    )}
 
-                    {customer.paymentMethod === 'Maribank' && (
-                      <div className="p-5 sm:p-7 rounded-3xl bg-orange-50/80 border-2 border-orange-200 text-center space-y-4 animate-fade-in">
-                        <div className="flex items-center justify-center gap-2 text-orange-950">
-                          <span className="text-2xl">🏦</span>
-                          <h4 className="text-base sm:text-lg font-black">Maribank Payment</h4>
-                        </div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-900 text-xs font-bold border border-orange-300/80">
-                          <span>Scan the QR code to send your payment.</span>
-                        </div>
-                        {/* ENLARGED MARIBANK QR CODE */}
-                        <div className="bg-white p-5 sm:p-7 rounded-3xl border-2 border-orange-300 max-w-sm sm:max-w-md mx-auto shadow-lg shadow-orange-900/10">
-                          <div className="relative group overflow-hidden rounded-2xl bg-white p-2">
-                            <img
-                              src={customQrs.maribank}
-                              alt="Maribank QR Code"
-                              className="w-full max-w-[340px] sm:max-w-[380px] mx-auto rounded-xl object-contain filter contrast-105"
-                            />
-                          </div>
-                          <div className="mt-4 pt-3 border-t border-orange-100">
-                            <div className="text-sm font-black text-mani-900">
-                              JOHN KEVIN RAMIREZ: MariBank(****0559)
+                        {/* Dynamic Details */}
+                        <div className="pt-2">
+                          {isCod && customer.paymentMethod === 'Cash on Delivery' && (
+                            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 animate-fade-in flex items-center gap-3">
+                              <span className="text-2xl">💵</span>
+                              <div>
+                                <span className="font-bold block">Cash on Delivery</span>
+                                Payment will be collected upon delivery.
+                              </div>
                             </div>
-                            <div className="text-xs text-mani-600 mt-1 font-medium">
-                              Supports MariBank, GCash, Maya, ShopeePay & all InstaPay apps
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-xs text-mani-600 font-medium">
-                          💡 Tip: Brighten your screen for faster scanning!
-                        </p>
-                      </div>
-                    )}
+                          )}
 
-                    {customer.paymentMethod === 'GCash' && (
-                      <div className="p-5 sm:p-7 rounded-3xl bg-blue-50/80 border-2 border-blue-200 space-y-4 animate-fade-in text-center">
-                        <div className="flex items-center justify-center gap-2 text-blue-950">
-                          <span className="text-2xl">📱</span>
-                          <h4 className="text-base sm:text-lg font-black">GCash Payment</h4>
-                        </div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-bold border border-blue-300/80">
-                          <span>Scan the QR code or send payment to the GCash number.</span>
-                        </div>
-                        {/* GCash Number Box with Big Copy Button */}
-                        <div className="bg-white p-4 rounded-2xl border-2 border-blue-300 max-w-sm sm:max-w-md mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-                          <div className="text-center sm:text-left">
-                            <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider block">GCash Number:</span>
-                            <span className="text-xl sm:text-2xl font-black font-mono text-mani-900">{customQrs.gcashNumber || GCASH_NUMBER}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleCopyGcash}
-                            className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-extrabold shadow transition-all"
-                          >
-                            {copiedGcash ? '✓ Copied Number!' : 'Copy Number'}
-                          </button>
-                        </div>
-                        {/* ENLARGED GCASH QR CODE */}
-                        <div className="bg-white p-5 sm:p-7 rounded-3xl border-2 border-blue-300 max-w-sm sm:max-w-md mx-auto shadow-lg shadow-blue-900/10">
-                          <div className="relative group overflow-hidden rounded-2xl bg-white p-2">
-                            <img
-                              src={customQrs.gcash}
-                              alt="GCash QR Code"
-                              className="w-full max-w-[340px] sm:max-w-[380px] mx-auto rounded-xl object-contain filter contrast-105"
-                            />
-                          </div>
-                          <div className="mt-4 pt-3 border-t border-blue-100">
-                            <div className="text-sm font-black text-mani-900">
-                              JO******N R.
+                          {isMaribank && customer.paymentMethod === 'Maribank' && (
+                            <div className="p-5 sm:p-7 rounded-3xl bg-orange-50/80 border-2 border-orange-200 text-center space-y-4 animate-fade-in">
+                              <div className="flex items-center justify-center gap-2 text-orange-950">
+                                <span className="text-2xl">🏦</span>
+                                <h4 className="text-base sm:text-lg font-black">Maribank Payment</h4>
+                              </div>
+                              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-900 text-xs font-bold border border-orange-300/80">
+                                <span>Scan the QR code to send your payment.</span>
+                              </div>
+                              {/* ENLARGED MARIBANK QR CODE */}
+                              <div className="bg-white p-5 sm:p-7 rounded-3xl border-2 border-orange-300 max-w-sm sm:max-w-md mx-auto shadow-lg shadow-orange-900/10">
+                                <div className="relative group overflow-hidden rounded-2xl bg-white p-2">
+                                  <img
+                                    src={customQrs.maribank}
+                                    alt="Maribank QR Code"
+                                    className="w-full max-w-[340px] sm:max-w-[380px] mx-auto rounded-xl object-contain filter contrast-105"
+                                  />
+                                </div>
+                                <div className="mt-4 pt-3 border-t border-orange-100">
+                                  <div className="text-sm font-black text-mani-900">
+                                    JOHN KEVIN RAMIREZ: MariBank(****0559)
+                                  </div>
+                                  <div className="text-xs text-mani-600 mt-1 font-medium">
+                                    Supports MariBank, GCash, Maya, ShopeePay & all InstaPay apps
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="text-xs text-mani-600 font-medium">
+                                💡 Tip: Brighten your screen for faster scanning!
+                              </p>
                             </div>
-                            <div className="text-xs text-mani-600 mt-1 font-medium">
-                              Scan via GCash app or any InstaPay banking app
+                          )}
+
+                          {isGcash && customer.paymentMethod === 'GCash' && (
+                            <div className="p-5 sm:p-7 rounded-3xl bg-blue-50/80 border-2 border-blue-200 space-y-4 animate-fade-in text-center">
+                              <div className="flex items-center justify-center gap-2 text-blue-950">
+                                <span className="text-2xl">📱</span>
+                                <h4 className="text-base sm:text-lg font-black">GCash Payment</h4>
+                              </div>
+                              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-bold border border-blue-300/80">
+                                <span>Scan the QR code or send payment to the GCash number.</span>
+                              </div>
+                              {/* GCash Number Box with Big Copy Button */}
+                              <div className="bg-white p-4 rounded-2xl border-2 border-blue-300 max-w-sm sm:max-w-md mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+                                <div className="text-center sm:text-left">
+                                  <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider block">GCash Number:</span>
+                                  <span className="text-xl sm:text-2xl font-black font-mono text-mani-900">{customQrs.gcashNumber || GCASH_NUMBER}</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={handleCopyGcash}
+                                  className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-extrabold shadow transition-all"
+                                >
+                                  {copiedGcash ? '✓ Copied Number!' : 'Copy Number'}
+                                </button>
+                              </div>
+                              {/* ENLARGED GCASH QR CODE */}
+                              <div className="bg-white p-5 sm:p-7 rounded-3xl border-2 border-blue-300 max-w-sm sm:max-w-md mx-auto shadow-lg shadow-blue-900/10">
+                                <div className="relative group overflow-hidden rounded-2xl bg-white p-2">
+                                  <img
+                                    src={customQrs.gcash}
+                                    alt="GCash QR Code"
+                                    className="w-full max-w-[340px] sm:max-w-[380px] mx-auto rounded-xl object-contain filter contrast-105"
+                                  />
+                                </div>
+                                <div className="mt-4 pt-3 border-t border-blue-100">
+                                  <div className="text-sm font-black text-mani-900">
+                                    JO******N R.
+                                  </div>
+                                  <div className="text-xs text-mani-600 mt-1 font-medium">
+                                    Scan via GCash app or any InstaPay banking app
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="text-xs text-mani-600 font-medium">
+                                💡 Tip: Please save a screenshot of your payment confirmation!
+                              </p>
                             </div>
-                          </div>
+                          )}
                         </div>
-                        <p className="text-xs text-mani-600 font-medium">
-                          💡 Tip: Please save a screenshot of your payment confirmation!
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Live Order Summary & Place Order */}

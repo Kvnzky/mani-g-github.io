@@ -144,6 +144,17 @@ function doGet(e) {
     return formatResponse(saveCutoffRes, e);
   }
 
+  // Fast path for Payment Methods update via GET (instant sync from mobile/desktop)
+  if (action === 'savePaymentMethods') {
+    var cod = e.parameter.cod !== 'false';
+    var maribank = e.parameter.maribank === 'true' || e.parameter.maribank === '1';
+    var gcash = e.parameter.gcash === 'true' || e.parameter.gcash === '1';
+    var savePmRes = handleSaveSettings({
+      paymentMethods: { cod: cod, maribank: maribank, gcash: gcash }
+    });
+    return formatResponse(savePmRes, e);
+  }
+
   // Fast test email verification endpoint
   if (action === 'testEmail' || action === 'sendTestEmail') {
     var targetRecipient = e.parameter ? e.parameter.to : null;
@@ -326,6 +337,8 @@ function handleSaveSettings(newSettings) {
   if (payload.cutoff) existing.cutoff = payload.cutoff;
   if (payload.products) existing.products = payload.products;
   if (payload.qrs) existing.qrs = payload.qrs;
+  if (payload.deliveryDay) existing.deliveryDay = payload.deliveryDay;
+  if (payload.flavorAvailability) existing.flavorAvailability = payload.flavorAvailability;
   if (payload.paymentMethods) existing.paymentMethods = payload.paymentMethods;
 
   props.setProperty('MANI_SETTINGS', JSON.stringify(existing));

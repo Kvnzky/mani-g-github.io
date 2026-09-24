@@ -247,8 +247,13 @@ export default function App() {
 
     // 5. Synchronize Mode of Payment Availability
     if (settings.paymentMethods && typeof settings.paymentMethods === 'object') {
-      setPaymentMethods((prev) => ({ ...prev, ...settings.paymentMethods }));
-      localStorage.setItem('mani_payment_methods', JSON.stringify(settings.paymentMethods));
+      const normalizedPm = {
+        cod: settings.paymentMethods.cod !== false,
+        maribank: settings.paymentMethods.maribank !== false,
+        gcash: settings.paymentMethods.gcash !== false
+      };
+      setPaymentMethods(normalizedPm);
+      localStorage.setItem('mani_payment_methods', JSON.stringify(normalizedPm));
     }
   };
 
@@ -574,8 +579,13 @@ export default function App() {
   };
 
   const handleUpdatePaymentMethods = (newMethods) => {
-    setPaymentMethods(newMethods);
-    localStorage.setItem('mani_payment_methods', JSON.stringify(newMethods));
+    const normalized = {
+      cod: newMethods.cod !== false,
+      maribank: newMethods.maribank !== false,
+      gcash: newMethods.gcash !== false
+    };
+    setPaymentMethods(normalized);
+    localStorage.setItem('mani_payment_methods', JSON.stringify(normalized));
 
     // 1. Sync to local backend server if running
     try {
@@ -586,7 +596,7 @@ export default function App() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${adminToken}`
           },
-          body: JSON.stringify({ paymentMethods: newMethods })
+          body: JSON.stringify({ paymentMethods: normalized })
         }).catch(() => {});
       }
     } catch (err) {}
@@ -594,14 +604,20 @@ export default function App() {
     // 2. Sync to Google Apps Script Cloud so mobile immediately receives updated payment methods
     const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (appsUrl) {
+      // POST sync
       fetch(appsUrl, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'saveSettings',
-          settings: { paymentMethods: newMethods }
+          settings: { paymentMethods: normalized }
         })
+      }).catch(() => {});
+
+      // GET fast-path sync
+      fetch(`${appsUrl}?action=savePaymentMethods&cod=${normalized.cod}&maribank=${normalized.maribank}&gcash=${normalized.gcash}`, {
+        mode: 'no-cors'
       }).catch(() => {});
     }
   };
@@ -907,9 +923,6 @@ export default function App() {
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-mani-950 tracking-tight">
                 Mani Wandering
               </h2>
-              <p className="text-base sm:text-lg text-amber-800 font-extrabold italic tracking-tight">
-                “Wondering where your money went? We know.” 👀🥜
-              </p>
               <p className="text-xs sm:text-sm text-mani-600 max-w-md mx-auto font-medium leading-relaxed">
                 Choose your favorite flavors, enter your delivery address, and pick your payment method!
               </p>
