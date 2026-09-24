@@ -72,7 +72,7 @@ export default function OrderSummaryDrawer({
             </div>
             <div>
               <h3 className="font-extrabold text-base sm:text-lg text-mani-900">
-                Your MANI G? Order
+                Order Summary
               </h3>
               <p className="text-xs text-mani-600 font-medium">
                 {totalPacks} {totalPacks === 1 ? 'tub' : 'tubs'} selected

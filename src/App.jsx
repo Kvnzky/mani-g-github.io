@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import FlavorCard from './components/FlavorCard';
 import CustomerForm from './components/CustomerForm';
+import OrderSummaryCard from './components/OrderSummaryCard';
 import OrderSummaryDrawer from './components/OrderSummaryDrawer';
 import OrderConfirmationModal from './components/OrderConfirmationModal';
 import AdminPortal from './components/AdminPortal';
@@ -11,7 +12,7 @@ import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
 import { DEFAULT_PAYMENT_METHODS, getPaymentMethodIdByName, isPaymentMethodEnabled } from './config/paymentConfig';
-import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock, Clock } from 'lucide-react';
+import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock, Clock, X } from 'lucide-react';
 
 // Helper to detect if current URL or hash targets the admin route
 const parseAdminRoute = () => {
@@ -174,6 +175,21 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
+
+  // Micro-interaction & Toast Feedback State
+  const [toast, setToast] = useState({ show: false, message: '', icon: '' });
+  const [recentlyAddedId, setRecentlyAddedId] = useState(null);
+  const [cartBounce, setCartBounce] = useState(false);
+
+  // Auto-dismiss toast notification
+  useEffect(() => {
+    if (toast.show) {
+      const timer = setTimeout(() => {
+        setToast((prev) => ({ ...prev, show: false }));
+      }, 2600);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.show]);
 
   // Reset cart quantities for any unavailable flavors
   useEffect(() => {
@@ -640,6 +656,25 @@ export default function App() {
     setQuantities(cleared);
   };
 
+  // Micro-interaction trigger on flavor addition
+  const handleAddToCartFeedback = (product, addedQty) => {
+    setRecentlyAddedId(product.id);
+    setTimeout(() => {
+      setRecentlyAddedId((curr) => (curr === product.id ? null : curr));
+    }, 1800);
+
+    setCartBounce(true);
+    setTimeout(() => setCartBounce(false), 400);
+
+    const flavorName = product.name.replace(/^Mani\s+/i, '');
+    const tubLabel = addedQty === 1 ? 'tub' : 'tubs';
+    setToast({
+      show: true,
+      message: `Added ${addedQty} ${tubLabel} of ${flavorName} to order`,
+      icon: product.icon || '🥜'
+    });
+  };
+
   // Calculate totals
   const totalPacks = Object.values(quantities).reduce((a, b) => a + (Number(b) || 0), 0);
 
@@ -848,6 +883,30 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFBF7] text-mani-900 selection:bg-amber-200">
+      {/* Sleek Floating Toast Notification */}
+      {toast.show && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed top-20 right-4 sm:right-6 z-50 flex items-center gap-3 bg-mani-950/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-amber-500/40 animate-fade-in transition-all max-w-sm"
+        >
+          <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg shrink-0">
+            {toast.icon}
+          </div>
+          <div className="text-xs sm:text-sm font-bold pr-1">
+            {toast.message}
+          </div>
+          <button
+            type="button"
+            onClick={() => setToast((prev) => ({ ...prev, show: false }))}
+            className="text-white/60 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors ml-auto cursor-pointer"
+            aria-label="Dismiss notification"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <Header
         currentView={currentView}
@@ -862,7 +921,7 @@ export default function App() {
       />
 
       {/* Main Content */}
-      <main className="flex-1 pb-24 sm:pb-12">
+      <main className={`flex-1 ${totalPacks > 0 ? 'pb-32 sm:pb-16' : 'pb-24 sm:pb-12'}`}>
         {currentView === 'admin' && adminToken ? (
           <AdminPortal
             products={products}
@@ -971,15 +1030,32 @@ export default function App() {
                         product={product}
                         quantity={quantities[product.id] || 0}
                         onQuantityChange={handleQuantityChange}
+                        onAddToCart={handleAddToCartFeedback}
                       />
                     ))}
                   </div>
                 </section>
               </div>
 
-              {/* Right Column (Desktop 5 cols, Sticky): Customer Info & Live Checkout */}
+              {/* Right Column (Desktop 5 cols, Sticky): 2. Order Summary, 3. Customer Info, 4. Shipping Info, 5. Payment & Checkout */}
               <div id="checkout-section" className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
-                {/* Customer Information, Delivery Address & Payment Method */}
+                {/* 2. Active Order Summary / Cart */}
+                <section>
+                  <OrderSummaryCard
+                    items={products}
+                    quantities={quantities}
+                    onQuantityChange={handleQuantityChange}
+                    onClearOrder={handleClearOrder}
+                    recentlyAddedId={recentlyAddedId}
+                    cartBounce={cartBounce}
+                    onProceedToDetails={() => {
+                      const el = document.getElementById('customer-info-section');
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                  />
+                </section>
+
+                {/* 3. Customer Info, 4. Shipping Info, 5. Payment & Checkout */}
                 <section>
                   <CustomerForm
                     formData={customerData}
@@ -987,114 +1063,12 @@ export default function App() {
                     errors={validationErrors}
                     customQrs={customQrs}
                     paymentMethods={paymentMethods}
+                    onSubmitOrder={handleSubmitOrder}
+                    isSubmitting={isSubmitting}
+                    isOrdersClosed={isOrdersClosed}
+                    totalPacks={totalPacks}
+                    subtotal={subtotal}
                   />
-                </section>
-
-                {/* Live Order Summary & Checkout Card */}
-                <section className="bg-cream rounded-3xl p-5 sm:p-7 border border-mani-200 shadow-warm space-y-4">
-                  <div className="flex items-center justify-between border-b border-mani-100 pb-3 flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">🛒</span>
-                      <h3 className="text-base sm:text-lg font-black text-mani-900">
-                        Order Summary
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {cutoffInfo && (
-                        <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${
-                          !cutoffInfo.isOpen
-                            ? 'bg-red-100 text-red-800 border-red-300'
-                            : cutoffInfo.enabled
-                            ? 'bg-amber-100 text-amber-900 border-amber-300'
-                            : 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                        }`}>
-                          {!cutoffInfo.isOpen ? (
-                            <><Lock className="w-3 h-3 text-red-600" /> Closed</>
-                          ) : cutoffInfo.enabled ? (
-                            <><Clock className="w-3 h-3 text-amber-600 animate-pulse" /> Cutoff {cutoffInfo.cutoffTime || '23:59'}</>
-                          ) : (
-                            <><span>🟢</span> Open</>
-                          )}
-                        </span>
-                      )}
-                      {totalPacks > 0 && (
-                        <button
-                          type="button"
-                          onClick={handleClearOrder}
-                          className="text-xs font-semibold text-mani-500 hover:text-red-600 transition-colors cursor-pointer"
-                        >
-                          Clear All
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {totalPacks === 0 ? (
-                    <div className="text-center py-6 text-mani-500 text-xs sm:text-sm">
-                      No Mani flavor selected yet. Click <strong>+</strong> on any flavor to add to your order.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="divide-y divide-mani-100 max-h-52 overflow-y-auto pr-1">
-                        {products
-                          .filter((p) => (quantities[p.id] || 0) > 0)
-                          .map((p) => (
-                            <div key={p.id} className="py-2.5 flex items-center justify-between text-xs sm:text-sm">
-                              <div className="flex items-center gap-2">
-                                <span>{p.icon || '🥜'}</span>
-                                <span className="font-extrabold text-mani-900">{p.name}</span>
-                                <span className="text-mani-600 font-medium">× {quantities[p.id]} tub(s)</span>
-                              </div>
-                              <span className="font-bold text-mani-900">
-                                {formatPHP(quantities[p.id] * (p.price || 50))}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
-
-                      <div className="pt-3 border-t border-mani-200 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs text-mani-600 font-semibold">
-                            Total Tubs: <span className="text-mani-900 font-black">{totalPacks}</span>
-                          </div>
-                          <div className="text-xl sm:text-2xl font-black text-amber-900">
-                            {formatPHP(subtotal)}
-                          </div>
-                        </div>
-
-                        {/* Order Placement Button or Cutoff Alert */}
-                        {isOrdersClosed ? (
-                          <div className="space-y-2">
-                            <button
-                              type="button"
-                              disabled={true}
-                              className="w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 bg-red-100 border-2 border-red-300 text-red-800 cursor-not-allowed shadow-none"
-                            >
-                              <Lock className="w-5 h-5 text-red-600" />
-                              <span>Orders Closed (Cutoff Ended)</span>
-                            </button>
-                            <p className="text-center text-xs text-red-700 font-medium">
-                              The cutoff time for accepting orders has ended.
-                            </p>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={isSubmitting || totalPacks === 0}
-                            onClick={handleSubmitOrder}
-                            className={`w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-all ${
-                              totalPacks === 0 || isSubmitting
-                                ? 'bg-mani-200 text-mani-400 cursor-not-allowed shadow-none'
-                                : 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white shadow-amber-900/20 active:scale-98 cursor-pointer'
-                            }`}
-                          >
-                            {isSubmitting ? 'Submitting Order...' : 'Place Order Now 🥜'}
-                            <ArrowRight className="w-5 h-5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </section>
               </div>
             </div>
@@ -1105,7 +1079,15 @@ export default function App() {
       {/* Mobile Sticky Quick-Action Bar */}
       {currentView === 'order' && totalPacks > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-cream/95 backdrop-blur-md border-t border-amber-200 px-4 py-3 shadow-2xl lg:hidden animate-fade-in flex items-center justify-between">
-          <div>
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('order-summary-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            className="text-left cursor-pointer active:opacity-80 transition-opacity"
+            title="View Order Summary"
+          >
             <div className="text-[11px] font-bold text-mani-600 flex items-center gap-1.5">
               <span>{totalPacks} tub{totalPacks > 1 ? 's' : ''} in cart</span>
               {cutoffInfo?.isOpen && cutoffInfo?.enabled && (
@@ -1114,10 +1096,11 @@ export default function App() {
                 </span>
               )}
             </div>
-            <div className="text-base font-black text-amber-900">
-              {formatPHP(subtotal)}
+            <div className="text-base font-black text-amber-900 flex items-center gap-1">
+              <span>{formatPHP(subtotal)}</span>
+              <span className="text-[10px] text-amber-700 font-bold underline">Summary</span>
             </div>
-          </div>
+          </button>
           {isOrdersClosed ? (
             <span className="px-3.5 py-2 rounded-xl bg-red-100 text-red-800 font-black text-xs border border-red-300 flex items-center gap-1">
               <Lock className="w-3.5 h-3.5" /> Orders Closed
@@ -1126,12 +1109,12 @@ export default function App() {
             <button
               type="button"
               onClick={() => {
-                const el = document.getElementById('checkout-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                const el = document.getElementById('customer-info-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
               className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-amber-900/20 cursor-pointer"
             >
-              <span>Proceed to Checkout</span>
+              <span>Proceed to Details</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           )}
@@ -1175,7 +1158,7 @@ export default function App() {
       <footer className="border-t border-mani-200/80 bg-white py-6 text-center text-xs text-mani-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-1">
           <p className="font-bold text-mani-700">
-            🥜 Mani Wandering — “Wondering where your money went? We know.” 👀🥜
+            🥜 Mani Wandering
           </p>
           <p className="text-mani-400 text-[11px]">
             Freshly roasted artisanal peanuts • Crispy na, Crunchy pa.

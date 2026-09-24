@@ -10,7 +10,6 @@ export default function OrderConfirmationModal({ order, onReset }) {
   if (!order) return null;
 
   const orderSummaryText = `🥜 *Mani Wandering ORDER CONFIRMATION* 🥜
-“Wondering where your money went? We know.” 👀🥜
 Order #: ${order.orderId}
 Date: ${order.orderDate} ${order.orderTime}
 Customer: ${order.customerName}

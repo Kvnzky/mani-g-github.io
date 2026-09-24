@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
-import { User, Phone, MapPin, Copy, Check, AlertCircle, ScanLine } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Phone, MapPin, Copy, Check, AlertCircle, ScanLine, ArrowRight, Lock } from 'lucide-react';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from '../config/qrConfig';
+import { formatPHP } from '../config/products';
 
 export default function CustomerForm({ 
   formData, 
   onChange, 
-  errors, 
+  errors = {}, 
   customQrs, 
-  paymentMethods = { cod: true, maribank: true, gcash: true } 
+  paymentMethods = { cod: true, maribank: true, gcash: true },
+  onSubmitOrder,
+  isSubmitting = false,
+  isOrdersClosed = false,
+  totalPacks = 0,
+  subtotal = 0
 }) {
   const [copiedGcash, setCopiedGcash] = useState(false);
 
@@ -36,7 +42,7 @@ export default function CustomerForm({
   const gridColsClass = enabledCount === 1 ? 'grid-cols-1' : enabledCount === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-3';
 
   // Auto-switch customer paymentMethod if the currently selected method is disabled
-  React.useEffect(() => {
+  useEffect(() => {
     let isValid = false;
     if (formData.paymentMethod === 'Cash on Delivery' && isCodEnabled) isValid = true;
     if (formData.paymentMethod === 'Maribank' && isMaribankEnabled) isValid = true;
@@ -51,14 +57,17 @@ export default function CustomerForm({
 
   return (
     <div className="space-y-6">
-      {/* 1. Customer Information & Delivery Address */}
-      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-4">
+      {/* 3. Customer Information */}
+      <div 
+        id="customer-info-section"
+        className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-4 transition-all"
+      >
         <div className="border-b border-mani-100 pb-3">
           <h3 className="text-base sm:text-lg font-extrabold text-mani-900 flex items-center gap-2">
-            <span>📋</span> Customer Information & Delivery Address
+            <span>👤</span> Customer Information
           </h3>
           <p className="text-xs sm:text-sm text-mani-600">
-            Please enter your contact and delivery details.
+            Please provide your name and contact number for order updates.
           </p>
         </div>
 
@@ -106,49 +115,66 @@ export default function CustomerForm({
               </p>
             ) : (
               <p className="text-[11px] text-mani-500 mt-1">
-                For order delivery coordination.
-              </p>
-            )}
-          </div>
-
-          {/* Delivery Address */}
-          <div className="sm:col-span-2">
-            <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-amber-600" />
-              Address / To Be Delivered To <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              rows="2"
-              value={formData.deliveryAddress || ''}
-              onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
-              placeholder="Enter complete delivery address"
-              className={`w-full text-sm px-4 py-2.5 rounded-xl border ${
-                errors.deliveryAddress ? 'border-red-400 bg-red-50/50' : 'border-mani-200 focus:border-amber-500'
-              } focus:ring-2 focus:ring-amber-200 outline-none transition-all resize-none`}
-            />
-            {errors.deliveryAddress && (
-              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" /> {errors.deliveryAddress}
+                Used to coordinate delivery upon arrival.
               </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* 2. Mode of Payment */}
-      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-5">
+      {/* 4. Shipping Information */}
+      <div 
+        id="shipping-info-section"
+        className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-4 transition-all"
+      >
         <div className="border-b border-mani-100 pb-3">
           <h3 className="text-base sm:text-lg font-extrabold text-mani-900 flex items-center gap-2">
-            <span>💳</span> Mode of Payment
+            <span>📍</span> Shipping Information
           </h3>
           <p className="text-xs sm:text-sm text-mani-600">
-            Select your preferred payment method. Only one option can be selected.
+            Specify where your freshly prepared Mani tubs will be delivered.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-amber-600" />
+            Address / To Be Delivered To <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            rows="2"
+            value={formData.deliveryAddress || ''}
+            onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
+            placeholder="House/Unit No., Street Name, Barangay, City, Landmark (e.g. Near St. Jude Church)"
+            className={`w-full text-sm px-4 py-2.5 rounded-xl border ${
+              errors.deliveryAddress ? 'border-red-400 bg-red-50/50' : 'border-mani-200 focus:border-amber-500'
+            } focus:ring-2 focus:ring-amber-200 outline-none transition-all resize-none`}
+          />
+          {errors.deliveryAddress && (
+            <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" /> {errors.deliveryAddress}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* 5. Payment / Checkout */}
+      <div 
+        id="payment-checkout-section"
+        className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-5 transition-all"
+      >
+        <div className="border-b border-mani-100 pb-3">
+          <h3 className="text-base sm:text-lg font-extrabold text-mani-900 flex items-center gap-2">
+            <span>💳</span> Payment & Checkout
+          </h3>
+          <p className="text-xs sm:text-sm text-mani-600">
+            Choose your payment method and submit your order.
           </p>
         </div>
 
         {errors.paymentMethod && (
-          <p className="text-xs text-red-600 font-medium flex items-center gap-1 bg-red-50 p-2 rounded-xl border border-red-200">
-            <AlertCircle className="w-3.5 h-3.5" /> {errors.paymentMethod}
+          <p className="text-xs text-red-600 font-medium flex items-center gap-1 bg-red-50 p-2.5 rounded-xl border border-red-200">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {errors.paymentMethod}
           </p>
         )}
 
@@ -259,7 +285,7 @@ export default function CustomerForm({
               <div>
                 <h4 className="text-sm font-bold text-amber-950">Cash on Delivery</h4>
                 <p className="text-xs text-amber-800 font-medium mt-0.5">
-                  Payment will be collected upon delivery.
+                  Payment will be collected by the courier upon delivery.
                 </p>
               </div>
             </div>
@@ -313,7 +339,7 @@ export default function CustomerForm({
 
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-bold border border-blue-300/80">
                 <ScanLine className="w-3.5 h-3.5" />
-                <span>Scan the QR code or send your payment to the GCash number above.</span>
+                <span>Scan the QR code or send payment to the GCash number below.</span>
               </div>
 
               {/* GCash Number Box with Big Copy Button */}
@@ -330,7 +356,7 @@ export default function CustomerForm({
                 <button
                   type="button"
                   onClick={handleCopyGcash}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
                 >
                   {copiedGcash ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   <span>{copiedGcash ? 'Copied Number!' : 'Copy Number'}</span>
@@ -362,6 +388,52 @@ export default function CustomerForm({
             </div>
           )}
         </div>
+
+        {/* Final Order Placement Button */}
+        {onSubmitOrder && (
+          <div className="pt-4 border-t border-mani-100">
+            {isOrdersClosed ? (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={true}
+                  className="w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 bg-red-100 border-2 border-red-300 text-red-800 cursor-not-allowed shadow-none"
+                >
+                  <Lock className="w-5 h-5 text-red-600" />
+                  <span>Orders Closed (Cutoff Ended)</span>
+                </button>
+                <p className="text-center text-xs text-red-700 font-medium">
+                  The cutoff time for accepting orders has ended.
+                </p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled={isSubmitting || totalPacks === 0}
+                onClick={onSubmitOrder}
+                className={`w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-all ${
+                  totalPacks === 0 || isSubmitting
+                    ? 'bg-mani-200 text-mani-400 cursor-not-allowed shadow-none'
+                    : 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white shadow-amber-900/20 active:scale-98 cursor-pointer'
+                }`}
+              >
+                {isSubmitting ? (
+                  <span>Submitting Order...</span>
+                ) : (
+                  <>
+                    <span>Place Order Now 🥜</span>
+                    {totalPacks > 0 && subtotal > 0 && (
+                      <span className="bg-black/20 px-2.5 py-0.5 rounded-lg text-xs font-extrabold ml-1">
+                        {formatPHP(subtotal)}
+                      </span>
+                    )}
+                    <ArrowRight className="w-5 h-5 ml-1" />
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
