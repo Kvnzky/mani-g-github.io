@@ -171,6 +171,8 @@ export default function AdminPortal({
   const [summaryPreset, setSummaryPreset] = useState(initialPreset);
   const [summaryStartDate, setSummaryStartDate] = useState(initialRange.start);
   const [summaryEndDate, setSummaryEndDate] = useState(initialRange.end);
+  const [isSendingSummaryEmail, setIsSendingSummaryEmail] = useState(false);
+  const [summaryEmailStatus, setSummaryEmailStatus] = useState({ msg: '', type: '' });
 
   // Cutoff Form State
   const [cutoffEnabled, setCutoffEnabled] = useState(cutoffInfo?.enabled || false);
@@ -445,9 +447,10 @@ export default function AdminPortal({
 
   const fetchAllOrders = async (silent = false) => {
     if (silent && Date.now() - lastOrderMutationRef.current < 5000) {
-      return;
+      return allOrders.length > 0 ? allOrders : orders;
     }
     let fetched = false;
+    let latestList = null;
 
     // 1. Primary Cloud Source of Truth: Google Apps Script Master list
     const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
@@ -460,31 +463,45 @@ export default function AdminPortal({
         if (res.ok) {
           const cloudData = await res.json();
           if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
-            setAllOrders(hydrateOrderList(cloudData.orders));
+            const hydrated = hydrateOrderList(cloudData.orders);
+            setAllOrders(hydrated);
+            latestList = hydrated;
             fetched = true;
-            return;
+            return latestList;
           }
         }
       } catch (cloudErr) {
         // JSONP fallback
         try {
-          const cbName = `mani_all_orders_${Date.now()}`;
-          const script = document.createElement('script');
-          window[cbName] = (cloudData) => {
-            if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
-              setAllOrders(hydrateOrderList(cloudData.orders));
-            }
-            delete window[cbName];
-            script.remove();
-          };
-          script.src = `${appsUrl}?action=getOrders&callback=${cbName}&_t=${Date.now()}`;
-          script.onerror = () => {
-            delete window[cbName];
-            script.remove();
-          };
-          document.head.appendChild(script);
-          fetched = true;
-          return;
+          await new Promise((resolve) => {
+            const cbName = `mani_all_orders_${Date.now()}`;
+            const script = document.createElement('script');
+            const timeoutId = setTimeout(() => {
+              delete window[cbName];
+              script.remove();
+              resolve();
+            }, 6000);
+            window[cbName] = (cloudData) => {
+              clearTimeout(timeoutId);
+              if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
+                const hydrated = hydrateOrderList(cloudData.orders);
+                setAllOrders(hydrated);
+                latestList = hydrated;
+                fetched = true;
+              }
+              delete window[cbName];
+              script.remove();
+              resolve();
+            };
+            script.src = `${appsUrl}?action=getOrders&callback=${cbName}&_t=${Date.now()}`;
+            script.onerror = () => {
+              clearTimeout(timeoutId);
+              delete window[cbName];
+              script.remove();
+              resolve();
+            };
+            document.head.appendChild(script);
+          });
         } catch (jpErr) {}
       }
     }
@@ -502,7 +519,9 @@ export default function AdminPortal({
                 ? data.allOrders 
                 : (Array.isArray(data.orders) ? data.orders : []);
               if (list.length > 0) {
-                setAllOrders(hydrateOrderList(list));
+                const hydrated = hydrateOrderList(list);
+                setAllOrders(hydrated);
+                latestList = hydrated;
                 fetched = true;
               }
             }
@@ -515,13 +534,17 @@ export default function AdminPortal({
       const local = hydrateOrderList(JSON.parse(localStorage.getItem('mani_orders') || '[]'));
       if (local.length > 0) {
         setAllOrders(local);
+        latestList = local;
       }
     }
+
+    return latestList || (allOrders.length > 0 ? allOrders : orders);
   };
 
   // Order Summary Presets & Calculations
   const handleSelectPreset = (presetId) => {
     setSummaryPreset(presetId);
+    setSummaryEmailStatus({ msg: '', type: '' });
     if (presetId !== 'custom') {
       const range = getPresetDateRange(presetId);
       setSummaryStartDate(range.start);
@@ -529,27 +552,214 @@ export default function AdminPortal({
     }
   };
 
-  // Active non-cancelled orders filtered by inclusive date range
-  const activeOrdersForSummary = useMemo(() => {
-    const source = allOrders.length > 0 ? allOrders : orders;
+  const filterOrdersForDateRange = (sourceOrders, startDate, endDate) => {
     const seenKeys = new Set();
-    return source.filter((o, idx) => {
-      // Use composite unique key so distinct orders sharing an orderId prefix are NOT dropped
+    return (sourceOrders || []).filter((o, idx) => {
       const uniqueKey = o.id || `${o.orderId || 'ord'}_${o.orderDate || ''}_${o.orderTime || ''}_${o.customerName || ''}_${o.subtotal || o.totalAmount || 0}_${idx}`;
       if (seenKeys.has(uniqueKey)) return false;
       seenKeys.add(uniqueKey);
 
-      // Exclude cancelled orders from summary totals
       if ((o.status || '').toLowerCase() === 'cancelled') return false;
 
-      // Inclusive date range filter
       const orderDate = o.orderDate || '';
-      if (summaryStartDate && orderDate < summaryStartDate) return false;
-      if (summaryEndDate && orderDate > summaryEndDate) return false;
+      if (startDate && orderDate < startDate) return false;
+      if (endDate && orderDate > endDate) return false;
 
       return true;
     });
+  };
+
+  // Active non-cancelled orders filtered by inclusive date range
+  const activeOrdersForSummary = useMemo(() => {
+    const source = allOrders.length > 0 ? allOrders : orders;
+    return filterOrdersForDateRange(source, summaryStartDate, summaryEndDate);
   }, [allOrders, orders, summaryStartDate, summaryEndDate]);
+
+  const formatOrderItemsForSummary = (order, catalogProducts = products) => {
+    const defaultFlavorNames = {
+      salted: 'Salted',
+      unsalted: 'Unsalted',
+      spicy: 'Spicy',
+      bbq: 'BBQ',
+      'sour-cream': 'Sour Cream',
+      cheese: 'Cheese',
+      'bawang-only': 'Bawang Only'
+    };
+
+    const getFlavorName = (id, fallbackName) => {
+      const found = (catalogProducts || []).find((p) => p.id === id);
+      if (found && found.name) return found.name;
+      if (fallbackName) return fallbackName;
+      if (defaultFlavorNames[id]) return defaultFlavorNames[id];
+      return String(id || 'Mani')
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    };
+
+    const parts = [];
+    if (Array.isArray(order.items) && order.items.length > 0) {
+      order.items.forEach((it) => {
+        const q = Number(it.quantity) || 0;
+        if (q > 0) {
+          const id = it.id || it.productId;
+          parts.push(`${getFlavorName(id, it.name)} × ${q}`);
+        }
+      });
+    } else if (order.flavorQuantities && typeof order.flavorQuantities === 'object') {
+      const orderedKeys = ['salted', 'unsalted', 'spicy', 'bbq', 'sour-cream', 'cheese', 'bawang-only'];
+      const extraKeys = Object.keys(order.flavorQuantities).filter((k) => !orderedKeys.includes(k));
+      [...orderedKeys, ...extraKeys].forEach((flavorId) => {
+        const q = Number(order.flavorQuantities[flavorId]) || 0;
+        if (q > 0) {
+          parts.push(`${getFlavorName(flavorId)} × ${q}`);
+        }
+      });
+    }
+
+    return parts.length > 0 ? parts.join(', ') : 'N/A';
+  };
+
+  const handleSendOrderSummaryEmail = async () => {
+    if (isSendingSummaryEmail) return;
+    setIsSendingSummaryEmail(true);
+    setSummaryEmailStatus({ msg: '', type: '' });
+
+    try {
+      // 1. Ensure we use the latest/current order data
+      const latestSource = await fetchAllOrders();
+      const filteredOrders = filterOrdersForDateRange(
+        latestSource && latestSource.length > 0 ? latestSource : (allOrders.length > 0 ? allOrders : orders),
+        summaryStartDate,
+        summaryEndDate
+      );
+
+      // 2. Compute formatted date range labels
+      let startDateDisplay = '';
+      let endDateDisplay = '';
+      let selectedDateRange = '';
+
+      if (summaryStartDate && summaryEndDate) {
+        startDateDisplay = formatDateDisplay(summaryStartDate);
+        endDateDisplay = formatDateDisplay(summaryEndDate);
+        selectedDateRange = `${startDateDisplay} – ${endDateDisplay}`;
+      } else if (summaryStartDate && !summaryEndDate) {
+        startDateDisplay = formatDateDisplay(summaryStartDate);
+        endDateDisplay = 'Present';
+        selectedDateRange = `${startDateDisplay} – ${endDateDisplay}`;
+      } else if (!summaryStartDate && summaryEndDate) {
+        startDateDisplay = 'Beginning';
+        endDateDisplay = formatDateDisplay(summaryEndDate);
+        selectedDateRange = `${startDateDisplay} – ${endDateDisplay}`;
+      } else {
+        const validDates = filteredOrders
+          .map((o) => o.orderDate)
+          .filter(Boolean)
+          .sort();
+        if (validDates.length > 0) {
+          startDateDisplay = formatDateDisplay(validDates[0]);
+          endDateDisplay = formatDateDisplay(validDates[validDates.length - 1]);
+          selectedDateRange = `${startDateDisplay} – ${endDateDisplay}`;
+        } else {
+          const todayStr = formatUtcYMD(getManilaTodayObj());
+          startDateDisplay = formatDateDisplay(todayStr);
+          endDateDisplay = formatDateDisplay(todayStr);
+          selectedDateRange = 'All Time';
+        }
+      }
+
+      // 3. Build order summary table rows (Name, Address, Order & Quantity)
+      const rows = filteredOrders.map((ord) => ({
+        name: (ord.customerName || 'N/A').trim(),
+        address: (ord.deliveryAddress || 'N/A').trim(),
+        orderAndQuantity: formatOrderItemsForSummary(ord, products)
+      }));
+
+      const payload = {
+        action: 'sendOrderSummaryEmail',
+        recipient: 'engrkevinramirez@gmail.com',
+        startDate: summaryStartDate || '',
+        endDate: summaryEndDate || '',
+        startDateDisplay,
+        endDateDisplay,
+        selectedDateRange,
+        rows
+      };
+
+      let sentSuccessfully = false;
+
+      // 4. Try backend API first
+      try {
+        const res = await fetch('/api/admin/send-order-summary', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload)
+        });
+        if (res.status === 401) {
+          onLogout();
+          return;
+        }
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data && data.success) {
+            sentSuccessfully = true;
+          }
+        }
+      } catch (apiErr) {
+        // Backend not reachable (e.g., GitHub Pages); fall through to Google Apps Script
+      }
+
+      // 5. Fallback to Google Apps Script Web App if backend did not handle it
+      if (!sentSuccessfully) {
+        const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+        if (appsUrl) {
+          try {
+            const gasRes = await fetch(appsUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(payload),
+              redirect: 'follow'
+            });
+            if (gasRes.ok) {
+              const gasData = await gasRes.json();
+              if (gasData && (gasData.success || gasData.sent)) {
+                sentSuccessfully = true;
+              }
+            }
+          } catch (corsErr) {
+            // Browser opaque response fallback
+            await fetch(appsUrl, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(payload)
+            });
+            sentSuccessfully = true;
+          }
+        }
+      }
+
+      if (sentSuccessfully) {
+        setSummaryEmailStatus({
+          msg: 'Order summary has been sent successfully.',
+          type: 'success'
+        });
+      } else {
+        setSummaryEmailStatus({
+          msg: 'Unable to send the order summary. Please try again.',
+          type: 'error'
+        });
+      }
+    } catch (err) {
+      setSummaryEmailStatus({
+        msg: 'Unable to send the order summary. Please try again.',
+        type: 'error'
+      });
+    } finally {
+      setIsSendingSummaryEmail(false);
+    }
+  };
 
   // High-level KPI metrics
   const summaryKpis = useMemo(() => {
@@ -1802,18 +2012,72 @@ export default function AdminPortal({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
                 <button
                   type="button"
                   onClick={() => fetchAllOrders(false)}
-                  className="px-3 py-1.5 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-800 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                  disabled={isLoading || isSendingSummaryEmail}
+                  className="px-3 py-2 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-800 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   title="Reload all order records"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
                   <span>Refresh Data</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={handleSendOrderSummaryEmail}
+                  disabled={isSendingSummaryEmail}
+                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shadow-xs ${
+                    isSendingSummaryEmail
+                      ? 'bg-amber-300 text-amber-950 cursor-not-allowed opacity-85'
+                      : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white hover:shadow-md active:scale-98 cursor-pointer'
+                  }`}
+                  title="Send Order Summary email to engrkevinramirez@gmail.com"
+                >
+                  {isSendingSummaryEmail ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Sending…</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>📧</span>
+                      <span>Send Order Summary</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
+
+            {/* Email Dispatch Feedback Banner */}
+            {summaryEmailStatus.msg && (
+              <div
+                role="alert"
+                className={`p-4 rounded-2xl text-xs sm:text-sm font-bold border flex items-center justify-between gap-2 animate-fade-in ${
+                  summaryEmailStatus.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                    : 'bg-red-50 text-red-900 border-red-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {summaryEmailStatus.type === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                  )}
+                  <span>{summaryEmailStatus.msg}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSummaryEmailStatus({ msg: '', type: '' })}
+                  className="text-current opacity-60 hover:opacity-100 p-1 rounded-lg cursor-pointer"
+                  aria-label="Dismiss notification"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
             {/* Date Range Selection & Quick Presets */}
             <div className="space-y-3.5">
@@ -1849,6 +2113,7 @@ export default function AdminPortal({
                       onChange={(e) => {
                         setSummaryStartDate(e.target.value);
                         setSummaryPreset('custom');
+                        setSummaryEmailStatus({ msg: '', type: '' });
                       }}
                       className="text-xs font-bold text-mani-900 bg-transparent outline-none cursor-pointer"
                     />
@@ -1864,6 +2129,7 @@ export default function AdminPortal({
                       onChange={(e) => {
                         setSummaryEndDate(e.target.value);
                         setSummaryPreset('custom');
+                        setSummaryEmailStatus({ msg: '', type: '' });
                       }}
                       className="text-xs font-bold text-mani-900 bg-transparent outline-none cursor-pointer"
                     />

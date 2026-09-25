@@ -57,17 +57,17 @@ export default function CustomerForm({
 
   return (
     <div className="space-y-6">
-      {/* 3. Customer Information */}
+      {/* 3. Customer & Shipping Information */}
       <div 
         id="customer-info-section"
         className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-4 transition-all"
       >
         <div className="border-b border-mani-100 pb-3">
           <h3 className="text-base sm:text-lg font-extrabold text-mani-900 flex items-center gap-2">
-            <span>👤</span> Customer Information
+            <span>👤</span> Customer & Shipping Information
           </h3>
           <p className="text-xs sm:text-sm text-mani-600">
-            Please provide your name and contact number for order updates.
+            Please provide your contact details and delivery address for your order.
           </p>
         </div>
 
@@ -119,42 +119,28 @@ export default function CustomerForm({
               </p>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* 4. Shipping Information */}
-      <div 
-        id="shipping-info-section"
-        className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-4 transition-all"
-      >
-        <div className="border-b border-mani-100 pb-3">
-          <h3 className="text-base sm:text-lg font-extrabold text-mani-900 flex items-center gap-2">
-            <span>📍</span> Shipping Information
-          </h3>
-          <p className="text-xs sm:text-sm text-mani-600">
-            Specify where your freshly prepared Mani tubs will be delivered.
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-amber-600" />
-            Address / To Be Delivered To <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            rows="2"
-            value={formData.deliveryAddress || ''}
-            onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
-            placeholder="House/Unit No., Street Name, Barangay, City, Landmark (e.g. Near St. Jude Church)"
-            className={`w-full text-sm px-4 py-2.5 rounded-xl border ${
-              errors.deliveryAddress ? 'border-red-400 bg-red-50/50' : 'border-mani-200 focus:border-amber-500'
-            } focus:ring-2 focus:ring-amber-200 outline-none transition-all resize-none`}
-          />
-          {errors.deliveryAddress && (
-            <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" /> {errors.deliveryAddress}
-            </p>
-          )}
+          {/* Address / To Be Delivered To */}
+          <div id="shipping-info-section" className="sm:col-span-2">
+            <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-amber-600" />
+              Address / To Be Delivered To <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              rows="2"
+              value={formData.deliveryAddress || ''}
+              onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
+              placeholder="House/Unit No., Street Name, Barangay, City, Landmark (e.g. Near St. Jude Church)"
+              className={`w-full text-sm px-4 py-2.5 rounded-xl border ${
+                errors.deliveryAddress ? 'border-red-400 bg-red-50/50' : 'border-mani-200 focus:border-amber-500'
+              } focus:ring-2 focus:ring-amber-200 outline-none transition-all resize-none`}
+            />
+            {errors.deliveryAddress && (
+              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.deliveryAddress}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
