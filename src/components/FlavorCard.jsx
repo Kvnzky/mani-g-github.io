@@ -130,64 +130,67 @@ export default function FlavorCard({
         </div>
 
         {/* Bottom Actions: Intuitive Quantity Control */}
-        <div className="pt-3 border-t border-mani-100 mt-auto">
+        <div className="pt-3 border-t border-mani-100 mt-auto w-full">
           {!isAvailable ? (
             <div className="w-full py-2.5 rounded-xl bg-gray-100 text-gray-400 font-bold text-xs text-center border border-gray-200">
               Temporarily Unavailable
             </div>
           ) : !isSelected ? (
-            /* Direct Stepper + Add to Order */
-            <div className="flex items-center gap-2">
-              <div className="flex items-center bg-mani-50/80 rounded-xl border border-mani-200/90 p-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleMinusStaged}
-                  disabled={stagedQty <= 1}
-                  aria-label={`Decrease ${product.name} quantity to add`}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold transition-all ${
-                    stagedQty <= 1 
-                      ? 'text-mani-300 cursor-not-allowed bg-transparent' 
-                      : 'bg-white text-mani-800 hover:bg-amber-50 hover:text-amber-800 shadow-2xs border border-mani-200/70 active:scale-90 cursor-pointer'
-                  }`}
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
+            /* Direct Stepper + Add to Order (Full-width contained layout) */
+            <div className="flex flex-col gap-2 w-full">
+              <div className="flex items-center justify-between bg-mani-50/80 rounded-xl border border-mani-200/90 px-2.5 py-1 w-full">
+                <span className="text-xs font-bold text-mani-600 select-none">Quantity</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleMinusStaged}
+                    disabled={stagedQty <= 1}
+                    aria-label={`Decrease ${product.name} quantity to add`}
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold transition-all ${
+                      stagedQty <= 1 
+                        ? 'text-mani-300 cursor-not-allowed bg-transparent' 
+                        : 'bg-white text-mani-800 hover:bg-amber-50 hover:text-amber-800 shadow-2xs border border-mani-200/70 active:scale-90 cursor-pointer'
+                    }`}
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
 
-                <span 
-                  aria-label={`Quantity to add: ${stagedQty}`}
-                  className="w-7 sm:w-8 text-center text-xs sm:text-sm font-black text-mani-900 select-none"
-                >
-                  {stagedQty}
-                </span>
+                  <span 
+                    aria-label={`Quantity to add: ${stagedQty}`}
+                    className="w-7 text-center text-xs sm:text-sm font-black text-mani-900 select-none"
+                  >
+                    {stagedQty}
+                  </span>
 
-                <button
-                  type="button"
-                  onClick={handlePlusStaged}
-                  aria-label={`Increase ${product.name} quantity to add`}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white text-mani-800 hover:bg-amber-50 hover:text-amber-800 active:scale-90 flex items-center justify-center border border-mani-200/70 shadow-2xs font-bold transition-all cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={handlePlusStaged}
+                    aria-label={`Increase ${product.name} quantity to add`}
+                    className="w-7 h-7 rounded-lg bg-white text-mani-800 hover:bg-amber-50 hover:text-amber-800 active:scale-90 flex items-center justify-center border border-mani-200/70 shadow-2xs font-bold transition-all cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               <button
                 type="button"
                 onClick={handleAddClick}
-                className="flex-1 py-2 sm:py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm shadow-sm hover:shadow-md shadow-amber-900/15 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm shadow-sm hover:shadow-md shadow-amber-900/15 flex items-center justify-center gap-1.5 whitespace-nowrap transition-all cursor-pointer"
               >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <Plus className="w-4 h-4 stroke-[2.5] shrink-0" />
                 <span>Add to Order</span>
               </button>
             </div>
           ) : (
             /* In-Cart Live Controller */
-            <div className="flex items-center justify-between gap-2 bg-amber-50/80 p-1.5 rounded-2xl border border-amber-300/80 ring-1 ring-amber-400/30">
-              <div className="flex items-center gap-1">
+            <div className="flex items-center justify-between gap-1.5 bg-amber-50/80 p-1.5 rounded-2xl border border-amber-300/80 ring-1 ring-amber-400/30 w-full">
+              <div className="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
                   onClick={handleMinusInCart}
                   aria-label={`Decrease ${product.name} quantity`}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white text-mani-800 hover:bg-red-50 hover:text-red-600 active:scale-90 flex items-center justify-center border border-mani-200/80 shadow-2xs font-bold transition-all cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-white text-mani-800 hover:bg-red-50 hover:text-red-600 active:scale-90 flex items-center justify-center border border-mani-200/80 shadow-2xs font-bold transition-all cursor-pointer"
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
@@ -199,24 +202,24 @@ export default function FlavorCard({
                   value={quantity}
                   onChange={handleDirectInput}
                   aria-label={`${product.name} quantity in order`}
-                  className="w-8 sm:w-10 text-center text-xs sm:text-sm font-black bg-transparent text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 rounded p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-7 sm:w-8 text-center text-xs sm:text-sm font-black bg-transparent text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 rounded p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
 
                 <button
                   type="button"
                   onClick={handlePlusInCart}
                   aria-label={`Increase ${product.name} quantity`}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500 text-white hover:bg-amber-600 active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-amber-500 text-white hover:bg-amber-600 active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
               </div>
 
-              <div className="pr-1.5 text-right">
-                <div className="text-xs sm:text-sm font-black text-amber-950">
+              <div className="pr-1 text-right min-w-0">
+                <div className="text-xs sm:text-sm font-black text-amber-950 truncate">
                   {formatPHP(quantity * (product.price || 50))}
                 </div>
-                <div className="text-[10px] font-bold text-amber-800 flex items-center gap-0.5 justify-end">
+                <div className="text-[10px] font-bold text-amber-800 flex items-center gap-0.5 justify-end whitespace-nowrap">
                   <span>{quantity} tub{quantity > 1 ? 's' : ''}</span>
                 </div>
               </div>
