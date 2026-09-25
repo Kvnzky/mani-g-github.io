@@ -193,6 +193,8 @@ function doGet(e) {
       result = handleUpdateStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.status);
     } else if (action === 'updatePaymentStatus') {
       result = handleUpdatePaymentStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.paymentStatus);
+    } else if (action === 'sendOrderSummaryEmail') {
+      result = handleSendOrderSummaryEmail(ss, e.parameter);
     }
 
     return formatResponse(result, e);
@@ -271,6 +273,9 @@ function doPost(e) {
     } else if (action === 'testEmail' || action === 'sendTestEmail') {
       var emailRes = handleSendTestEmail(payload.to);
       return ContentService.createTextOutput(JSON.stringify(emailRes)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'sendOrderSummaryEmail') {
+      var summaryRes = handleSendOrderSummaryEmail(ss, payload);
+      return ContentService.createTextOutput(JSON.stringify(summaryRes)).setMimeType(ContentService.MimeType.JSON);
     } else {
       return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'Unknown action: ' + action }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -1660,4 +1665,176 @@ function handleSendTestEmail(toEmail) {
   }
   return res;
 }
+
+/**
+ * Escape HTML special characters for safe email table rendering
+ */
+function escapeHtmlGas(str) {
+  return String(str !== undefined && str !== null ? str : '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Send Order Summary Email to engrkevinramirez@gmail.com
+ */
+function handleSendOrderSummaryEmail(ss, payload) {
+  payload = payload || {};
+  var recipientEmail = 'engrkevinramirez@gmail.com';
+  var startDate = payload.startDate || '';
+  var endDate = payload.endDate || '';
+  var startDisplay = payload.startDateDisplay || startDate || 'All Time';
+  var endDisplay = payload.endDateDisplay || endDate || 'Present';
+  var selectedDateRange = payload.selectedDateRange || (startDisplay + ' – ' + endDisplay);
+  var rows = payload.rows;
+
+  // If rows were not passed in payload, build them directly from the latest Google Sheet orders
+  if (!Array.isArray(rows)) {
+    var ordData = handleGetOrders(ss, '');
+    var allOrders = (ordData && Array.isArray(ordData.orders)) ? ordData.orders : [];
+    var filtered = allOrders.filter(function(o) {
+      if (String(o.status || '').toLowerCase() === 'cancelled') return false;
+      var od = o.orderDate || '';
+      if (startDate && od < startDate) return false;
+      if (endDate && od > endDate) return false;
+      return true;
+    });
+
+    var flavorLabels = {
+      salted: 'Salted',
+      unsalted: 'Unsalted',
+      spicy: 'Spicy',
+      bbq: 'BBQ',
+      'sour-cream': 'Sour Cream',
+      cheese: 'Cheese',
+      'bawang-only': 'Bawang Only'
+    };
+
+    rows = filtered.map(function(o) {
+      var parts = [];
+      if (Array.isArray(o.items) && o.items.length > 0) {
+        o.items.forEach(function(it) {
+          var q = Number(it.quantity) || 0;
+          if (q > 0) {
+            parts.push((it.name || flavorLabels[it.id] || it.id) + ' × ' + q);
+          }
+        });
+      } else if (o.flavorQuantities) {
+        ['salted', 'unsalted', 'spicy', 'bbq', 'sour-cream', 'cheese', 'bawang-only'].forEach(function(k) {
+          var q = Number(o.flavorQuantities[k]) || 0;
+          if (q > 0) {
+            parts.push((flavorLabels[k] || k) + ' × ' + q);
+          }
+        });
+      }
+      return {
+        name: String(o.customerName || 'N/A').trim(),
+        address: String(o.deliveryAddress || 'N/A').trim(),
+        orderAndQuantity: parts.length > 0 ? parts.join(', ') : 'N/A'
+      };
+    });
+  }
+
+  var subject = 'Order Summary – ' + selectedDateRange;
+  var introLine = 'Please see the order summary for ' + startDisplay + ' – ' + endDisplay + ' below.';
+
+  var tableRowsHtml = '';
+  var plainTextRows = 'Name\tAddress\tOrder & Quantity\n';
+
+  if (rows.length === 0) {
+    tableRowsHtml = '<tr><td colspan="3" style="padding: 18px 14px; text-align: center; color: #8C6A48; font-style: italic;">No orders found for ' + escapeHtmlGas(startDisplay) + ' – ' + escapeHtmlGas(endDisplay) + '.</td></tr>';
+    plainTextRows += 'No orders found for ' + startDisplay + ' – ' + endDisplay + '.\n';
+  } else {
+    rows.forEach(function(row, idx) {
+      var rowBg = (idx % 2 === 0) ? '#FFFFFF' : '#FDFBF7';
+      var rName = String(row.name || 'N/A').trim();
+      var rAddr = String(row.address || 'N/A').trim();
+      var rOrd = String(row.orderAndQuantity || 'N/A').trim();
+
+      tableRowsHtml += '<tr style="background-color: ' + rowBg + '; border-bottom: 1px solid #EDE4D8;">' +
+        '<td style="padding: 12px 14px; font-weight: 700; color: #2B1810; vertical-align: top; word-break: break-word;">' + escapeHtmlGas(rName) + '</td>' +
+        '<td style="padding: 12px 14px; color: #4A3525; vertical-align: top; word-break: break-word;">' + escapeHtmlGas(rAddr) + '</td>' +
+        '<td style="padding: 12px 14px; font-weight: 700; color: #7C552E; vertical-align: top; word-break: break-word;">' + escapeHtmlGas(rOrd) + '</td>' +
+        '</tr>';
+
+      plainTextRows += rName + ' | ' + rAddr + ' | ' + rOrd + '\n';
+    });
+  }
+
+  var htmlBody = '<!DOCTYPE html>' +
+    '<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<title>' + escapeHtmlGas(subject) + '</title>' +
+    '<style>@media only screen and (max-width: 600px) { .email-container { width: 100% !important; border-radius: 12px !important; } .email-padding { padding: 16px 12px !important; } .summary-table th, .summary-table td { padding: 10px 8px !important; font-size: 13px !important; } }</style>' +
+    '</head>' +
+    '<body style="margin: 0; padding: 20px 10px; background-color: #FDFBF7; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; color: #2B1810;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">' +
+    '<table role="presentation" class="email-container" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 680px; background-color: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #EADBCE; box-shadow: 0 4px 20px rgba(124, 85, 46, 0.08);">' +
+    '<tr><td style="background: linear-gradient(135deg, #7C552E 0%, #D97706 100%); padding: 28px 24px; text-align: center; color: #ffffff;">' +
+    '<div style="font-size: 28px; line-height: 1; margin-bottom: 6px;">🥜</div>' +
+    '<div style="font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #FEF3C7; margin-bottom: 4px;">Mani Wandering</div>' +
+    '<h1 style="margin: 0; font-size: 22px; font-weight: 900; color: #ffffff;">Order Summary</h1>' +
+    '<div style="margin-top: 8px; font-size: 13px; color: #FEF3C7; font-weight: 600;">📅 ' + escapeHtmlGas(selectedDateRange) + '</div>' +
+    '</td></tr>' +
+    '<tr><td class="email-padding" style="padding: 24px;">' +
+    '<p style="margin: 0 0 18px 0; font-size: 15px; line-height: 1.6; color: #2B1810; font-weight: 600;">' + escapeHtmlGas(introLine) + '</p>' +
+    '<table role="presentation" class="summary-table" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; width: 100%; font-size: 14px; border: 1px solid #EDE4D8; border-radius: 12px; overflow: hidden;">' +
+    '<thead><tr style="background-color: #F8F4EE; border-bottom: 2px solid #E5D5C3;">' +
+    '<th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 25%;">Name</th>' +
+    '<th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 40%;">Address</th>' +
+    '<th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 35%;">Order &amp; Quantity</th>' +
+    '</tr></thead>' +
+    '<tbody>' + tableRowsHtml + '</tbody>' +
+    '</table>' +
+    '<div style="margin-top: 16px; font-size: 12px; color: #8C6A48; text-align: right; font-weight: 600;">Total Orders Included: ' + rows.length + '</div>' +
+    '</td></tr>' +
+    '<tr><td style="background-color: #F8F5EE; padding: 16px 24px; text-align: center; font-size: 12px; color: #8C6A48; border-top: 1px solid #EADBCE;">' +
+    '🥜 Mani Wandering Order Summary — Sent to ' + recipientEmail +
+    '</td></tr>' +
+    '</table></td></tr></table></body></html>';
+
+  var plainTextBody = introLine + '\n\n' + plainTextRows;
+
+  try {
+    MailApp.sendEmail({
+      to: recipientEmail,
+      subject: subject,
+      body: plainTextBody,
+      htmlBody: htmlBody,
+      name: 'Mani Wandering Orders'
+    });
+    return {
+      success: true,
+      sent: true,
+      recipient: recipientEmail,
+      subject: subject,
+      rowCount: rows.length
+    };
+  } catch (err) {
+    try {
+      GmailApp.sendEmail(recipientEmail, subject, plainTextBody, {
+        htmlBody: htmlBody,
+        name: 'Mani Wandering Orders'
+      });
+      return {
+        success: true,
+        sent: true,
+        recipient: recipientEmail,
+        subject: subject,
+        rowCount: rows.length,
+        via: 'GmailApp'
+      };
+    } catch (gErr) {
+      return {
+        success: false,
+        sent: false,
+        error: err.toString(),
+        gmailError: gErr.toString()
+      };
+    }
+  }
+}
+
 

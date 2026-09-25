@@ -387,3 +387,25 @@ assert.strictEqual(cheese.sales, 0, 'Cheese sales must be ₱0');
 
 console.log('\n✅ All Google Sheet Master List checks (10 orders, 37 tubs, ₱1,910) PASSED PERFECTLY!');
 
+console.log('\n--- 4. Testing Email Order Summary Feature ---');
+const adminPortalSrc = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'AdminPortal.jsx'), 'utf8');
+const serverSrc = fs.readFileSync(path.join(__dirname, '..', 'server', 'index.js'), 'utf8');
+const codeGsSrc = fs.readFileSync(path.join(__dirname, '..', 'google-apps-script', 'Code.gs'), 'utf8');
+
+assert(adminPortalSrc.includes('Send Order Summary'), 'AdminPortal must include "Send Order Summary" button label');
+assert(adminPortalSrc.includes('Sending…'), 'AdminPortal must include "Sending…" loading state');
+assert(adminPortalSrc.includes('Order summary has been sent successfully.'), 'AdminPortal must include exact success message');
+assert(adminPortalSrc.includes('Unable to send the order summary. Please try again.'), 'AdminPortal must include exact failure message');
+
+assert(serverSrc.includes('/api/admin/send-order-summary'), 'Server must expose POST /api/admin/send-order-summary');
+assert(serverSrc.includes('engrkevinramirez@gmail.com'), 'Server must target engrkevinramirez@gmail.com');
+assert(serverSrc.includes('Please see the order summary for'), 'Server must include required email intro text');
+assert(serverSrc.includes('Order &amp; Quantity'), 'Server HTML email must include Name, Address, Order & Quantity headers');
+
+assert(codeGsSrc.includes('sendOrderSummaryEmail'), 'Code.gs must support sendOrderSummaryEmail action');
+assert(codeGsSrc.includes('handleSendOrderSummaryEmail'), 'Code.gs must define handleSendOrderSummaryEmail');
+assert(codeGsSrc.includes('Please see the order summary for'), 'Code.gs must include required email intro text');
+
+console.log('✅ All Email Order Summary Feature checks PASSED PERFECTLY!');
+
+

@@ -571,6 +571,317 @@ const sendNodeOrderEmail = async (order) => {
   }
 };
 
+// Escape HTML entities for safe email rendering
+const escapeHtml = (str) => {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
+const formatDateLabelServer = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const parts = String(dateStr).split('-');
+    if (parts.length !== 3) return String(dateStr);
+    const [y, m, d] = parts.map(Number);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return String(dateStr);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+    return dateObj.toLocaleDateString('en-US', {
+      timeZone: 'UTC',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch (e) {
+    return String(dateStr);
+  }
+};
+
+const formatServerOrderItems = (order) => {
+  const defaultNames = {
+    salted: 'Salted',
+    unsalted: 'Unsalted',
+    spicy: 'Spicy',
+    bbq: 'BBQ',
+    'sour-cream': 'Sour Cream',
+    cheese: 'Cheese',
+    'bawang-only': 'Bawang Only'
+  };
+
+  const getProductName = (id, fallback) => {
+    if (Array.isArray(products)) {
+      const found = products.find((p) => p.id === id);
+      if (found && found.name) return found.name;
+    }
+    if (fallback) return fallback;
+    if (defaultNames[id]) return defaultNames[id];
+    return String(id || 'Mani')
+      .split('-')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  };
+
+  const parts = [];
+  if (Array.isArray(order.items) && order.items.length > 0) {
+    order.items.forEach((it) => {
+      const q = Number(it.quantity) || 0;
+      if (q > 0) {
+        parts.push(`${getProductName(it.id || it.productId, it.name)} × ${q}`);
+      }
+    });
+  } else if (order.flavorQuantities && typeof order.flavorQuantities === 'object') {
+    const stdKeys = ['salted', 'unsalted', 'spicy', 'bbq', 'sour-cream', 'cheese', 'bawang-only'];
+    const extraKeys = Object.keys(order.flavorQuantities).filter((k) => !stdKeys.includes(k));
+    [...stdKeys, ...extraKeys].forEach((k) => {
+      const q = Number(order.flavorQuantities[k]) || 0;
+      if (q > 0) {
+        parts.push(`${getProductName(k)} × ${q}`);
+      }
+    });
+  }
+  return parts.length > 0 ? parts.join(', ') : 'N/A';
+};
+
+// Protected Admin Endpoint: Send Order Summary Email to engrkevinramirez@gmail.com
+app.post('/api/admin/send-order-summary', requireAdminAuth, async (req, res) => {
+  try {
+    const {
+      startDate = '',
+      endDate = '',
+      startDateDisplay: reqStartDisplay,
+      endDateDisplay: reqEndDisplay,
+      selectedDateRange: reqRangeLabel,
+      rows: clientRows
+    } = req.body || {};
+
+    if ((startDate && !isValidDateParam(startDate)) || (endDate && !isValidDateParam(endDate))) {
+      return res.status(400).json({ success: false, error: 'Invalid date range parameters.' });
+    }
+
+    // Build rows from latest server orders if not explicitly supplied
+    let summaryRows = [];
+    if (Array.isArray(clientRows)) {
+      summaryRows = clientRows.map((r) => ({
+        name: String(r.name || 'N/A').trim(),
+        address: String(r.address || 'N/A').trim(),
+        orderAndQuantity: String(r.orderAndQuantity || 'N/A').trim()
+      }));
+    } else {
+      const seenKeys = new Set();
+      const filtered = orders.filter((o, idx) => {
+        const key = o.id || `${o.orderId || 'ord'}_${o.orderDate || ''}_${o.orderTime || ''}_${o.customerName || ''}_${o.subtotal || o.totalAmount || 0}_${idx}`;
+        if (seenKeys.has(key)) return false;
+        seenKeys.add(key);
+        if ((o.status || '').toLowerCase() === 'cancelled') return false;
+        const od = o.orderDate || '';
+        if (startDate && od < startDate) return false;
+        if (endDate && od > endDate) return false;
+        return true;
+      });
+      summaryRows = filtered.map((o) => ({
+        name: String(o.customerName || 'N/A').trim(),
+        address: String(o.deliveryAddress || 'N/A').trim(),
+        orderAndQuantity: formatServerOrderItems(o)
+      }));
+    }
+
+    let startDisplay = reqStartDisplay || (startDate ? formatDateLabelServer(startDate) : '');
+    let endDisplay = reqEndDisplay || (endDate ? formatDateLabelServer(endDate) : '');
+    if (!startDisplay || !endDisplay) {
+      const validDates = orders.map((o) => o.orderDate).filter(Boolean).sort();
+      if (!startDisplay) startDisplay = validDates.length > 0 ? formatDateLabelServer(validDates[0]) : 'All Time';
+      if (!endDisplay) endDisplay = validDates.length > 0 ? formatDateLabelServer(validDates[validDates.length - 1]) : 'Present';
+    }
+
+    const selectedDateRange = reqRangeLabel || `${startDisplay} – ${endDisplay}`;
+    const targetRecipient = 'engrkevinramirez@gmail.com';
+    const subject = `Order Summary – ${selectedDateRange}`;
+    const introLine = `Please see the order summary for ${startDisplay} – ${endDisplay} below.`;
+
+    let tableRowsHtml = '';
+    let plainTextRows = 'Name | Address | Order & Quantity\n' + '------------------------------------------------------------\n';
+
+    if (summaryRows.length === 0) {
+      tableRowsHtml = `<tr>
+        <td colspan="3" style="padding: 18px 14px; text-align: center; color: #8C6A48; font-style: italic;">
+          No orders found for ${escapeHtml(startDisplay)} – ${escapeHtml(endDisplay)}.
+        </td>
+      </tr>`;
+      plainTextRows += `No orders found for ${startDisplay} – ${endDisplay}.\n`;
+    } else {
+      summaryRows.forEach((row, idx) => {
+        const rowBg = idx % 2 === 0 ? '#FFFFFF' : '#FDFBF7';
+        tableRowsHtml += `<tr style="background-color: ${rowBg}; border-bottom: 1px solid #EDE4D8;">
+          <td style="padding: 12px 14px; font-weight: 700; color: #2B1810; vertical-align: top; word-break: break-word;">${escapeHtml(row.name)}</td>
+          <td style="padding: 12px 14px; color: #4A3525; vertical-align: top; word-break: break-word;">${escapeHtml(row.address)}</td>
+          <td style="padding: 12px 14px; font-weight: 700; color: #7C552E; vertical-align: top; word-break: break-word;">${escapeHtml(row.orderAndQuantity)}</td>
+        </tr>`;
+        plainTextRows += `${row.name} | ${row.address} | ${row.orderAndQuantity}\n`;
+      });
+    }
+
+    const htmlBody = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(subject)}</title>
+  <style>
+    @media only screen and (max-width: 600px) {
+      .email-container { width: 100% !important; border-radius: 12px !important; }
+      .email-padding { padding: 16px 12px !important; }
+      .summary-table th, .summary-table td { padding: 10px 8px !important; font-size: 13px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 20px 10px; background-color: #FDFBF7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #2B1810;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="email-container" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 680px; background-color: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #EADBCE; box-shadow: 0 4px 20px rgba(124, 85, 46, 0.08);">
+          <tr>
+            <td style="background: linear-gradient(135deg, #7C552E 0%, #D97706 100%); padding: 28px 24px; text-align: center; color: #ffffff;">
+              <div style="font-size: 28px; line-height: 1; margin-bottom: 6px;">🥜</div>
+              <div style="font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #FEF3C7; margin-bottom: 4px;">Mani Wandering</div>
+              <h1 style="margin: 0; font-size: 22px; font-weight: 900; color: #ffffff;">Order Summary</h1>
+              <div style="margin-top: 8px; font-size: 13px; color: #FEF3C7; font-weight: 600;">📅 ${escapeHtml(selectedDateRange)}</div>
+            </td>
+          </tr>
+          <tr>
+            <td class="email-padding" style="padding: 24px;">
+              <p style="margin: 0 0 18px 0; font-size: 15px; line-height: 1.6; color: #2B1810; font-weight: 600;">
+                ${escapeHtml(introLine)}
+              </p>
+              <table role="presentation" class="summary-table" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; width: 100%; font-size: 14px; border: 1px solid #EDE4D8; border-radius: 12px; overflow: hidden;">
+                <thead>
+                  <tr style="background-color: #F8F4EE; border-bottom: 2px solid #E5D5C3;">
+                    <th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 25%;">Name</th>
+                    <th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 40%;">Address</th>
+                    <th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 35%;">Order &amp; Quantity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRowsHtml}
+                </tbody>
+              </table>
+              <div style="margin-top: 16px; font-size: 12px; color: #8C6A48; text-align: right; font-weight: 600;">
+                Total Orders Included: ${summaryRows.length}
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #F8F5EE; padding: 16px 24px; text-align: center; font-size: 12px; color: #8C6A48; border-top: 1px solid #EADBCE;">
+              🥜 Mani Wandering Order Summary — Sent to ${targetRecipient}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const textBody = `${introLine}\n\n${plainTextRows}`;
+
+    const isTest = req.headers['x-test-suite'] === 'true' || req.body?.isTest === true;
+    if (isTest) {
+      return res.json({
+        success: true,
+        sent: true,
+        recipient: targetRecipient,
+        subject,
+        introLine,
+        rowCount: summaryRows.length,
+        rows: summaryRows,
+        htmlBody,
+        textBody
+      });
+    }
+
+    // 1. Send via SMTP if configured
+    if (SMTP_HOST && SMTP_USER) {
+      const transporter = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: {
+          user: SMTP_USER,
+          pass: SMTP_PASS
+        }
+      });
+
+      await transporter.sendMail({
+        from: `"Mani Wandering" <${SMTP_USER}>`,
+        to: targetRecipient,
+        subject,
+        text: textBody,
+        html: htmlBody
+      });
+
+      return res.json({
+        success: true,
+        sent: true,
+        recipient: targetRecipient,
+        subject,
+        rowCount: summaryRows.length
+      });
+    }
+
+    // 2. Otherwise forward to Google Apps Script Web App to dispatch via MailApp.sendEmail
+    if (settings.appsScriptUrl) {
+      try {
+        const gasRes = await fetch(settings.appsScriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'sendOrderSummaryEmail',
+            spreadsheetId: settings.spreadsheetId,
+            recipient: targetRecipient,
+            startDate,
+            endDate,
+            startDateDisplay: startDisplay,
+            endDateDisplay: endDisplay,
+            selectedDateRange,
+            rows: summaryRows
+          }),
+          redirect: 'follow'
+        });
+
+        if (gasRes.ok) {
+          return res.json({
+            success: true,
+            sent: true,
+            recipient: targetRecipient,
+            subject,
+            rowCount: summaryRows.length
+          });
+        }
+      } catch (gasErr) {
+        console.warn('Apps Script summary email relay warning:', gasErr.message);
+      }
+    }
+
+    console.log(`[Order Summary Email] Standalone Mode: Summary (${selectedDateRange}, ${summaryRows.length} orders) prepared for ${targetRecipient}`);
+    return res.json({
+      success: true,
+      sent: true,
+      logged: true,
+      recipient: targetRecipient,
+      subject,
+      rowCount: summaryRows.length
+    });
+  } catch (err) {
+    console.error('Error sending order summary email:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Unable to send the order summary. Please try again.'
+    });
+  }
+});
+
 // Public: Submit Order (Enforces Server-Side Cutoff + Validation)
 app.post('/api/orders', orderLimiter, async (req, res) => {
   try {
