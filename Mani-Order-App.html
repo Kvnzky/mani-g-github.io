@@ -214,6 +214,75 @@
         localStorage.setItem('mani_qr_config_v2', JSON.stringify(customQrs));
       }, [customQrs]);
 
+      const syncCloudSettings = (overrides = {}) => {
+        if (!appsScriptUrl) return;
+        const nextProducts = overrides.products || products;
+        const nextPaymentMethods = overrides.paymentMethods || paymentMethods;
+        const nextQrs = overrides.customQrs || customQrs;
+        const availMap = {};
+        nextProducts.forEach(p => { availMap[p.id] = p.available !== false; });
+
+        fetch(appsScriptUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'saveSettings',
+            settings: {
+              cutoff: {
+                enabled: true,
+                date: getPhilippineDateTime().dateStr,
+                time: '23:59',
+                paymentMethods: nextPaymentMethods,
+                flavorAvailability: availMap,
+                gcashNumber: nextQrs.gcashNumber || GCASH_NUMBER,
+                updatedAt: Date.now()
+              },
+              products: nextProducts,
+              paymentMethods: nextPaymentMethods,
+              flavorAvailability: availMap,
+              qrs: { gcashNumber: nextQrs.gcashNumber || GCASH_NUMBER }
+            }
+          })
+        }).catch(() => {});
+      };
+
+      useEffect(() => {
+        if (!appsScriptUrl) return;
+        const pollCloud = async () => {
+          try {
+            const res = await fetch(`${appsScriptUrl}?action=getSettings&_t=${Date.now()}`, { cache: 'no-store' });
+            if (res.ok) {
+              const data = await res.json();
+              const s = data && data.settings ? data.settings : null;
+              if (s) {
+                const pm = s.paymentMethods || (s.cutoff && s.cutoff.paymentMethods);
+                if (pm && typeof pm === 'object') {
+                  setPaymentMethods({
+                    cod: pm.cod !== undefined ? Boolean(pm.cod) : true,
+                    maribank: pm.maribank !== undefined ? Boolean(pm.maribank) : true,
+                    gcash: pm.gcash !== undefined ? Boolean(pm.gcash) : true
+                  });
+                }
+                if (Array.isArray(s.products) && s.products.length > 0) {
+                  setProducts(prev => prev.map(defP => {
+                    const cp = s.products.find(x => x.id === defP.id);
+                    return cp ? { ...defP, ...cp, image: defP.image } : defP;
+                  }));
+                }
+                const gNum = (s.qrs && s.qrs.gcashNumber) || (s.cutoff && s.cutoff.gcashNumber);
+                if (gNum) {
+                  setCustomQrs(prev => ({ ...prev, gcashNumber: String(gNum).trim() }));
+                }
+              }
+            }
+          } catch (e) {}
+        };
+        pollCloud();
+        const timer = setInterval(pollCloud, 5000);
+        return () => clearInterval(timer);
+      }, [appsScriptUrl]);
+
       const handleQty = (id, change) => {
         const prod = products.find(p => p.id === id);
         if (prod && prod.available === false && change > 0) return;
@@ -237,10 +306,11 @@
         if (!file) return;
         const reader = new FileReader();
         reader.onload = () => {
-          setCustomQrs(prev => ({
-            ...prev,
-            [qrKey]: reader.result
-          }));
+          setCustomQrs(prev => {
+            const next = { ...prev, [qrKey]: reader.result };
+            syncCloudSettings({ customQrs: next });
+            return next;
+          });
           setQrSaveMsg(qrKey === 'maribank' ? 'Maribank QR updated!' : 'GCash QR updated!');
           setTimeout(() => setQrSaveMsg(''), 3000);
         };
@@ -394,7 +464,9 @@
                     </div>
                     <button
                       onClick={() => {
-                        setPaymentMethods({ cod: true, maribank: true, gcash: true });
+                        const nextPm = { cod: true, maribank: true, gcash: true };
+                        setPaymentMethods(nextPm);
+                        syncCloudSettings({ paymentMethods: nextPm });
                         setQrSaveMsg('All payment methods enabled!');
                         setTimeout(() => setQrSaveMsg(''), 2500);
                       }}
@@ -418,7 +490,11 @@
                             alert('At least one payment method must remain active.');
                             return;
                           }
-                          setPaymentMethods(prev => ({ ...prev, cod: nextVal }));
+                          setPaymentMethods(prev => {
+                            const nextPm = { ...prev, cod: nextVal };
+                            syncCloudSettings({ paymentMethods: nextPm });
+                            return nextPm;
+                          });
                         }}
                         className={"text-[11px] font-black px-2 py-1 rounded-md border cursor-pointer " + (paymentMethods.cod !== false ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-stone-200 text-stone-600 border-stone-300")}
                       >
@@ -439,7 +515,11 @@
                             alert('At least one payment method must remain active.');
                             return;
                           }
-                          setPaymentMethods(prev => ({ ...prev, maribank: nextVal }));
+                          setPaymentMethods(prev => {
+                            const nextPm = { ...prev, maribank: nextVal };
+                            syncCloudSettings({ paymentMethods: nextPm });
+                            return nextPm;
+                          });
                         }}
                         className={"text-[11px] font-black px-2 py-1 rounded-md border cursor-pointer " + (paymentMethods.maribank !== false ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-stone-200 text-stone-600 border-stone-300")}
                       >
@@ -460,7 +540,11 @@
                             alert('At least one payment method must remain active.');
                             return;
                           }
-                          setPaymentMethods(prev => ({ ...prev, gcash: nextVal }));
+                          setPaymentMethods(prev => {
+                            const nextPm = { ...prev, gcash: nextVal };
+                            syncCloudSettings({ paymentMethods: nextPm });
+                            return nextPm;
+                          });
                         }}
                         className={"text-[11px] font-black px-2 py-1 rounded-md border cursor-pointer " + (paymentMethods.gcash !== false ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-stone-200 text-stone-600 border-stone-300")}
                       >
@@ -512,7 +596,8 @@
                         />
                         <button
                           onClick={() => {
-                            setQrSaveMsg('GCash number saved!');
+                            syncCloudSettings({ customQrs });
+                            setQrSaveMsg('GCash number saved & synced!');
                             setTimeout(() => setQrSaveMsg(''), 2500);
                           }}
                           className="px-2.5 py-1 bg-blue-600 text-white rounded-lg font-bold text-[11px]"
@@ -560,6 +645,7 @@
                             onClick={() => {
                               const updated = products.map(prod => prod.id === p.id ? { ...prod, available: !isAvail } : prod);
                               setProducts(updated);
+                              syncCloudSettings({ products: updated });
                             }}
                             className={"text-[11px] font-black px-2 py-0.5 rounded-md border cursor-pointer " + (isAvail ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-red-100 text-red-800 border-red-300")}
                           >

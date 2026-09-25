@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import FlavorCard from './components/FlavorCard';
 import CustomerForm from './components/CustomerForm';
@@ -151,9 +151,17 @@ export default function App() {
       if (saved) {
         return { ...DEFAULT_PAYMENT_METHODS, ...JSON.parse(saved) };
       }
+      const savedCutoff = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
+      if (savedCutoff?.paymentMethods && typeof savedCutoff.paymentMethods === 'object') {
+        return { ...DEFAULT_PAYMENT_METHODS, ...savedCutoff.paymentMethods };
+      }
     } catch (e) {}
     return { ...DEFAULT_PAYMENT_METHODS };
   });
+
+  // Guards to prevent in-flight background polls from reverting recent local Admin mutations
+  const lastAdminMutationRef = useRef(0);
+  const lastAppliedUpdatedAtRef = useRef(0);
 
   // Automatically update customer paymentMethod if the selected method is disabled
   useEffect(() => {
@@ -164,6 +172,14 @@ export default function App() {
           : paymentMethods.gcash ? 'GCash'
           : paymentMethods.maribank ? 'Maribank'
           : '';
+        setCustomerData((prev) => ({ ...prev, paymentMethod: fallback }));
+      }
+    } else {
+      const fallback = paymentMethods.cod ? 'Cash on Delivery'
+        : paymentMethods.gcash ? 'GCash'
+        : paymentMethods.maribank ? 'Maribank'
+        : '';
+      if (fallback) {
         setCustomerData((prev) => ({ ...prev, paymentMethod: fallback }));
       }
     }
@@ -200,30 +216,47 @@ export default function App() {
     });
   }, [products]);
 
-  // Apply cloud settings payload to React states & local cache
-  const applyCloudSettings = (settings, serverTimeStr) => {
+  // Apply cloud settings payload to React states & local cache (Desktop <-> Mobile)
+  const applyCloudSettings = (settings, serverTimeStr, force = false) => {
     if (!settings) return;
+
+    // Skip applying background poll results if Admin just made a local change within the last 6 seconds
+    if (!force && Date.now() - lastAdminMutationRef.current < 6000) {
+      return;
+    }
+
+    const savedCutoff = settings.cutoff || {};
+    const cloudUpdatedAt = Number(settings.updatedAt || savedCutoff.updatedAt || 0);
+    if (!force && cloudUpdatedAt > 0 && lastAppliedUpdatedAtRef.current > 0 && cloudUpdatedAt < lastAppliedUpdatedAtRef.current) {
+      return;
+    }
+    if (cloudUpdatedAt > 0) {
+      lastAppliedUpdatedAtRef.current = Math.max(lastAppliedUpdatedAtRef.current, cloudUpdatedAt);
+    }
+
+    const cloudFlavorAvailability = settings.flavorAvailability || savedCutoff.flavorAvailability || null;
+    const cloudPaymentMethods = settings.paymentMethods || savedCutoff.paymentMethods || settings.qrs?.paymentMethods || null;
+    const cloudGcashNumber = settings.qrs?.gcashNumber || savedCutoff.gcashNumber || null;
 
     // 1. Synchronize Cutoff Settings & Delivery Day
     if (settings.cutoff || settings.deliveryDay) {
-      const saved = settings.cutoff || {};
       const now = serverTimeStr ? new Date(serverTimeStr) : new Date();
-      const normalizedTime = saved.time?.length === 5 ? `${saved.time}:00` : (saved.time || '23:59:00');
-      const cutoffIso = saved.date ? `${saved.date}T${normalizedTime}+08:00` : null;
+      const normalizedTime = savedCutoff.time?.length === 5 ? `${savedCutoff.time}:00` : (savedCutoff.time || '23:59:00');
+      const cutoffIso = savedCutoff.date ? `${savedCutoff.date}T${normalizedTime}+08:00` : null;
       const cutoffTimestamp = cutoffIso ? new Date(cutoffIso).getTime() : null;
       const diffSec = cutoffTimestamp ? Math.floor((cutoffTimestamp - now.getTime()) / 1000) : null;
-      const isOpen = saved.enabled ? (diffSec > 0) : true;
-      const status = !saved.enabled ? 'OPEN' : (isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED');
-      const deliveryDay = settings.deliveryDay || saved.deliveryDay || 'Wednesday';
+      const isOpen = savedCutoff.enabled ? (diffSec > 0) : true;
+      const status = !savedCutoff.enabled ? 'OPEN' : (isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED');
+      const deliveryDay = settings.deliveryDay || savedCutoff.deliveryDay || 'Wednesday';
 
       setCutoffInfo({
-        enabled: Boolean(saved.enabled),
+        enabled: Boolean(savedCutoff.enabled),
         isOpen,
         status,
-        cutoffDate: saved.date,
-        cutoffTime: saved.time,
+        cutoffDate: savedCutoff.date,
+        cutoffTime: savedCutoff.time,
         deliveryDay,
-        flavorAvailability: saved.flavorAvailability || settings.flavorAvailability || null,
+        flavorAvailability: cloudFlavorAvailability,
         timezone: 'Asia/Manila',
         serverTime: now.toISOString(),
         remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
@@ -231,42 +264,58 @@ export default function App() {
       });
 
       localStorage.setItem('mani_cutoff_settings', JSON.stringify({
-        ...saved,
-        deliveryDay
+        ...savedCutoff,
+        deliveryDay,
+        flavorAvailability: cloudFlavorAvailability,
+        paymentMethods: cloudPaymentMethods || undefined
       }));
     }
 
-    // 2. Synchronize Flavor Availability
-    if (settings.flavorAvailability && typeof settings.flavorAvailability === 'object') {
-      setProducts((prev) =>
-        prev.map((p) => {
-          if (settings.flavorAvailability[p.id] !== undefined) {
-            return { ...p, available: Boolean(settings.flavorAvailability[p.id]) };
-          }
-          return p;
-        })
-      );
-      localStorage.setItem('mani_flavor_availability', JSON.stringify(settings.flavorAvailability));
-    }
-
-    // 3. Synchronize Products & Pricing
+    // 2 & 3. Synchronize Products, Pricing, Details & Flavor Availability
     if (Array.isArray(settings.products) && settings.products.length > 0) {
-      setProducts(settings.products);
-      localStorage.setItem('mani_products', JSON.stringify(settings.products));
+      const mergedProducts = settings.products.map((p) => {
+        if (cloudFlavorAvailability && cloudFlavorAvailability[p.id] !== undefined) {
+          return { ...p, available: Boolean(cloudFlavorAvailability[p.id]) };
+        }
+        return { ...p, available: p.available !== false };
+      });
+      setProducts(mergedProducts);
+      localStorage.setItem('mani_products', JSON.stringify(mergedProducts));
+      if (cloudFlavorAvailability && typeof cloudFlavorAvailability === 'object') {
+        localStorage.setItem('mani_flavor_availability', JSON.stringify(cloudFlavorAvailability));
+      }
+    } else if (cloudFlavorAvailability && typeof cloudFlavorAvailability === 'object') {
+      setProducts((prev) => {
+        const next = prev.map((p) =>
+          cloudFlavorAvailability[p.id] !== undefined
+            ? { ...p, available: Boolean(cloudFlavorAvailability[p.id]) }
+            : p
+        );
+        localStorage.setItem('mani_products', JSON.stringify(next));
+        return next;
+      });
+      localStorage.setItem('mani_flavor_availability', JSON.stringify(cloudFlavorAvailability));
     }
 
     // 4. Synchronize Payment QR Codes & GCash Number
-    if (settings.qrs && typeof settings.qrs === 'object') {
-      setCustomQrs((prev) => ({ ...prev, ...settings.qrs }));
-      localStorage.setItem('mani_qr_config_v2', JSON.stringify(settings.qrs));
+    if ((settings.qrs && typeof settings.qrs === 'object') || cloudGcashNumber) {
+      setCustomQrs((prev) => {
+        const nextQrs = {
+          ...prev,
+          ...(settings.qrs && typeof settings.qrs === 'object' ? settings.qrs : {}),
+          ...(cloudGcashNumber ? { gcashNumber: cloudGcashNumber } : {})
+        };
+        localStorage.setItem('mani_qr_config_v2', JSON.stringify(nextQrs));
+        return nextQrs;
+      });
     }
 
-    // 5. Synchronize Mode of Payment Availability
-    if (settings.paymentMethods && typeof settings.paymentMethods === 'object') {
+    // 5. Synchronize Mode of Payment Availability (COD, Maribank, GCash)
+    if (cloudPaymentMethods && typeof cloudPaymentMethods === 'object') {
       const normalizedPm = {
-        cod: settings.paymentMethods.cod !== false,
-        maribank: settings.paymentMethods.maribank !== false,
-        gcash: settings.paymentMethods.gcash !== false
+        cod: cloudPaymentMethods.cod !== false,
+        maribank: cloudPaymentMethods.maribank !== false,
+        gcash: cloudPaymentMethods.gcash !== false
       };
       setPaymentMethods(normalizedPm);
       localStorage.setItem('mani_payment_methods', JSON.stringify(normalizedPm));
@@ -278,7 +327,32 @@ export default function App() {
     try {
       const savedPM = JSON.parse(localStorage.getItem('mani_payment_methods') || 'null');
       if (savedPM && typeof savedPM === 'object') {
-        setPaymentMethods((prev) => ({ ...prev, ...savedPM }));
+        setPaymentMethods({
+          cod: savedPM.cod !== false,
+          maribank: savedPM.maribank !== false,
+          gcash: savedPM.gcash !== false
+        });
+      }
+    } catch (e) {}
+
+    try {
+      const savedProds = JSON.parse(localStorage.getItem('mani_products') || 'null');
+      const savedAvail = JSON.parse(localStorage.getItem('mani_flavor_availability') || 'null');
+      if (Array.isArray(savedProds) && savedProds.length > 0) {
+        setProducts(
+          savedProds.map((p) =>
+            savedAvail && savedAvail[p.id] !== undefined
+              ? { ...p, available: Boolean(savedAvail[p.id]) }
+              : p
+          )
+        );
+      }
+    } catch (e) {}
+
+    try {
+      const savedQrs = JSON.parse(localStorage.getItem('mani_qr_config_v2') || 'null');
+      if (savedQrs && typeof savedQrs === 'object') {
+        setCustomQrs((prev) => ({ ...prev, ...savedQrs }));
       }
     } catch (e) {}
 
@@ -310,44 +384,24 @@ export default function App() {
     } catch (e) {}
   };
 
-  // Real-time Cloud Settings Synchronization (Desktop <-> Mobile)
-  const fetchCutoff = async () => {
-    // 1. Try local Express backend if running (development mode)
-    try {
-      const res = await fetch('/api/cutoff');
-      const contentType = res.headers.get('content-type') || '';
-      if (res.ok && contentType.includes('application/json')) {
-        const data = await res.json();
-        if (data && data.status) {
-          setCutoffInfo(data);
-          if (data.flavorAvailability && typeof data.flavorAvailability === 'object') {
-            setProducts((prev) =>
-              prev.map((p) => {
-                if (data.flavorAvailability[p.id] !== undefined) {
-                  return { ...p, available: Boolean(data.flavorAvailability[p.id]) };
-                }
-                return p;
-              })
-            );
-          }
-          if (data.paymentMethods && typeof data.paymentMethods === 'object') {
-            setPaymentMethods((prev) => ({ ...prev, ...data.paymentMethods }));
-            localStorage.setItem('mani_payment_methods', JSON.stringify(data.paymentMethods));
-          }
-          return;
-        }
-      }
-    } catch (err) {}
+  // Real-time Cloud Settings Synchronization (Desktop <-> Mobile for both Admin & User)
+  const fetchCutoff = async (force = false) => {
+    if (!force && Date.now() - lastAdminMutationRef.current < 6000) {
+      return;
+    }
 
-    // 2. Fetch from Google Apps Script Web App (production cloud shared across desktop & mobile)
+    // 1. Primary Cloud Source of Truth: Google Apps Script Web App (shared across Desktop & Mobile)
     const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (appsUrl) {
       try {
-        const cloudRes = await fetch(`${appsUrl}?action=getSettings`, { mode: 'cors' });
+        const cloudRes = await fetch(`${appsUrl}?action=getSettings&_t=${Date.now()}`, {
+          mode: 'cors',
+          cache: 'no-store'
+        });
         if (cloudRes.ok) {
           const cloudData = await cloudRes.json();
           if (cloudData && cloudData.success && cloudData.settings) {
-            applyCloudSettings(cloudData.settings, cloudData.serverTime);
+            applyCloudSettings(cloudData.settings, cloudData.serverTime, force);
             return;
           }
         }
@@ -358,52 +412,85 @@ export default function App() {
           const script = document.createElement('script');
           window[cbName] = (data) => {
             if (data && data.success && data.settings) {
-              applyCloudSettings(data.settings, data.serverTime);
+              applyCloudSettings(data.settings, data.serverTime, force);
             }
             delete window[cbName];
             script.remove();
           };
-          script.src = `${appsUrl}?action=getSettings&callback=${cbName}`;
+          script.src = `${appsUrl}?action=getSettings&callback=${cbName}&_t=${Date.now()}`;
           script.onerror = () => {
             delete window[cbName];
             script.remove();
           };
           document.head.appendChild(script);
+          return;
         } catch (jpErr) {}
       }
     }
+
+    // 2. Local Express backend fallback if running and cloud is unreachable
+    try {
+      const res = await fetch('/api/cutoff');
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data && data.status) {
+          setCutoffInfo(data);
+          if (data.flavorAvailability && typeof data.flavorAvailability === 'object') {
+            setProducts((prev) =>
+              prev.map((p) =>
+                data.flavorAvailability[p.id] !== undefined
+                  ? { ...p, available: Boolean(data.flavorAvailability[p.id]) }
+                  : p
+              )
+            );
+          }
+          if (data.paymentMethods && typeof data.paymentMethods === 'object') {
+            setPaymentMethods({
+              cod: data.paymentMethods.cod !== false,
+              maribank: data.paymentMethods.maribank !== false,
+              gcash: data.paymentMethods.gcash !== false
+            });
+            localStorage.setItem('mani_payment_methods', JSON.stringify(data.paymentMethods));
+          }
+          return;
+        }
+      }
+    } catch (err) {}
 
     // 3. Offline fallback
     applyLocalStorageFallback();
   };
 
-  // Initial Data Fetching & Real-Time Sync Polling
+  // Initial Data Fetching, Cross-Tab Storage Sync & Real-Time Cloud Polling
   useEffect(() => {
-    fetchCutoff();
-    const syncInterval = setInterval(fetchCutoff, 10000); // Check cloud every 10s
+    fetchCutoff(true);
+    const syncInterval = setInterval(() => fetchCutoff(false), 4000); // Sync cloud every 4s across Desktop & Mobile
 
-    // Real-time mobile wakeup: refresh settings immediately when user switches tabs or unlocks phone
+    // Real-time wakeup when user switches tabs or unlocks phone
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        fetchCutoff();
+        fetchCutoff(false);
       }
     };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', fetchCutoff);
+    const handleFocus = () => fetchCutoff(false);
 
-    fetch('/api/products')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setProducts(data);
-        }
-      })
-      .catch(() => {});
+    // Instant 0ms sync across tabs/windows on the same browser (e.g. Admin tab <-> User tab)
+    const handleStorageChange = (e) => {
+      if (!e || !e.key || e.key.startsWith('mani_')) {
+        applyLocalStorageFallback();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
       clearInterval(syncInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', fetchCutoff);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -546,21 +633,86 @@ export default function App() {
     }
   };
 
-  const handleUpdateProducts = (newProducts) => {
-    setProducts(newProducts);
-    localStorage.setItem('mani_products', JSON.stringify(newProducts));
+  // Unified Cloud Synchronization for ALL Admin Portal Settings (Desktop <-> Mobile)
+  const syncAllSettingsToCloud = (overrides = {}) => {
+    const updatedAt = Date.now();
+    lastAdminMutationRef.current = updatedAt;
+    lastAppliedUpdatedAtRef.current = updatedAt;
 
-    // 1. Sync to local backend if available
-    fetch('/api/products', {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${adminToken}`
-      },
-      body: JSON.stringify(newProducts)
-    }).catch(() => {});
+    const nextProducts = overrides.products || products;
+    const rawPaymentMethods = overrides.paymentMethods || paymentMethods;
+    const nextPaymentMethods = {
+      cod: rawPaymentMethods.cod !== false,
+      maribank: rawPaymentMethods.maribank !== false,
+      gcash: rawPaymentMethods.gcash !== false
+    };
+    const nextQrs = overrides.qrs || customQrs;
 
-    // 2. Sync to Google Apps Script Cloud so mobile immediately receives updated products & pricing
+    const now = new Date();
+    const manilaDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(now);
+    const nextCutoffEnabled = overrides.cutoffEnabled !== undefined
+      ? Boolean(overrides.cutoffEnabled)
+      : Boolean(cutoffInfo?.enabled);
+    const nextCutoffDate = overrides.cutoffDate !== undefined
+      ? overrides.cutoffDate
+      : (cutoffInfo?.cutoffDate || manilaDateStr);
+    const nextCutoffTime = overrides.cutoffTime !== undefined
+      ? overrides.cutoffTime
+      : (cutoffInfo?.cutoffTime || '23:59');
+    const nextDeliveryDay = (overrides.deliveryDay !== undefined
+      ? overrides.deliveryDay
+      : (cutoffInfo?.deliveryDay || 'Wednesday')).trim() || 'Wednesday';
+
+    const availabilityMap = {};
+    nextProducts.forEach((p) => {
+      availabilityMap[p.id] = p.available !== false;
+    });
+    if (overrides.flavorAvailability && typeof overrides.flavorAvailability === 'object') {
+      Object.assign(availabilityMap, overrides.flavorAvailability);
+    }
+
+    // Immediately update local React states & localStorage cache for 0ms responsiveness
+    const normalizedTime = nextCutoffTime.length === 5 ? `${nextCutoffTime}:00` : (nextCutoffTime || '23:59:00');
+    const cutoffIso = nextCutoffDate ? `${nextCutoffDate}T${normalizedTime}+08:00` : null;
+    const cutoffTimestamp = cutoffIso ? new Date(cutoffIso).getTime() : null;
+    const diffSec = cutoffTimestamp ? Math.floor((cutoffTimestamp - now.getTime()) / 1000) : null;
+    const isOpen = nextCutoffEnabled ? (diffSec > 0) : true;
+    const status = !nextCutoffEnabled ? 'OPEN' : (isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED');
+
+    setCutoffInfo({
+      enabled: nextCutoffEnabled,
+      isOpen,
+      status,
+      cutoffDate: nextCutoffDate,
+      cutoffTime: nextCutoffTime,
+      deliveryDay: nextDeliveryDay,
+      flavorAvailability: availabilityMap,
+      timezone: 'Asia/Manila',
+      serverTime: now.toISOString(),
+      remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
+      cutoffIso
+    });
+
+    const cutoffPayload = {
+      enabled: nextCutoffEnabled,
+      date: nextCutoffDate,
+      time: nextCutoffTime,
+      deliveryDay: nextDeliveryDay,
+      flavorAvailability: availabilityMap,
+      paymentMethods: nextPaymentMethods,
+      gcashNumber: nextQrs?.gcashNumber || GCASH_NUMBER,
+      updatedAt
+    };
+
+    localStorage.setItem('mani_cutoff_settings', JSON.stringify(cutoffPayload));
+    localStorage.setItem('mani_products', JSON.stringify(nextProducts));
+    localStorage.setItem('mani_flavor_availability', JSON.stringify(availabilityMap));
+    localStorage.setItem('mani_payment_methods', JSON.stringify(nextPaymentMethods));
+    if (overrides.qrs) {
+      localStorage.setItem('mani_qr_config_v2', JSON.stringify(nextQrs));
+    }
+
+    // Sync to Google Apps Script Cloud (embeds all fields inside cutoff + top-level so every deployment version persists 100% of fields)
     const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (appsUrl) {
       fetch(appsUrl, {
@@ -569,29 +721,59 @@ export default function App() {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'saveSettings',
-          settings: { products: newProducts }
+          settings: {
+            cutoff: cutoffPayload,
+            deliveryDay: nextDeliveryDay,
+            flavorAvailability: availabilityMap,
+            paymentMethods: nextPaymentMethods,
+            products: nextProducts,
+            ...(overrides.qrs ? { qrs: nextQrs } : {}),
+            updatedAt
+          }
         })
       }).catch(() => {});
     }
   };
 
-  const handleUpdateQrs = (newQrs) => {
-    setCustomQrs(newQrs);
-    localStorage.setItem('mani_qr_config_v2', JSON.stringify(newQrs));
+  const handleUpdateProducts = (newProducts) => {
+    setProducts(newProducts);
 
-    // Sync to Google Apps Script Cloud so mobile immediately receives updated QR codes
-    const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
-    if (appsUrl) {
-      fetch(appsUrl, {
+    const availabilityMap = {};
+    newProducts.forEach((p) => {
+      availabilityMap[p.id] = p.available !== false;
+    });
+
+    // 1. Sync to local backend if available
+    if (adminToken) {
+      fetch('/api/products', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`
+        },
+        body: JSON.stringify(newProducts)
+      }).catch(() => {});
+
+      fetch('/api/admin/flavor-availability', {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'saveSettings',
-          settings: { qrs: newQrs }
-        })
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ flavorAvailability: availabilityMap })
       }).catch(() => {});
     }
+
+    // 2. Unified Cloud Sync across Desktop & Mobile
+    syncAllSettingsToCloud({
+      products: newProducts,
+      flavorAvailability: availabilityMap
+    });
+  };
+
+  const handleUpdateQrs = (newQrs) => {
+    setCustomQrs(newQrs);
+    syncAllSettingsToCloud({ qrs: newQrs });
   };
 
   const handleUpdatePaymentMethods = (newMethods) => {
@@ -601,7 +783,6 @@ export default function App() {
       gcash: newMethods.gcash !== false
     };
     setPaymentMethods(normalized);
-    localStorage.setItem('mani_payment_methods', JSON.stringify(normalized));
 
     // 1. Sync to local backend server if running
     try {
@@ -617,25 +798,8 @@ export default function App() {
       }
     } catch (err) {}
 
-    // 2. Sync to Google Apps Script Cloud so mobile immediately receives updated payment methods
-    const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
-    if (appsUrl) {
-      // POST sync
-      fetch(appsUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'saveSettings',
-          settings: { paymentMethods: normalized }
-        })
-      }).catch(() => {});
-
-      // GET fast-path sync
-      fetch(`${appsUrl}?action=savePaymentMethods&cod=${normalized.cod}&maribank=${normalized.maribank}&gcash=${normalized.gcash}`, {
-        mode: 'no-cors'
-      }).catch(() => {});
-    }
+    // 2. Unified Cloud Sync across Desktop & Mobile
+    syncAllSettingsToCloud({ paymentMethods: normalized });
   };
 
   const handleQuantityChange = (productId, newQty) => {
@@ -870,11 +1034,15 @@ export default function App() {
   const handleResetForNewOrder = () => {
     setConfirmedOrder(null);
     handleClearOrder();
+    const defaultPm = paymentMethods.cod ? 'Cash on Delivery'
+      : paymentMethods.gcash ? 'GCash'
+      : paymentMethods.maribank ? 'Maribank'
+      : '';
     setCustomerData({
       customerName: '',
       mobileNumber: '',
       deliveryAddress: '',
-      paymentMethod: 'Cash on Delivery'
+      paymentMethod: defaultPm
     });
     setValidationErrors({});
     setSubmissionError('');
@@ -930,11 +1098,12 @@ export default function App() {
             onUpdateQrs={handleUpdateQrs}
             paymentMethods={paymentMethods}
             onUpdatePaymentMethods={handleUpdatePaymentMethods}
+            onSyncCloudSettings={syncAllSettingsToCloud}
             adminToken={adminToken}
             adminUser={adminUser}
             onLogout={handleLogout}
             cutoffInfo={cutoffInfo}
-            onRefreshCutoff={fetchCutoff}
+            onRefreshCutoff={() => fetchCutoff(true)}
             activeTab={adminTab}
             onTabChange={handleAdminTabChange}
           />
@@ -990,7 +1159,7 @@ export default function App() {
             {/* ⏰ Order Cutoff Timer Banner Prominently Placed at the Top */}
             <OrderCutoffBanner 
               cutoffInfo={cutoffInfo} 
-              onRefreshCutoff={fetchCutoff} 
+              onRefreshCutoff={() => fetchCutoff(true)} 
             />
 
             {/* Error Banner */}
@@ -1144,6 +1313,7 @@ export default function App() {
         <OrderConfirmationModal
           order={confirmedOrder}
           onReset={handleResetForNewOrder}
+          customQrs={customQrs}
         />
       )}
 

@@ -190,6 +190,10 @@ const evaluateCutoff = () => {
 
   const deliveryDay = settings.deliveryDay || cutoff.deliveryDay || 'Wednesday';
   const flavorAvailability = settings.flavorAvailability || null;
+  const products = settings.products || null;
+  const qrs = settings.qrs || null;
+  const gcashNumber = settings.gcashNumber || (settings.qrs && settings.qrs.gcashNumber) || null;
+  const updatedAt = settings.updatedAt || cutoff.updatedAt || null;
 
   if (!cutoff.enabled || !cutoff.date || !cutoff.time) {
     return {
@@ -200,6 +204,10 @@ const evaluateCutoff = () => {
       cutoffTime: cutoff.time || '23:59',
       deliveryDay,
       flavorAvailability,
+      products,
+      qrs,
+      gcashNumber,
+      updatedAt,
       paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
       timezone: TIMEZONE,
       serverTime: now.toISOString(),
@@ -228,6 +236,10 @@ const evaluateCutoff = () => {
     cutoffTime: cutoff.time,
     deliveryDay,
     flavorAvailability,
+    products,
+    qrs,
+    gcashNumber,
+    updatedAt,
     paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
     timezone: TIMEZONE,
     serverTime: now.toISOString(),
@@ -325,7 +337,7 @@ app.get('/api/cutoff', (req, res) => {
 
 // Admin Cutoff Update (Protected)
 app.post('/api/admin/cutoff', requireAdminAuth, (req, res) => {
-  const { enabled, date, time, deliveryDay, flavorAvailability } = req.body || {};
+  const { enabled, date, time, deliveryDay, flavorAvailability, products, qrs, gcashNumber, paymentMethods } = req.body || {};
 
   if (enabled !== undefined) {
     settings.cutoff.enabled = Boolean(enabled);
@@ -357,6 +369,31 @@ app.post('/api/admin/cutoff', requireAdminAuth, (req, res) => {
     };
   }
 
+  if (Array.isArray(products) && products.length > 0) {
+    settings.products = products;
+  }
+
+  if (qrs && typeof qrs === 'object') {
+    settings.qrs = {
+      ...(settings.qrs || {}),
+      ...qrs
+    };
+  }
+
+  if (gcashNumber !== undefined) {
+    settings.gcashNumber = String(gcashNumber).trim();
+  }
+
+  if (paymentMethods && typeof paymentMethods === 'object') {
+    settings.paymentMethods = {
+      cod: paymentMethods.cod !== undefined ? Boolean(paymentMethods.cod) : (settings.paymentMethods?.cod ?? true),
+      maribank: paymentMethods.maribank !== undefined ? Boolean(paymentMethods.maribank) : (settings.paymentMethods?.maribank ?? true),
+      gcash: paymentMethods.gcash !== undefined ? Boolean(paymentMethods.gcash) : (settings.paymentMethods?.gcash ?? true)
+    };
+  }
+
+  settings.updatedAt = Date.now();
+  settings.cutoff.updatedAt = settings.updatedAt;
   saveSettings();
   const updatedCutoff = evaluateCutoff();
 
@@ -379,6 +416,7 @@ app.post('/api/admin/flavor-availability', requireAdminAuth, (req, res) => {
     ...(settings.flavorAvailability || {}),
     ...flavorAvailability
   };
+  settings.updatedAt = Date.now();
 
   saveSettings();
 
@@ -402,6 +440,7 @@ app.post('/api/admin/payment-methods', requireAdminAuth, (req, res) => {
     maribank: paymentMethods.maribank !== undefined ? Boolean(paymentMethods.maribank) : (settings.paymentMethods?.maribank ?? true),
     gcash: paymentMethods.gcash !== undefined ? Boolean(paymentMethods.gcash) : (settings.paymentMethods?.gcash ?? true)
   };
+  settings.updatedAt = Date.now();
 
   saveSettings();
 

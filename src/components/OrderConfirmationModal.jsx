@@ -3,11 +3,13 @@ import { CheckCircle2, Share2, Copy, Check, ShoppingBag, MapPin, CreditCard, Pho
 import { formatPHP } from '../config/products';
 import { GCASH_NUMBER } from '../config/qrConfig';
 
-export default function OrderConfirmationModal({ order, onReset }) {
+export default function OrderConfirmationModal({ order, onReset, customQrs }) {
   const [copied, setCopied] = useState(false);
   const [copiedGcash, setCopiedGcash] = useState(false);
 
   if (!order) return null;
+
+  const gcashNumber = customQrs?.gcashNumber || GCASH_NUMBER;
 
   const orderSummaryText = `🥜 *Mani Wandering ORDER CONFIRMATION* 🥜
 Order #: ${order.orderId}
@@ -41,7 +43,7 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
   };
 
   const handleCopyGcash = () => {
-    navigator.clipboard.writeText(GCASH_NUMBER);
+    navigator.clipboard.writeText(gcashNumber);
     setCopiedGcash(true);
     setTimeout(() => setCopiedGcash(false), 2000);
   };
@@ -150,10 +152,10 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
                   onClick={handleCopyGcash}
                   className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-600 text-white"
                 >
-                  {copiedGcash ? 'Copied!' : 'Copy 09055182263'}
+                  {copiedGcash ? 'Copied!' : `Copy ${gcashNumber}`}
                 </button>
               </div>
-              <p>Please send {formatPHP(order.subtotal)} to GCash: <strong>09055182263</strong> (JO******N R.).</p>
+              <p>Please send {formatPHP(order.subtotal)} to GCash: <strong>{gcashNumber}</strong> (JO******N R.).</p>
             </div>
           )}
 

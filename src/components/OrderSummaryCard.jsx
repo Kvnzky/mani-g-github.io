@@ -14,6 +14,11 @@ export default function OrderSummaryCard({
   const selectedItems = items.filter((p) => (quantities[p.id] || 0) > 0);
   const totalPacks = Object.values(quantities).reduce((a, b) => a + (Number(b) || 0), 0);
   const subtotal = items.reduce((sum, p) => sum + ((quantities[p.id] || 0) * (p.price || 50)), 0);
+  const catalogPrices = items.map((p) => Number(p.price) || 50);
+  const minCatalogPrice = catalogPrices.length > 0 ? Math.min(...catalogPrices) : 50;
+  const selectedPrices = selectedItems.map((p) => Number(p.price) || 50);
+  const minSelectedPrice = selectedPrices.length > 0 ? Math.min(...selectedPrices) : minCatalogPrice;
+  const maxSelectedPrice = selectedPrices.length > 0 ? Math.max(...selectedPrices) : minCatalogPrice;
 
   return (
     <div 
@@ -73,7 +78,7 @@ export default function OrderSummaryCard({
           <div className="pt-1">
             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-900 bg-white/90 px-3 py-1 rounded-full border border-amber-200 shadow-2xs">
               <Sparkles className="w-3 h-3 text-amber-600" />
-              <span>₱50 / tub • Freshly roasted weekly</span>
+              <span>₱{minCatalogPrice} / tub • Freshly roasted weekly</span>
             </span>
           </div>
         </div>
@@ -155,7 +160,11 @@ export default function OrderSummaryCard({
             </div>
             <div className="flex items-center justify-between text-xs text-mani-700 font-medium">
               <span>Price per tub</span>
-              <span className="font-bold text-mani-900">₱50.00</span>
+              <span className="font-bold text-mani-900">
+                {minSelectedPrice === maxSelectedPrice
+                  ? formatPHP(minSelectedPrice)
+                  : `${formatPHP(minSelectedPrice)} – ${formatPHP(maxSelectedPrice)}`}
+              </span>
             </div>
             <div className="pt-2 border-t border-amber-200/80 flex items-center justify-between">
               <div>

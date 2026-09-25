@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   ShieldCheck, RefreshCw, Search, Calendar, 
   Settings, ExternalLink, Plus, Edit2, Edit3, Check, Package, DollarSign, QrCode, Upload, Copy, Phone, MapPin, CreditCard,
@@ -136,6 +136,7 @@ export default function AdminPortal({
   onUpdateQrs, 
   paymentMethods = DEFAULT_PAYMENT_METHODS,
   onUpdatePaymentMethods,
+  onSyncCloudSettings,
   adminToken, 
   adminUser, 
   onLogout,
@@ -162,6 +163,7 @@ export default function AdminPortal({
   const [isLoading, setIsLoading] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
+  const lastOrderMutationRef = useRef(0);
 
   // Order Summary (Date Range Analytics) State
   const initialPreset = 'all-time';
@@ -199,6 +201,13 @@ export default function AdminPortal({
   // QR Edit State
   const [localGcashNum, setLocalGcashNum] = useState(customQrs?.gcashNumber || '09055182263');
   const [qrSaveMsg, setQrSaveMsg] = useState('');
+
+  // Sync localGcashNum whenever customQrs.gcashNumber updates from cloud sync
+  useEffect(() => {
+    if (customQrs?.gcashNumber) {
+      setLocalGcashNum(customQrs.gcashNumber);
+    }
+  }, [customQrs?.gcashNumber]);
 
   // Product edit state
   const [editingPriceId, setEditingPriceId] = useState(null);
@@ -264,6 +273,52 @@ export default function AdminPortal({
     Cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-900 border-red-300', dot: '🔴' },
   };
 
+  // Hydrate items array from flavorQuantities so orders from Google Sheets display complete flavor breakdown badges
+  const hydrateOrderList = (rawList) => {
+    if (!Array.isArray(rawList)) return [];
+    const prodMap = {};
+    products.forEach((p) => {
+      prodMap[p.id] = p;
+    });
+    const fallbackLabels = {
+      salted: 'Salted',
+      unsalted: 'Unsalted',
+      spicy: 'Spicy',
+      bbq: 'BBQ',
+      'sour-cream': 'Sour Cream',
+      cheese: 'Cheese',
+      'bawang-only': 'Crispy Garlic'
+    };
+
+    return rawList.map((ord) => {
+      let hydratedItems = Array.isArray(ord.items) && ord.items.length > 0 ? ord.items : [];
+      if (hydratedItems.length === 0 && ord.flavorQuantities && typeof ord.flavorQuantities === 'object') {
+        hydratedItems = Object.entries(ord.flavorQuantities)
+          .filter(([, q]) => Number(q) > 0)
+          .map(([fId, q]) => {
+            const prod = prodMap[fId];
+            const qty = Number(q) || 0;
+            const price = prod ? Number(prod.price) || 50 : (fId === 'bawang-only' ? 60 : 50);
+            return {
+              id: fId,
+              productId: fId,
+              name: prod ? prod.name : (fallbackLabels[fId] || fId),
+              quantity: qty,
+              price,
+              subtotal: qty * price
+            };
+          });
+      }
+      const totalPacks = ord.totalPacks !== undefined ? Number(ord.totalPacks) : (Number(ord.totalTubs) || 0);
+      return {
+        ...ord,
+        items: hydratedItems,
+        totalPacks,
+        totalTubs: totalPacks
+      };
+    });
+  };
+
   const getAuthHeaders = () => {
     const headers = { 'Content-Type': 'application/json' };
     if (adminToken) {
@@ -272,179 +327,192 @@ export default function AdminPortal({
     return headers;
   };
 
-  const fetchOrders = async () => {
-    setIsLoading(true);
-    let ordersFetched = false;
-    try {
-      let url = '/api/orders';
-      const params = new URLSearchParams();
-      if (selectedDate) params.append('date', selectedDate);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (params.toString()) url += `?${params.toString()}`;
-
-      const res = await fetch(url, { headers: getAuthHeaders() });
-      if (res.status === 401) {
-        onLogout();
-        return;
-      }
-      const contentType = res.headers.get('content-type') || '';
-      if (res.ok && contentType.includes('application/json')) {
-        const data = await res.json();
-        if (data && data.orders) {
-          setOrders(data.orders);
-          if (Array.isArray(data.allOrders)) {
-            setAllOrders(data.allOrders);
-          } else {
-            setAllOrders((prev) => (prev.length > 0 ? prev : data.orders));
-          }
-          setDailySummary(data.dailySummary);
-          if (!selectedDate && data.todayDate) {
-            setSelectedDate(data.todayDate);
-          }
-          ordersFetched = true;
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn('Backend /api/orders fetch error:', e.message);
+  const fetchOrders = async (silent = false) => {
+    if (silent && Date.now() - lastOrderMutationRef.current < 5000) {
+      return;
     }
+    if (!silent) setIsLoading(true);
+    let ordersFetched = false;
 
-    // Google Apps Script Cloud fallback for GitHub Pages (Desktop & Mobile)
-    if (!ordersFetched) {
-      const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
-      if (appsUrl) {
+    // 1. Primary Cloud Source of Truth: Google Apps Script Master list (shared across Desktop & Mobile)
+    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      try {
+        const qDate = selectedDate || '';
+        const res = await fetch(`${appsUrl}?action=getOrders&date=${encodeURIComponent(qDate)}&_t=${Date.now()}`, {
+          mode: 'cors',
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const cloudData = await res.json();
+          if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
+            const hydrated = hydrateOrderList(cloudData.orders);
+            let filtered = hydrated;
+            if (statusFilter && statusFilter !== 'all') {
+              filtered = filtered.filter((o) => o.status === statusFilter);
+            }
+            setOrders(filtered);
+            if (!qDate || allOrders.length === 0) {
+              setAllOrders(hydrated);
+            }
+            if (cloudData.dailySummary) {
+              setDailySummary(cloudData.dailySummary);
+            }
+            ordersFetched = true;
+            if (!silent) setIsLoading(false);
+            return;
+          }
+        }
+      } catch (cloudErr) {
+        // JSONP fallback for strict mobile browsers
         try {
+          const cbName = `mani_orders_${Date.now()}`;
+          const script = document.createElement('script');
           const qDate = selectedDate || '';
-          const res = await fetch(`${appsUrl}?action=getOrders&date=${encodeURIComponent(qDate)}`, { mode: 'cors' });
-          if (res.ok) {
-            const cloudData = await res.json();
+          window[cbName] = (cloudData) => {
             if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
-              let filtered = cloudData.orders;
+              const hydrated = hydrateOrderList(cloudData.orders);
+              let filtered = hydrated;
               if (statusFilter && statusFilter !== 'all') {
-                filtered = filtered.filter(o => o.status === statusFilter);
+                filtered = filtered.filter((o) => o.status === statusFilter);
               }
               setOrders(filtered);
               if (!qDate || allOrders.length === 0) {
-                setAllOrders(cloudData.orders);
+                setAllOrders(hydrated);
               }
               if (cloudData.dailySummary) {
                 setDailySummary(cloudData.dailySummary);
               }
-              if (!selectedDate && cloudData.todayDate) {
-                setSelectedDate(cloudData.todayDate);
-              }
-              ordersFetched = true;
-              return;
             }
-          }
-        } catch (cloudErr) {
-          // JSONP fallback for mobile browsers
-          try {
-            const cbName = `mani_orders_${Date.now()}`;
-            const script = document.createElement('script');
-            const qDate = selectedDate || '';
-            window[cbName] = (cloudData) => {
-              if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
-                let filtered = cloudData.orders;
-                if (statusFilter && statusFilter !== 'all') {
-                  filtered = filtered.filter(o => o.status === statusFilter);
-                }
-                setOrders(filtered);
-                if (!qDate || allOrders.length === 0) {
-                  setAllOrders(cloudData.orders);
-                }
-                if (cloudData.dailySummary) {
-                  setDailySummary(cloudData.dailySummary);
-                }
-                if (!selectedDate && cloudData.todayDate) {
-                  setSelectedDate(cloudData.todayDate);
-                }
-              }
-              delete window[cbName];
-              script.remove();
-            };
-            script.src = `${appsUrl}?action=getOrders&date=${encodeURIComponent(qDate)}&callback=${cbName}`;
-            script.onerror = () => {
-              delete window[cbName];
-              script.remove();
-            };
-            document.head.appendChild(script);
-            ordersFetched = true;
-          } catch (jpErr) {}
-        }
+            delete window[cbName];
+            script.remove();
+          };
+          script.src = `${appsUrl}?action=getOrders&date=${encodeURIComponent(qDate)}&callback=${cbName}&_t=${Date.now()}`;
+          script.onerror = () => {
+            delete window[cbName];
+            script.remove();
+          };
+          document.head.appendChild(script);
+          ordersFetched = true;
+          if (!silent) setIsLoading(false);
+          return;
+        } catch (jpErr) {}
       }
     }
 
+    // 2. Local Express backend fallback if cloud is unreachable
     if (!ordersFetched) {
-      const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+      try {
+        let url = '/api/orders';
+        const params = new URLSearchParams();
+        if (selectedDate) params.append('date', selectedDate);
+        if (statusFilter !== 'all') params.append('status', statusFilter);
+        if (params.toString()) url += `?${params.toString()}`;
+
+        const res = await fetch(url, { headers: getAuthHeaders() });
+        if (res.status === 401) {
+          onLogout();
+          return;
+        }
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data && data.orders) {
+            setOrders(hydrateOrderList(data.orders));
+            if (Array.isArray(data.allOrders)) {
+              setAllOrders(hydrateOrderList(data.allOrders));
+            } else {
+              setAllOrders((prev) => (prev.length > 0 ? prev : hydrateOrderList(data.orders)));
+            }
+            setDailySummary(data.dailySummary);
+            ordersFetched = true;
+            if (!silent) setIsLoading(false);
+            return;
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!ordersFetched) {
+      const local = hydrateOrderList(JSON.parse(localStorage.getItem('mani_orders') || '[]'));
       setOrders(local);
       if (allOrders.length === 0) {
         setAllOrders(local);
       }
     }
-    setIsLoading(false);
+    if (!silent) setIsLoading(false);
   };
 
-  const fetchAllOrders = async () => {
+  const fetchAllOrders = async (silent = false) => {
+    if (silent && Date.now() - lastOrderMutationRef.current < 5000) {
+      return;
+    }
     let fetched = false;
-    try {
-      const res = await fetch('/api/orders', { headers: getAuthHeaders() });
-      if (res.ok) {
-        const contentType = res.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-          const data = await res.json();
-          if (data) {
-            const list = Array.isArray(data.allOrders) && data.allOrders.length > 0 
-              ? data.allOrders 
-              : (Array.isArray(data.orders) ? data.orders : []);
-            if (list.length > 0) {
-              setAllOrders(list);
-              fetched = true;
-            }
-          }
-        }
-      }
-    } catch (e) {}
 
-    // Cloud fallback to Google Apps Script Master list for GitHub Pages / static
-    if (!fetched) {
-      const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
-      if (appsUrl) {
-        try {
-          const res = await fetch(`${appsUrl}?action=getOrders`, { mode: 'cors' });
-          if (res.ok) {
-            const cloudData = await res.json();
-            if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
-              setAllOrders(cloudData.orders);
-              fetched = true;
-            }
-          }
-        } catch (cloudErr) {
-          // JSONP fallback
-          try {
-            const cbName = `mani_all_orders_${Date.now()}`;
-            const script = document.createElement('script');
-            window[cbName] = (cloudData) => {
-              if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
-                setAllOrders(cloudData.orders);
-              }
-              delete window[cbName];
-              script.remove();
-            };
-            script.src = `${appsUrl}?action=getOrders&callback=${cbName}`;
-            script.onerror = () => {
-              delete window[cbName];
-              script.remove();
-            };
-            document.head.appendChild(script);
+    // 1. Primary Cloud Source of Truth: Google Apps Script Master list
+    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      try {
+        const res = await fetch(`${appsUrl}?action=getOrders&_t=${Date.now()}`, {
+          mode: 'cors',
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const cloudData = await res.json();
+          if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
+            setAllOrders(hydrateOrderList(cloudData.orders));
             fetched = true;
-          } catch (jpErr) {}
+            return;
+          }
         }
+      } catch (cloudErr) {
+        // JSONP fallback
+        try {
+          const cbName = `mani_all_orders_${Date.now()}`;
+          const script = document.createElement('script');
+          window[cbName] = (cloudData) => {
+            if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
+              setAllOrders(hydrateOrderList(cloudData.orders));
+            }
+            delete window[cbName];
+            script.remove();
+          };
+          script.src = `${appsUrl}?action=getOrders&callback=${cbName}&_t=${Date.now()}`;
+          script.onerror = () => {
+            delete window[cbName];
+            script.remove();
+          };
+          document.head.appendChild(script);
+          fetched = true;
+          return;
+        } catch (jpErr) {}
       }
     }
 
+    // 2. Local Express backend fallback
     if (!fetched) {
-      const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+      try {
+        const res = await fetch('/api/orders', { headers: getAuthHeaders() });
+        if (res.ok) {
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data) {
+              const list = Array.isArray(data.allOrders) && data.allOrders.length > 0 
+                ? data.allOrders 
+                : (Array.isArray(data.orders) ? data.orders : []);
+              if (list.length > 0) {
+                setAllOrders(hydrateOrderList(list));
+                fetched = true;
+              }
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!fetched) {
+      const local = hydrateOrderList(JSON.parse(localStorage.getItem('mani_orders') || '[]'));
       if (local.length > 0) {
         setAllOrders(local);
       }
@@ -599,6 +667,74 @@ export default function AdminPortal({
     }
   }, [summaryStartDate, summaryEndDate]);
 
+  // Compute live Daily Summary across Desktop & Mobile even when orders come from Google Apps Script Cloud
+  const effectiveDailySummary = useMemo(() => {
+    const todayStr = formatUtcYMD(getManilaTodayObj());
+    const targetDate = selectedDate || todayStr;
+    const source = allOrders.length > 0 ? allOrders : orders;
+    const dayOrders = source.filter(
+      (o) => (!selectedDate || o.orderDate === targetDate) && (o.status || '').toLowerCase() !== 'cancelled'
+    );
+
+    let totalPacks = 0;
+    let totalSales = 0;
+    let paid = 0;
+    let unpaid = 0;
+    const counts = {
+      salted: 0,
+      unsalted: 0,
+      spicy: 0,
+      bbq: 0,
+      'sour-cream': 0,
+      cheese: 0,
+      'bawang-only': 0
+    };
+
+    dayOrders.forEach((o) => {
+      const packs = o.totalPacks !== undefined ? Number(o.totalPacks) : (Number(o.totalTubs) || 0);
+      const rev = Number(o.subtotal) || Number(o.totalAmount) || 0;
+      totalPacks += isNaN(packs) ? 0 : packs;
+      totalSales += isNaN(rev) ? 0 : rev;
+
+      if ((o.paymentStatus || '').toLowerCase() === 'paid') {
+        paid += 1;
+      } else {
+        unpaid += 1;
+      }
+
+      if (o.flavorQuantities && typeof o.flavorQuantities === 'object') {
+        Object.entries(o.flavorQuantities).forEach(([k, v]) => {
+          if (counts[k] !== undefined) counts[k] += Number(v) || 0;
+        });
+      } else if (Array.isArray(o.items)) {
+        o.items.forEach((it) => {
+          const id = it.id || it.productId;
+          if (counts[id] !== undefined) counts[id] += Number(it.quantity) || 0;
+        });
+      }
+    });
+
+    if (dailySummary && dailySummary.date === targetDate && dayOrders.length === 0 && dailySummary.totalOrders > 0) {
+      return dailySummary;
+    }
+
+    return {
+      date: selectedDate ? targetDate : `${todayStr} (All Loaded Orders: ${dayOrders.length})`,
+      totalOrders: dayOrders.length,
+      totalPacks,
+      totalSales,
+      paid,
+      unpaid,
+      salted: counts.salted,
+      unsalted: counts.unsalted,
+      spicy: counts.spicy,
+      bbq: counts.bbq,
+      sourCream: counts['sour-cream'],
+      cheese: counts.cheese,
+      bawangOnly: counts['bawang-only']
+    };
+  }, [allOrders, orders, selectedDate, dailySummary]);
+
   const fetchSettings = async () => {
     try {
       const res = await fetch('/api/settings', { headers: getAuthHeaders() });
@@ -626,14 +762,38 @@ export default function AdminPortal({
   };
 
   useEffect(() => {
-    fetchOrders();
-    fetchAllOrders();
+    fetchOrders(false);
+    fetchAllOrders(false);
     fetchSettings();
   }, [selectedDate, statusFilter]);
 
+  // Background real-time polling for orders across Desktop & Mobile Admin views
   useEffect(() => {
-    if (activeTab === 'order-summary') {
-      fetchAllOrders();
+    const orderPoll = setInterval(() => {
+      fetchOrders(true);
+      fetchAllOrders(true);
+    }, 8000);
+
+    const handleWakeup = () => {
+      if (document.visibilityState === 'visible') {
+        fetchOrders(true);
+        fetchAllOrders(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleWakeup);
+    window.addEventListener('focus', handleWakeup);
+
+    return () => {
+      clearInterval(orderPoll);
+      document.removeEventListener('visibilitychange', handleWakeup);
+      window.removeEventListener('focus', handleWakeup);
+    };
+  }, [selectedDate, statusFilter]);
+
+  useEffect(() => {
+    if (activeTab === 'order-summary' || activeTab === 'summary' || activeTab === 'orders') {
+      fetchOrders(true);
+      fetchAllOrders(true);
     }
   }, [activeTab]);
 
@@ -643,77 +803,11 @@ export default function AdminPortal({
       p.id === id ? { ...p, available: p.available === false ? true : false } : p
     );
     onUpdateProducts(updated);
-
-    const availabilityMap = {};
-    updated.forEach(p => {
-      availabilityMap[p.id] = p.available !== false;
-    });
-
-    localStorage.setItem('mani_products', JSON.stringify(updated));
-    localStorage.setItem('mani_flavor_availability', JSON.stringify(availabilityMap));
-
-    // Fast sync to Express backend
-    try {
-      await fetch('/api/admin/flavor-availability', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ flavorAvailability: availabilityMap })
-      });
-    } catch (e) {}
-
-    // Cloud sync to Google Apps Script Web App
-    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
-    if (appsUrl) {
-      fetch(appsUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'saveSettings',
-          settings: {
-            products: updated,
-            flavorAvailability: availabilityMap
-          }
-        })
-      }).catch(() => {});
-    }
   };
 
   const handleBulkFlavorAvailability = async (setAllToAvailable) => {
-    const updated = products.map(p => ({ ...p, available: setAllToAvailable }));
+    const updated = products.map((p) => ({ ...p, available: setAllToAvailable }));
     onUpdateProducts(updated);
-
-    const availabilityMap = {};
-    updated.forEach(p => {
-      availabilityMap[p.id] = setAllToAvailable;
-    });
-
-    localStorage.setItem('mani_products', JSON.stringify(updated));
-    localStorage.setItem('mani_flavor_availability', JSON.stringify(availabilityMap));
-
-    try {
-      await fetch('/api/admin/flavor-availability', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ flavorAvailability: availabilityMap })
-      });
-    } catch (e) {}
-
-    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
-    if (appsUrl) {
-      fetch(appsUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'saveSettings',
-          settings: {
-            products: updated,
-            flavorAvailability: availabilityMap
-          }
-        })
-      }).catch(() => {});
-    }
   };
 
   // Handle Cutoff & Delivery Day Save with Cross-Device Cloud Sync
@@ -738,7 +832,7 @@ export default function AdminPortal({
     setCutoffSaveMsg({ msg: '', type: '' });
 
     const availabilityMap = {};
-    products.forEach(p => {
+    products.forEach((p) => {
       availabilityMap[p.id] = p.available !== false;
     });
 
@@ -763,46 +857,17 @@ export default function AdminPortal({
       }
     } catch (err) {}
 
-    // 2. Synchronize to Google Apps Script cloud (Shared across Desktop & Mobile)
-    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
-    if (appsUrl) {
-      // POST sync
-      fetch(appsUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'saveSettings',
-          settings: {
-            cutoff: {
-              enabled: cutoffEnabled,
-              date: cutoffDate,
-              time: cutoffTime,
-              deliveryDay: currentDelivery
-            },
-            deliveryDay: currentDelivery,
-            products,
-            flavorAvailability: availabilityMap
-          }
-        })
-      }).catch(() => {});
-
-      // GET sync fast-path
-      fetch(`${appsUrl}?action=saveCutoff&enabled=${cutoffEnabled}&date=${encodeURIComponent(cutoffDate)}&time=${encodeURIComponent(cutoffTime)}&deliveryDay=${encodeURIComponent(currentDelivery)}`, {
-        mode: 'no-cors'
-      }).catch(() => {});
+    // 2. Unified Cloud Sync to Google Apps Script (Shared across Desktop & Mobile)
+    if (onSyncCloudSettings) {
+      onSyncCloudSettings({
+        cutoffEnabled,
+        cutoffDate,
+        cutoffTime,
+        deliveryDay: currentDelivery,
+        products,
+        flavorAvailability: availabilityMap
+      });
     }
-
-    // 3. Update localStorage cache
-    localStorage.setItem('mani_cutoff_settings', JSON.stringify({
-      enabled: cutoffEnabled,
-      date: cutoffDate,
-      time: cutoffTime,
-      deliveryDay: currentDelivery,
-      flavorAvailability: availabilityMap
-    }));
-
-    if (onRefreshCutoff) onRefreshCutoff();
 
     setCutoffSaveMsg({ msg: 'Cutoff and Delivery Day settings saved & synchronized across desktop & mobile devices!', type: 'success' });
     setTimeout(() => setCutoffSaveMsg({ msg: '', type: '' }), 4000);
@@ -810,6 +875,7 @@ export default function AdminPortal({
   };
 
   const handleUpdateStatus = async (orderId, newStatus, orderDate) => {
+    lastOrderMutationRef.current = Date.now();
     setUpdatingOrderId(orderId);
     try {
       const res = await fetch(`/api/orders/${orderId}/status`, {
@@ -823,25 +889,37 @@ export default function AdminPortal({
       }
     } catch (e) {}
 
-    // Cloud sync to Google Sheets via Apps Script Web App
+    // Cloud sync to Google Sheets via Apps Script Web App (both POST and GET for 100% browser compatibility)
     const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (appsUrl) {
-      const target = orders.find(o => o.orderId === orderId);
+      const target = orders.find((o) => o.orderId === orderId);
       const dateStr = orderDate || (target ? target.orderDate : '') || '';
-      fetch(`${appsUrl}?action=updateStatus&orderId=${encodeURIComponent(orderId)}&orderDate=${encodeURIComponent(dateStr)}&status=${encodeURIComponent(newStatus)}`, {
+      fetch(appsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'updateStatus',
+          orderId,
+          orderDate: dateStr,
+          status: newStatus
+        })
+      }).catch(() => {});
+      fetch(`${appsUrl}?action=updateStatus&orderId=${encodeURIComponent(orderId)}&orderDate=${encodeURIComponent(dateStr)}&status=${encodeURIComponent(newStatus)}&_t=${Date.now()}`, {
         mode: 'no-cors'
       }).catch(() => {});
     }
 
     const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
-    const updated = local.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
+    const updated = local.map((o) => (o.orderId === orderId ? { ...o, status: newStatus } : o));
     localStorage.setItem('mani_orders', JSON.stringify(updated));
-    setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
-    setAllOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
+    setOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: newStatus } : o)));
+    setAllOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: newStatus } : o)));
     setUpdatingOrderId(null);
   };
 
   const handleUpdatePaymentStatus = async (orderId, newPaymentStatus, orderDate) => {
+    lastOrderMutationRef.current = Date.now();
     setUpdatingPaymentId(orderId);
     try {
       const res = await fetch(`/api/orders/${orderId}/payment-status`, {
@@ -855,21 +933,32 @@ export default function AdminPortal({
       }
     } catch (e) {}
 
-    // Cloud sync to Google Sheets via Apps Script Web App
+    // Cloud sync to Google Sheets via Apps Script Web App (both POST and GET for 100% browser compatibility)
     const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (appsUrl) {
-      const target = orders.find(o => o.orderId === orderId);
+      const target = orders.find((o) => o.orderId === orderId);
       const dateStr = orderDate || (target ? target.orderDate : '') || '';
-      fetch(`${appsUrl}?action=updatePaymentStatus&orderId=${encodeURIComponent(orderId)}&orderDate=${encodeURIComponent(dateStr)}&paymentStatus=${encodeURIComponent(newPaymentStatus)}`, {
+      fetch(appsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'updatePaymentStatus',
+          orderId,
+          orderDate: dateStr,
+          paymentStatus: newPaymentStatus
+        })
+      }).catch(() => {});
+      fetch(`${appsUrl}?action=updatePaymentStatus&orderId=${encodeURIComponent(orderId)}&orderDate=${encodeURIComponent(dateStr)}&paymentStatus=${encodeURIComponent(newPaymentStatus)}&_t=${Date.now()}`, {
         mode: 'no-cors'
       }).catch(() => {});
     }
 
     const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
-    const updated = local.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o);
+    const updated = local.map((o) => (o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
     localStorage.setItem('mani_orders', JSON.stringify(updated));
-    setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
-    setAllOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
+    setOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o)));
+    setAllOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o)));
     setUpdatingPaymentId(null);
   };
 
@@ -1554,8 +1643,8 @@ export default function AdminPortal({
 
               <button
                 type="button"
-                onClick={fetchOrders}
-                className="p-2 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-700 transition-colors"
+                onClick={() => fetchOrders(false)}
+                className="p-2 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-700 transition-colors cursor-pointer"
                 title="Refresh orders"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -1571,12 +1660,13 @@ export default function AdminPortal({
             </div>
           ) : (
             <div className="grid gap-3 sm:gap-4">
-              {displayOrders.map((ord) => {
+              {displayOrders.map((ord, idx) => {
                 const statusInfo = STATUS_CONFIG[ord.status] || STATUS_CONFIG.New;
+                const normalizedPaymentStatus = (ord.paymentStatus || 'Unpaid').toLowerCase() === 'paid' ? 'Paid' : 'Unpaid';
 
                 return (
                   <div
-                    key={ord.orderId}
+                    key={ord.id || `${ord.orderId}_${ord.orderDate}_${ord.orderTime}_${idx}`}
                     className="bg-white rounded-2xl p-4 sm:p-5 border border-mani-200 shadow-warm hover:shadow-warm-lg transition-shadow space-y-3"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-mani-100 pb-3">
@@ -1602,11 +1692,11 @@ export default function AdminPortal({
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-mani-500 font-medium">Payment:</span>
                           <select
-                            value={ord.paymentStatus || 'Unpaid'}
+                            value={normalizedPaymentStatus}
                             disabled={updatingPaymentId === ord.orderId}
                             onChange={(e) => handleUpdatePaymentStatus(ord.orderId, e.target.value, ord.orderDate)}
                             className={`text-xs font-black px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${
-                              (ord.paymentStatus || 'Unpaid').toLowerCase() === 'paid'
+                              normalizedPaymentStatus === 'Paid'
                                 ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
                                 : 'bg-amber-100 text-amber-900 border-amber-300'
                             }`}
@@ -1620,7 +1710,7 @@ export default function AdminPortal({
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-mani-500 font-medium">Status:</span>
                           <select
-                            value={ord.status}
+                            value={ord.status || 'New'}
                             disabled={updatingOrderId === ord.orderId}
                             onChange={(e) => handleUpdateStatus(ord.orderId, e.target.value, ord.orderDate)}
                             className={`text-xs font-bold px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${statusInfo.color}`}
@@ -1715,7 +1805,7 @@ export default function AdminPortal({
               <div className="flex items-center gap-2 self-start sm:self-auto">
                 <button
                   type="button"
-                  onClick={fetchAllOrders}
+                  onClick={() => fetchAllOrders(false)}
                   className="px-3 py-1.5 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-800 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
                   title="Reload all order records"
                 >
@@ -2072,7 +2162,7 @@ export default function AdminPortal({
       {/* ========================================================= */}
       {/* 3. DAILY SUMMARY TAB                                      */}
       {/* ========================================================= */}
-      {activeTab === 'summary' && dailySummary && (
+      {activeTab === 'summary' && effectiveDailySummary && (
         <div className="space-y-6">
           <div className="bg-white rounded-3xl p-5 sm:p-7 border border-mani-200/90 shadow-warm space-y-6">
             <div className="border-b border-mani-100 pb-3 flex items-center justify-between">
@@ -2081,7 +2171,7 @@ export default function AdminPortal({
                   Daily Performance Summary
                 </h3>
                 <p className="text-xs sm:text-sm text-mani-600">
-                  Metrics for date: <span className="font-bold text-mani-900">{dailySummary.date}</span>
+                  Metrics for date: <span className="font-bold text-mani-900">{effectiveDailySummary.date}</span>
                 </p>
               </div>
               <input
@@ -2095,30 +2185,30 @@ export default function AdminPortal({
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
                 <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Total Orders</span>
-                <div className="text-2xl sm:text-3xl font-black text-amber-950 mt-1">{dailySummary.totalOrders}</div>
+                <div className="text-2xl sm:text-3xl font-black text-amber-950 mt-1">{effectiveDailySummary.totalOrders}</div>
               </div>
 
               <div className="p-4 rounded-2xl bg-orange-50 border border-orange-200">
                 <span className="text-xs font-bold text-orange-800 uppercase tracking-wider">Total Tubs</span>
-                <div className="text-2xl sm:text-3xl font-black text-orange-950 mt-1">{dailySummary.totalPacks}</div>
+                <div className="text-2xl sm:text-3xl font-black text-orange-950 mt-1">{effectiveDailySummary.totalPacks}</div>
               </div>
 
               <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 col-span-2 sm:col-span-1">
                 <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Total Sales</span>
-                <div className="text-2xl sm:text-3xl font-black text-emerald-950 mt-1">{formatPHP(dailySummary.totalSales || dailySummary.totalRevenue || 0)}</div>
+                <div className="text-2xl sm:text-3xl font-black text-emerald-950 mt-1">{formatPHP(effectiveDailySummary.totalSales || effectiveDailySummary.totalRevenue || 0)}</div>
               </div>
 
               <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-300">
                 <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">🟢 Paid Orders</span>
                 <div className="text-2xl sm:text-3xl font-black text-emerald-950 mt-1">
-                  {dailySummary.paid !== undefined ? dailySummary.paid : (dailySummary.paidOrders || 0)}
+                  {effectiveDailySummary.paid !== undefined ? effectiveDailySummary.paid : (effectiveDailySummary.paidOrders || 0)}
                 </div>
               </div>
 
               <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-300">
                 <span className="text-xs font-bold text-amber-900 uppercase tracking-wider">🟡 Unpaid Orders</span>
                 <div className="text-2xl sm:text-3xl font-black text-amber-950 mt-1">
-                  {dailySummary.unpaid !== undefined ? dailySummary.unpaid : (dailySummary.unpaidOrders || 0)}
+                  {effectiveDailySummary.unpaid !== undefined ? effectiveDailySummary.unpaid : (effectiveDailySummary.unpaidOrders || 0)}
                 </div>
               </div>
             </div>
@@ -2130,13 +2220,13 @@ export default function AdminPortal({
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {[
-                  { name: 'Salted', qty: dailySummary.salted, icon: '🧂' },
-                  { name: 'Unsalted', qty: dailySummary.unsalted, icon: '🥜' },
-                  { name: 'Spicy', qty: dailySummary.spicy, icon: '🌶️' },
-                  { name: 'BBQ', qty: dailySummary.bbq, icon: '🔥' },
-                  { name: 'Sour Cream', qty: dailySummary.sourCream, icon: '🥛' },
-                  { name: 'Cheese', qty: dailySummary.cheese, icon: '🧀' },
-                  { name: 'Bawang Only', qty: dailySummary.bawangOnly, icon: '🧄' }
+                  { name: 'Salted', qty: effectiveDailySummary.salted, icon: '🧂' },
+                  { name: 'Unsalted', qty: effectiveDailySummary.unsalted, icon: '🥜' },
+                  { name: 'Spicy', qty: effectiveDailySummary.spicy, icon: '🌶️' },
+                  { name: 'BBQ', qty: effectiveDailySummary.bbq, icon: '🔥' },
+                  { name: 'Sour Cream', qty: effectiveDailySummary.sourCream, icon: '🥛' },
+                  { name: 'Cheese', qty: effectiveDailySummary.cheese, icon: '🧀' },
+                  { name: 'Bawang Only', qty: effectiveDailySummary.bawangOnly, icon: '🧄' }
                 ].map((fl) => (
                   <div key={fl.name} className="bg-cream p-3 rounded-xl border border-mani-100 flex items-center justify-between">
                     <div className="flex items-center gap-2">

@@ -138,8 +138,11 @@ function doGet(e) {
     var enabled = e.parameter.enabled === 'true';
     var date = e.parameter.date || Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
     var time = e.parameter.time || '23:59';
+    var cutoffUpdate = { enabled: enabled, date: date, time: time };
+    if (e.parameter.deliveryDay) cutoffUpdate.deliveryDay = e.parameter.deliveryDay;
     var saveCutoffRes = handleSaveSettings({
-      cutoff: { enabled: enabled, date: date, time: time }
+      cutoff: cutoffUpdate,
+      deliveryDay: e.parameter.deliveryDay || undefined
     });
     return formatResponse(saveCutoffRes, e);
   }
@@ -149,8 +152,10 @@ function doGet(e) {
     var cod = e.parameter.cod !== 'false';
     var maribank = e.parameter.maribank === 'true' || e.parameter.maribank === '1';
     var gcash = e.parameter.gcash === 'true' || e.parameter.gcash === '1';
+    var pmObj = { cod: cod, maribank: maribank, gcash: gcash };
     var savePmRes = handleSaveSettings({
-      paymentMethods: { cod: cod, maribank: maribank, gcash: gcash }
+      paymentMethods: pmObj,
+      cutoff: { paymentMethods: pmObj }
     });
     return formatResponse(savePmRes, e);
   }
@@ -334,9 +339,25 @@ function handleSaveSettings(newSettings) {
     } catch (e) {}
   }
 
-  if (payload.cutoff) existing.cutoff = payload.cutoff;
+  if (payload.cutoff) {
+    var mergedCutoff = existing.cutoff || {};
+    for (var ck in payload.cutoff) {
+      if (Object.prototype.hasOwnProperty.call(payload.cutoff, ck)) {
+        mergedCutoff[ck] = payload.cutoff[ck];
+      }
+    }
+    existing.cutoff = mergedCutoff;
+  }
   if (payload.products) existing.products = payload.products;
-  if (payload.qrs) existing.qrs = payload.qrs;
+  if (payload.qrs) {
+    var mergedQrs = existing.qrs || {};
+    for (var qk in payload.qrs) {
+      if (Object.prototype.hasOwnProperty.call(payload.qrs, qk)) {
+        mergedQrs[qk] = payload.qrs[qk];
+      }
+    }
+    existing.qrs = mergedQrs;
+  }
   if (payload.deliveryDay) existing.deliveryDay = payload.deliveryDay;
   if (payload.flavorAvailability) existing.flavorAvailability = payload.flavorAvailability;
   if (payload.paymentMethods) existing.paymentMethods = payload.paymentMethods;
