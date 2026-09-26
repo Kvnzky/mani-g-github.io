@@ -60,6 +60,7 @@ function onOpen() {
       .addItem('📋 1. Consolidate All Orders into Master list', 'menuConsolidateToMasterList')
       .addItem('🔑 2. Authorize Email Notifications', 'authorizeEmailNotifications')
       .addItem('📧 3. Send Test Order Notification Email', 'menuSendTestEmail')
+      .addItem('📊 4. Send Order Summary Email (engrkevinramirez@gmail.com)', 'menuSendOrderSummaryEmail')
       .addItem('🧹 Clean Test Orders & Fix Calculations', 'menuCleanAndRepair')
       .addItem('📐 Refresh Summary Dashboard & Formulas', 'menuFixLayout')
       .addToUi();
@@ -85,6 +86,26 @@ function authorizeEmailNotifications() {
     body: 'Great news! Email notifications for Mani Wandering orders are now authorized and active.\n\nRecipient: ' + recipient + '\nTimestamp: ' + Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd HH:mm:ss') + ' (PHT)'
   });
   Logger.log('Authorization successful! Confirmation email sent to ' + recipient);
+}
+
+/**
+ * 📊 SEND ORDER SUMMARY EMAIL DIRECTLY FROM APPS SCRIPT EDITOR OR MENU
+ * Sends the complete table of Customer Name, Delivery Address, and Orders to engrkevinramirez@gmail.com
+ */
+function sendOrderSummaryEmailNow() {
+  var ss = getTargetSpreadsheet();
+  var res = handleSendOrderSummaryEmail(ss, {});
+  Logger.log('sendOrderSummaryEmailNow result: ' + JSON.stringify(res));
+  return res;
+}
+
+function menuSendOrderSummaryEmail() {
+  var ss = getTargetSpreadsheet();
+  var res = handleSendOrderSummaryEmail(ss, {});
+  var msg = res.sent
+    ? ('Order Summary email (' + res.rowCount + ' orders) successfully sent to ' + res.recipient)
+    : ('Failed to send Order Summary email: ' + (res.error || res.gmailError || 'Unknown error'));
+  SpreadsheetApp.getUi().alert('Order Summary Email', msg, SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function menuSendTestEmail() {
@@ -165,6 +186,17 @@ function doGet(e) {
     var targetRecipient = e.parameter ? e.parameter.to : null;
     var testEmailRes = handleSendTestEmail(targetRecipient);
     return formatResponse(testEmailRes, e);
+  }
+
+  // Fast path for Order Summary Email via GET / JSONP (works across mobile & desktop browsers)
+  if (action === 'sendOrderSummaryEmail') {
+    try {
+      var summarySs = getTargetSpreadsheet(e.parameter ? e.parameter.spreadsheetId : null);
+      var summaryEmailRes = handleSendOrderSummaryEmail(summarySs, e.parameter || {});
+      return formatResponse(summaryEmailRes, e);
+    } catch (sumErr) {
+      return formatResponse({ success: false, sent: false, error: sumErr.toString() }, e);
+    }
   }
 
   if (!action) {
@@ -650,13 +682,18 @@ function handleCleanAllSheets(ss) {
  * Cleans a specific date sheet: removes Juan Dela Cruz / test orders, corrects Mermer's order, and resets formulas
  */
 function cleanAndRepairDateSheet(sheet, dateStr) {
-  setupSheetHeadersAndSummary(sheet, dateStr);
-
   var lastRow = sheet.getLastRow();
-  if (lastRow < 8) return;
+  if (lastRow < 8) {
+    setupSheetHeadersAndSummary(sheet, dateStr);
+    return;
+  }
 
-  var lastCol = Math.max(sheet.getLastColumn(), 17);
+  var lastCol = Math.max(sheet.getLastColumn(), 18);
+  var col14Header = String(sheet.getRange(7, 14).getValue() || '');
+  var hadCheese = (col14Header.indexOf('Cheese') !== -1 || sheet.getLastColumn() >= 18);
   var rawValues = sheet.getRange(8, 1, lastRow - 7, lastCol).getValues();
+
+  setupSheetHeadersAndSummary(sheet, dateStr);
 
   var validRows = [];
 
@@ -711,8 +748,9 @@ function cleanAndRepairDateSheet(sheet, dateStr) {
     var spicy = Number(r[10] || 0);
     var bbq = Number(r[11] || 0);
     var sourCream = Number(r[12] || 0);
-    var bawangOnly = Number(r[13] || 0);
-    var orderStatus = String(r[16] || 'New');
+    var cheese = hadCheese ? Number(r[13] || 0) : 0;
+    var bawangOnly = hadCheese ? Number(r[14] || 0) : Number(r[13] || 0);
+    var orderStatus = hadCheese ? String(r[17] || 'New') : String(r[16] || 'New');
 
     if (isMermer) {
       // Customer Mermer ordered Spicy, BBQ, Salted, and Sour Cream (1 pack each = 4 packs, ₱200, GCash, Paid)
@@ -721,6 +759,7 @@ function cleanAndRepairDateSheet(sheet, dateStr) {
       spicy = 1;
       bbq = 1;
       sourCream = 1;
+      cheese = 0;
       bawangOnly = 0;
       paymentMode = 'GCash';
       paidStatus = 'Paid';
@@ -741,6 +780,7 @@ function cleanAndRepairDateSheet(sheet, dateStr) {
       spicy: spicy,
       bbq: bbq,
       sourCream: sourCream,
+      cheese: cheese,
       bawangOnly: bawangOnly,
       orderStatus: orderStatus
     });
@@ -756,13 +796,13 @@ function cleanAndRepairDateSheet(sheet, dateStr) {
     return;
   }
 
-  // Write back genuine rows with dynamic formulas
+  // Write back genuine rows with dynamic 18-column formulas
   for (var k = 0; k < validRows.length; k++) {
     var v = validRows[k];
     var targetRow = 8 + k;
 
-    var totalPacksFormula = '=SUM(I' + targetRow + ':N' + targetRow + ')';
-    var totalAmountFormula = '=(SUM(I' + targetRow + ':M' + targetRow + ')*50)+(N' + targetRow + '*60)';
+    var totalPacksFormula = '=SUM(I' + targetRow + ':O' + targetRow + ')';
+    var totalAmountFormula = '=(SUM(I' + targetRow + ':N' + targetRow + ')*50)+(O' + targetRow + '*60)';
 
     var cleanRow = [
       v.orderId,
@@ -778,13 +818,14 @@ function cleanAndRepairDateSheet(sheet, dateStr) {
       v.spicy,
       v.bbq,
       v.sourCream,
+      v.cheese,
       v.bawangOnly,
       totalPacksFormula,
       totalAmountFormula,
       v.orderStatus
     ];
 
-    sheet.getRange(targetRow, 1, 1, 17).setValues([cleanRow]);
+    sheet.getRange(targetRow, 1, 1, 18).setValues([cleanRow]);
     formatDataRow(sheet, targetRow, cleanRow);
   }
 }
@@ -1707,10 +1748,17 @@ function handleSendOrderSummaryEmail(ss, payload) {
   var recipientEmail = 'engrkevinramirez@gmail.com';
   var startDate = payload.startDate || '';
   var endDate = payload.endDate || '';
-  var startDisplay = payload.startDateDisplay || startDate || 'All Time';
-  var endDisplay = payload.endDateDisplay || endDate || 'Present';
-  var selectedDateRange = payload.selectedDateRange || (startDisplay + ' – ' + endDisplay);
+  var startDisplay = payload.startDateDisplay || startDate || '';
+  var endDisplay = payload.endDateDisplay || endDate || '';
   var rows = payload.rows;
+
+  if (typeof rows === 'string' && rows.trim()) {
+    try {
+      rows = JSON.parse(rows);
+    } catch (e) {
+      rows = null;
+    }
+  }
 
   // If rows were not passed in payload, build them directly from the latest Google Sheet orders
   if (!Array.isArray(rows)) {
@@ -1724,6 +1772,12 @@ function handleSendOrderSummaryEmail(ss, payload) {
       return true;
     });
 
+    if (!startDisplay || !endDisplay) {
+      var dates = filtered.map(function(o) { return o.orderDate; }).filter(Boolean).sort();
+      if (!startDisplay) startDisplay = dates.length > 0 ? dates[0] : 'All Time';
+      if (!endDisplay) endDisplay = dates.length > 0 ? dates[dates.length - 1] : 'Present';
+    }
+
     var flavorLabels = {
       salted: 'Salted',
       unsalted: 'Unsalted',
@@ -1731,8 +1785,19 @@ function handleSendOrderSummaryEmail(ss, payload) {
       bbq: 'BBQ',
       'sour-cream': 'Sour Cream',
       cheese: 'Cheese',
-      'bawang-only': 'Bawang Only'
+      'bawang-only': 'Crispy Garlic'
     };
+
+    try {
+      var cloudSettingsRes = handleGetSettings();
+      if (cloudSettingsRes && cloudSettingsRes.settings && Array.isArray(cloudSettingsRes.settings.products)) {
+        cloudSettingsRes.settings.products.forEach(function(p) {
+          if (p && p.id && p.name) {
+            flavorLabels[p.id] = p.name;
+          }
+        });
+      }
+    } catch (sErr) {}
 
     rows = filtered.map(function(o) {
       var parts = [];
@@ -1752,18 +1817,22 @@ function handleSendOrderSummaryEmail(ss, payload) {
         });
       }
       return {
-        name: String(o.customerName || 'N/A').trim(),
-        address: String(o.deliveryAddress || 'N/A').trim(),
+        name: String(o.customerName || o.name || 'N/A').trim(),
+        address: String(o.deliveryAddress || o.address || 'N/A').trim(),
         orderAndQuantity: parts.length > 0 ? parts.join(', ') : 'N/A'
       };
     });
   }
 
+  if (!startDisplay) startDisplay = 'All Time';
+  if (!endDisplay) endDisplay = 'Present';
+  var selectedDateRange = payload.selectedDateRange || (startDisplay + ' – ' + endDisplay);
+
   var subject = 'Order Summary – ' + selectedDateRange;
   var introLine = 'Please see the order summary for ' + startDisplay + ' – ' + endDisplay + ' below.';
 
   var tableRowsHtml = '';
-  var plainTextRows = 'Name\tAddress\tOrder & Quantity\n';
+  var plainTextRows = 'Customer Name\tDelivery Address\tOrders (Order & Quantity)\n';
 
   if (rows.length === 0) {
     tableRowsHtml = '<tr><td colspan="3" style="padding: 18px 14px; text-align: center; color: #8C6A48; font-style: italic;">No orders found for ' + escapeHtmlGas(startDisplay) + ' – ' + escapeHtmlGas(endDisplay) + '.</td></tr>';
@@ -1771,14 +1840,14 @@ function handleSendOrderSummaryEmail(ss, payload) {
   } else {
     rows.forEach(function(row, idx) {
       var rowBg = (idx % 2 === 0) ? '#FFFFFF' : '#FDFBF7';
-      var rName = String(row.name || 'N/A').trim();
-      var rAddr = String(row.address || 'N/A').trim();
-      var rOrd = String(row.orderAndQuantity || 'N/A').trim();
+      var rName = String(row.name || row.customerName || 'N/A').trim();
+      var rAddr = String(row.address || row.deliveryAddress || 'N/A').trim();
+      var rOrd = String(row.orderAndQuantity || row.orders || 'N/A').trim();
 
       tableRowsHtml += '<tr style="background-color: ' + rowBg + '; border-bottom: 1px solid #EDE4D8;">' +
-        '<td style="padding: 12px 14px; font-weight: 700; color: #2B1810; vertical-align: top; word-break: break-word;">' + escapeHtmlGas(rName) + '</td>' +
-        '<td style="padding: 12px 14px; color: #4A3525; vertical-align: top; word-break: break-word;">' + escapeHtmlGas(rAddr) + '</td>' +
-        '<td style="padding: 12px 14px; font-weight: 700; color: #7C552E; vertical-align: top; word-break: break-word;">' + escapeHtmlGas(rOrd) + '</td>' +
+        '<td style="padding: 12px 14px; font-weight: 700; color: #2B1810; vertical-align: top; word-break: break-word; white-space: pre-line;">' + escapeHtmlGas(rName) + '</td>' +
+        '<td style="padding: 12px 14px; color: #4A3525; vertical-align: top; word-break: break-word; white-space: pre-line;">' + escapeHtmlGas(rAddr) + '</td>' +
+        '<td style="padding: 12px 14px; font-weight: 700; color: #7C552E; vertical-align: top; word-break: break-word; white-space: pre-line;">' + escapeHtmlGas(rOrd) + '</td>' +
         '</tr>';
 
       plainTextRows += rName + ' | ' + rAddr + ' | ' + rOrd + '\n';
@@ -1803,9 +1872,9 @@ function handleSendOrderSummaryEmail(ss, payload) {
     '<p style="margin: 0 0 18px 0; font-size: 15px; line-height: 1.6; color: #2B1810; font-weight: 600;">' + escapeHtmlGas(introLine) + '</p>' +
     '<table role="presentation" class="summary-table" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; width: 100%; font-size: 14px; border: 1px solid #EDE4D8; border-radius: 12px; overflow: hidden;">' +
     '<thead><tr style="background-color: #F8F4EE; border-bottom: 2px solid #E5D5C3;">' +
-    '<th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 25%;">Name</th>' +
-    '<th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 40%;">Address</th>' +
-    '<th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 35%;">Order &amp; Quantity</th>' +
+    '<th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 25%;">Customer Name</th>' +
+    '<th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 40%;">Delivery Address</th>' +
+    '<th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 35%;">Orders (Order &amp; Quantity)</th>' +
     '</tr></thead>' +
     '<tbody>' + tableRowsHtml + '</tbody>' +
     '</table>' +

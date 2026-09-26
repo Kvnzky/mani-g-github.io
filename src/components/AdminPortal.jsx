@@ -571,9 +571,9 @@ export default function AdminPortal({
 
   // Active non-cancelled orders filtered by inclusive date range
   const activeOrdersForSummary = useMemo(() => {
-    const source = allOrders.length > 0 ? allOrders : orders;
+    const source = hydrateOrderList(allOrders.length > 0 ? allOrders : orders);
     return filterOrdersForDateRange(source, summaryStartDate, summaryEndDate);
-  }, [allOrders, orders, summaryStartDate, summaryEndDate]);
+  }, [allOrders, orders, summaryStartDate, summaryEndDate, products]);
 
   const formatOrderItemsForSummary = (order, catalogProducts = products) => {
     const defaultFlavorNames = {
@@ -583,7 +583,7 @@ export default function AdminPortal({
       bbq: 'BBQ',
       'sour-cream': 'Sour Cream',
       cheese: 'Cheese',
-      'bawang-only': 'Bawang Only'
+      'bawang-only': 'Crispy Garlic'
     };
 
     const getFlavorName = (id, fallbackName) => {
@@ -620,16 +620,39 @@ export default function AdminPortal({
     return parts.length > 0 ? parts.join(', ') : 'N/A';
   };
 
+  const handleCopySummaryTable = async () => {
+    const rows = activeOrdersForSummary.map((ord, idx) => ({
+      num: idx + 1,
+      name: String(ord.customerName || ord.name || 'N/A').trim(),
+      address: String(ord.deliveryAddress || ord.address || 'N/A').trim().replace(/\s*\n\s*/g, ', '),
+      orderAndQuantity: formatOrderItemsForSummary(ord, products)
+    }));
+    const header = 'Customer Name\tDelivery Address\tOrders (Order & Quantity)';
+    const body = rows.map((r) => `${r.name}\t${r.address}\t${r.orderAndQuantity}`).join('\n');
+    try {
+      await navigator.clipboard.writeText(`${header}\n${body}`);
+      setSummaryEmailStatus({
+        msg: `Copied ${rows.length} customer order summary rows to clipboard!`,
+        type: 'success'
+      });
+    } catch (e) {}
+  };
+
   const handleSendOrderSummaryEmail = async () => {
     if (isSendingSummaryEmail) return;
     setIsSendingSummaryEmail(true);
     setSummaryEmailStatus({ msg: '', type: '' });
 
     try {
-      // 1. Ensure we use the latest/current order data
+      // 1. Ensure we use the latest/current order data and hydrate flavor breakdowns
       const latestSource = await fetchAllOrders();
+      const hydratedSource = hydrateOrderList(
+        latestSource && latestSource.length > 0
+          ? latestSource
+          : (allOrders.length > 0 ? allOrders : orders)
+      );
       const filteredOrders = filterOrdersForDateRange(
-        latestSource && latestSource.length > 0 ? latestSource : (allOrders.length > 0 ? allOrders : orders),
+        hydratedSource,
         summaryStartDate,
         summaryEndDate
       );
@@ -668,10 +691,10 @@ export default function AdminPortal({
         }
       }
 
-      // 3. Build order summary table rows (Name, Address, Order & Quantity)
+      // 3. Build order summary table rows (Customer Name, Delivery Address, Orders)
       const rows = filteredOrders.map((ord) => ({
-        name: (ord.customerName || 'N/A').trim(),
-        address: (ord.deliveryAddress || 'N/A').trim(),
+        name: String(ord.customerName || ord.name || 'N/A').trim(),
+        address: String(ord.deliveryAddress || ord.address || 'N/A').trim(),
         orderAndQuantity: formatOrderItemsForSummary(ord, products)
       }));
 
@@ -687,6 +710,7 @@ export default function AdminPortal({
       };
 
       let sentSuccessfully = false;
+      let needsScriptUpdate = false;
 
       // 4. Try backend API first
       try {
@@ -702,18 +726,21 @@ export default function AdminPortal({
         const contentType = res.headers.get('content-type') || '';
         if (res.ok && contentType.includes('application/json')) {
           const data = await res.json();
-          if (data && data.success) {
+          if (data && data.success === true && data.sent === true && !data.logged) {
             sentSuccessfully = true;
+          } else if (data && data.needsAppsScriptUpdate) {
+            needsScriptUpdate = true;
           }
         }
       } catch (apiErr) {
         // Backend not reachable (e.g., GitHub Pages); fall through to Google Apps Script
       }
 
-      // 5. Fallback to Google Apps Script Web App if backend did not handle it
+      // 5. Fallback to Google Apps Script Web App (POST -> GET -> JSONP)
       if (!sentSuccessfully) {
         const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
         if (appsUrl) {
+          // 5a. Try POST with full rows payload
           try {
             const gasRes = await fetch(appsUrl, {
               method: 'POST',
@@ -722,20 +749,80 @@ export default function AdminPortal({
               redirect: 'follow'
             });
             if (gasRes.ok) {
-              const gasData = await gasRes.json();
-              if (gasData && (gasData.success || gasData.sent)) {
+              const gasData = await gasRes.json().catch(() => null);
+              if (gasData && gasData.success === true && gasData.sent === true) {
                 sentSuccessfully = true;
+              } else if (gasData && String(gasData.error || '').includes('Unknown action')) {
+                needsScriptUpdate = true;
               }
             }
           } catch (corsErr) {
-            // Browser opaque response fallback
-            await fetch(appsUrl, {
-              method: 'POST',
-              mode: 'no-cors',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify(payload)
+            // POST blocked by browser CORS on redirect; continue to GET / JSONP
+          }
+
+          // 5b. Try GET with CORS
+          if (!sentSuccessfully) {
+            const qs = new URLSearchParams({
+              action: 'sendOrderSummaryEmail',
+              recipient: 'engrkevinramirez@gmail.com',
+              startDate: summaryStartDate || '',
+              endDate: summaryEndDate || '',
+              startDateDisplay,
+              endDateDisplay,
+              selectedDateRange
             });
-            sentSuccessfully = true;
+            const rowsStr = JSON.stringify(rows);
+            if (rowsStr.length <= 1500) {
+              qs.set('rows', rowsStr);
+            }
+
+            try {
+              const getRes = await fetch(`${appsUrl}?${qs.toString()}&_t=${Date.now()}`, {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-store'
+              });
+              if (getRes.ok) {
+                const getGasData = await getRes.json().catch(() => null);
+                if (getGasData && getGasData.success === true && getGasData.sent === true) {
+                  sentSuccessfully = true;
+                } else if (getGasData && getGasData.status === 'ok' && !getGasData.sent) {
+                  needsScriptUpdate = true;
+                }
+              }
+            } catch (getCorsErr) {
+              // 5c. JSONP fallback for strict mobile/desktop browser CORS
+              try {
+                await new Promise((resolve) => {
+                  const cbName = `mani_send_summary_${Date.now()}`;
+                  const script = document.createElement('script');
+                  const timeoutId = setTimeout(() => {
+                    delete window[cbName];
+                    script.remove();
+                    resolve();
+                  }, 10000);
+                  window[cbName] = (cloudData) => {
+                    clearTimeout(timeoutId);
+                    if (cloudData && cloudData.success === true && cloudData.sent === true) {
+                      sentSuccessfully = true;
+                    } else if (cloudData && cloudData.status === 'ok' && !cloudData.sent) {
+                      needsScriptUpdate = true;
+                    }
+                    delete window[cbName];
+                    script.remove();
+                    resolve();
+                  };
+                  script.src = `${appsUrl}?${qs.toString()}&callback=${cbName}&_t=${Date.now()}`;
+                  script.onerror = () => {
+                    clearTimeout(timeoutId);
+                    delete window[cbName];
+                    script.remove();
+                    resolve();
+                  };
+                  document.head.appendChild(script);
+                });
+              } catch (jpErr) {}
+            }
           }
         }
       }
@@ -746,9 +833,21 @@ export default function AdminPortal({
           type: 'success'
         });
       } else {
+        const subjectText = `Order Summary – ${selectedDateRange}`;
+        const introText = `Please see the order summary for ${startDateDisplay} – ${endDateDisplay} below.`;
+        const tableLines = rows.length > 0
+          ? rows.map((r, i) => `${i + 1}. ${r.name} | ${r.address.replace(/\s*\n\s*/g, ', ')} | ${r.orderAndQuantity}`).join('\n')
+          : `No orders found for ${startDateDisplay} – ${endDateDisplay}.`;
+        const fullBodyText = `${introText}\n\nCustomer Name | Delivery Address | Orders (Order & Quantity)\n------------------------------------------------------------\n${tableLines}\n\nTotal Orders Included: ${rows.length}`;
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent('engrkevinramirez@gmail.com')}&su=${encodeURIComponent(subjectText)}&body=${encodeURIComponent(fullBodyText)}`;
+        const mailtoUrl = `mailto:engrkevinramirez@gmail.com?subject=${encodeURIComponent(subjectText)}&body=${encodeURIComponent(fullBodyText)}`;
+
         setSummaryEmailStatus({
           msg: 'Unable to send the order summary. Please try again.',
-          type: 'error'
+          type: 'error',
+          needsScriptUpdate,
+          gmailUrl,
+          mailtoUrl
         });
       }
     } catch (err) {
@@ -2026,6 +2125,17 @@ export default function AdminPortal({
 
                 <button
                   type="button"
+                  onClick={handleCopySummaryTable}
+                  disabled={activeOrdersForSummary.length === 0}
+                  className="px-3 py-2 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-800 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                  title="Copy Customer Name, Delivery Address, and Orders table"
+                >
+                  <span>📋</span>
+                  <span>Copy Table</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleSendOrderSummaryEmail}
                   disabled={isSendingSummaryEmail}
                   className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shadow-xs ${
@@ -2054,28 +2164,70 @@ export default function AdminPortal({
             {summaryEmailStatus.msg && (
               <div
                 role="alert"
-                className={`p-4 rounded-2xl text-xs sm:text-sm font-bold border flex items-center justify-between gap-2 animate-fade-in ${
+                className={`p-4 rounded-2xl text-xs sm:text-sm font-bold border space-y-2.5 animate-fade-in ${
                   summaryEmailStatus.type === 'success'
                     ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
                     : 'bg-red-50 text-red-900 border-red-300'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  {summaryEmailStatus.type === 'success' ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                  )}
-                  <span>{summaryEmailStatus.msg}</span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {summaryEmailStatus.type === 'success' ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                    )}
+                    <span>{summaryEmailStatus.msg}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSummaryEmailStatus({ msg: '', type: '' })}
+                    className="text-current opacity-60 hover:opacity-100 p-1 rounded-lg cursor-pointer"
+                    aria-label="Dismiss notification"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSummaryEmailStatus({ msg: '', type: '' })}
-                  className="text-current opacity-60 hover:opacity-100 p-1 rounded-lg cursor-pointer"
-                  aria-label="Dismiss notification"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+
+                {summaryEmailStatus.type === 'error' && (
+                  <div className="pt-2 border-t border-red-200/80 space-y-2 text-xs font-medium text-red-950">
+                    {summaryEmailStatus.needsScriptUpdate && (
+                      <p className="leading-relaxed">
+                        <strong className="font-black">Why this happened:</strong> Your Google Sheet&apos;s Apps Script Web App deployment needs a 1-time update with the latest <code className="bg-red-100 px-1.5 py-0.5 rounded font-mono text-[11px]">google-apps-script/Code.gs</code> (in Google Sheets: <strong className="font-bold">Extensions → Apps Script → Paste Code.gs → Deploy → Manage deployments → Edit ✏️ → Version: New version → Deploy</strong>).
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      {summaryEmailStatus.gmailUrl && (
+                        <a
+                          href={summaryEmailStatus.gmailUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs inline-flex items-center gap-1.5 shadow-2xs transition-colors"
+                        >
+                          <span>📨</span>
+                          <span>Send via Gmail Compose Now</span>
+                        </a>
+                      )}
+                      {summaryEmailStatus.mailtoUrl && (
+                        <a
+                          href={summaryEmailStatus.mailtoUrl}
+                          className="px-3 py-1.5 rounded-xl bg-white hover:bg-red-100 text-red-900 border border-red-300 font-bold text-xs inline-flex items-center gap-1.5 transition-colors"
+                        >
+                          <span>✉️</span>
+                          <span>Open Mail App</span>
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleCopySummaryTable}
+                        className="px-3 py-1.5 rounded-xl bg-white hover:bg-red-100 text-red-900 border border-red-300 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <span>📋</span>
+                        <span>Copy Summary Table</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2266,6 +2418,79 @@ export default function AdminPortal({
                   >
                     Reset to Today
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Customer Order Summary Table (Customer Name, Delivery Address, Orders) */}
+            {activeOrdersForSummary.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-mani-100 pb-2">
+                  <div>
+                    <h4 className="text-sm font-black text-mani-900 flex items-center gap-2">
+                      <span>👥</span> Customer Order Summary Table
+                    </h4>
+                    <p className="text-xs text-mani-600">
+                      Customer name, delivery address, and their orders in a table — sent to <span className="font-bold text-amber-900">engrkevinramirez@gmail.com</span> when you click &ldquo;Send Order Summary&rdquo;
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-bold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 self-start sm:self-auto">
+                    {activeOrdersForSummary.length} {activeOrdersForSummary.length === 1 ? 'Customer Order' : 'Customer Orders'}
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto rounded-2xl border border-mani-200 shadow-xs">
+                  <table className="w-full text-left text-xs sm:text-sm border-collapse bg-white">
+                    <thead>
+                      <tr className="border-b-2 border-mani-200 bg-amber-50/70 text-mani-800">
+                        <th className="py-3 px-3.5 font-black uppercase text-[11px] tracking-wider w-12 text-center">#</th>
+                        <th className="py-3 px-3.5 font-black uppercase text-[11px] tracking-wider w-1/4">Customer Name</th>
+                        <th className="py-3 px-3.5 font-black uppercase text-[11px] tracking-wider w-2/5">Delivery Address</th>
+                        <th className="py-3 px-3.5 font-black uppercase text-[11px] tracking-wider">Orders (Order &amp; Quantity)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-mani-100">
+                      {activeOrdersForSummary.map((ord, idx) => {
+                        const custName = String(ord.customerName || ord.name || 'N/A').trim();
+                        const custAddr = String(ord.deliveryAddress || ord.address || 'N/A').trim();
+                        const custOrders = formatOrderItemsForSummary(ord, products);
+                        return (
+                          <tr key={ord.id || `${ord.orderId}_${idx}`} className="hover:bg-amber-50/40 transition-colors">
+                            <td className="py-3 px-3.5 text-center font-bold text-mani-400 align-top">
+                              {idx + 1}
+                            </td>
+                            <td className="py-3 px-3.5 font-extrabold text-mani-950 align-top">
+                              <div>{custName}</div>
+                              {ord.orderDate && (
+                                <div className="text-[11px] font-medium text-mani-500 mt-0.5">
+                                  {ord.orderDate}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3 px-3.5 text-mani-800 font-medium align-top whitespace-pre-line break-words">
+                              {custAddr}
+                            </td>
+                            <td className="py-3 px-3.5 font-bold text-amber-900 align-top">
+                              {custOrders}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-amber-300 bg-gradient-to-r from-amber-100/90 to-orange-100/80 font-black text-mani-950">
+                        <td colSpan={2} className="py-3 px-3.5 font-black tracking-wide text-mani-950">
+                          TOTAL CUSTOMER ORDERS: {activeOrdersForSummary.length}
+                        </td>
+                        <td className="py-3 px-3.5 text-xs text-mani-700 font-bold">
+                          Recipient: engrkevinramirez@gmail.com
+                        </td>
+                        <td className="py-3 px-3.5 text-amber-950 font-black">
+                          {summaryKpis.totalTubs} Total Tubs ({formatPHP(summaryKpis.totalRevenue)})
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               </div>
             )}

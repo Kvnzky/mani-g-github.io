@@ -741,7 +741,7 @@ app.post('/api/admin/send-order-summary', requireAdminAuth, async (req, res) => 
     const introLine = `Please see the order summary for ${startDisplay} – ${endDisplay} below.`;
 
     let tableRowsHtml = '';
-    let plainTextRows = 'Name | Address | Order & Quantity\n' + '------------------------------------------------------------\n';
+    let plainTextRows = 'Customer Name | Delivery Address | Orders (Order & Quantity)\n' + '------------------------------------------------------------\n';
 
     if (summaryRows.length === 0) {
       tableRowsHtml = `<tr>
@@ -754,9 +754,9 @@ app.post('/api/admin/send-order-summary', requireAdminAuth, async (req, res) => 
       summaryRows.forEach((row, idx) => {
         const rowBg = idx % 2 === 0 ? '#FFFFFF' : '#FDFBF7';
         tableRowsHtml += `<tr style="background-color: ${rowBg}; border-bottom: 1px solid #EDE4D8;">
-          <td style="padding: 12px 14px; font-weight: 700; color: #2B1810; vertical-align: top; word-break: break-word;">${escapeHtml(row.name)}</td>
-          <td style="padding: 12px 14px; color: #4A3525; vertical-align: top; word-break: break-word;">${escapeHtml(row.address)}</td>
-          <td style="padding: 12px 14px; font-weight: 700; color: #7C552E; vertical-align: top; word-break: break-word;">${escapeHtml(row.orderAndQuantity)}</td>
+          <td style="padding: 12px 14px; font-weight: 700; color: #2B1810; vertical-align: top; word-break: break-word; white-space: pre-line;">${escapeHtml(row.name)}</td>
+          <td style="padding: 12px 14px; color: #4A3525; vertical-align: top; word-break: break-word; white-space: pre-line;">${escapeHtml(row.address)}</td>
+          <td style="padding: 12px 14px; font-weight: 700; color: #7C552E; vertical-align: top; word-break: break-word; white-space: pre-line;">${escapeHtml(row.orderAndQuantity)}</td>
         </tr>`;
         plainTextRows += `${row.name} | ${row.address} | ${row.orderAndQuantity}\n`;
       });
@@ -797,9 +797,9 @@ app.post('/api/admin/send-order-summary', requireAdminAuth, async (req, res) => 
               <table role="presentation" class="summary-table" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; width: 100%; font-size: 14px; border: 1px solid #EDE4D8; border-radius: 12px; overflow: hidden;">
                 <thead>
                   <tr style="background-color: #F8F4EE; border-bottom: 2px solid #E5D5C3;">
-                    <th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 25%;">Name</th>
-                    <th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 40%;">Address</th>
-                    <th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 35%;">Order &amp; Quantity</th>
+                    <th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 25%;">Customer Name</th>
+                    <th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 40%;">Delivery Address</th>
+                    <th align="left" style="padding: 12px 14px; font-weight: 800; color: #664322; width: 35%;">Orders (Order &amp; Quantity)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -870,6 +870,7 @@ app.post('/api/admin/send-order-summary', requireAdminAuth, async (req, res) => 
     }
 
     // 2. Otherwise forward to Google Apps Script Web App to dispatch via MailApp.sendEmail
+    let gasErrorDetail = '';
     if (settings.appsScriptUrl) {
       try {
         const gasRes = await fetch(settings.appsScriptUrl, {
@@ -890,27 +891,70 @@ app.post('/api/admin/send-order-summary', requireAdminAuth, async (req, res) => 
         });
 
         if (gasRes.ok) {
-          return res.json({
-            success: true,
-            sent: true,
-            recipient: targetRecipient,
-            subject,
-            rowCount: summaryRows.length
-          });
+          const gasData = await gasRes.json().catch(() => null);
+          if (gasData && gasData.success === true && gasData.sent === true) {
+            return res.json({
+              success: true,
+              sent: true,
+              recipient: targetRecipient,
+              subject,
+              rowCount: summaryRows.length
+            });
+          }
+          if (gasData && gasData.error) {
+            gasErrorDetail = String(gasData.error);
+          }
         }
       } catch (gasErr) {
-        console.warn('Apps Script summary email relay warning:', gasErr.message);
+        console.warn('Apps Script POST summary email relay warning:', gasErr.message);
+      }
+
+      // Also try GET fast-path on Google Apps Script Web App
+      try {
+        const qs = new URLSearchParams({
+          action: 'sendOrderSummaryEmail',
+          recipient: targetRecipient,
+          startDate: startDate || '',
+          endDate: endDate || '',
+          startDateDisplay: startDisplay || '',
+          endDateDisplay: endDisplay || '',
+          selectedDateRange: selectedDateRange || ''
+        });
+        const rowsJson = JSON.stringify(summaryRows);
+        if (rowsJson.length <= 1500) {
+          qs.set('rows', rowsJson);
+        }
+        const getRes = await fetch(`${settings.appsScriptUrl}?${qs.toString()}`, {
+          method: 'GET',
+          redirect: 'follow'
+        });
+        if (getRes.ok) {
+          const getGasData = await getRes.json().catch(() => null);
+          if (getGasData && getGasData.success === true && getGasData.sent === true) {
+            return res.json({
+              success: true,
+              sent: true,
+              recipient: targetRecipient,
+              subject,
+              rowCount: summaryRows.length
+            });
+          }
+        }
+      } catch (getErr) {
+        console.warn('Apps Script GET summary email relay warning:', getErr.message);
       }
     }
 
-    console.log(`[Order Summary Email] Standalone Mode: Summary (${selectedDateRange}, ${summaryRows.length} orders) prepared for ${targetRecipient}`);
+    const needsAppsScriptUpdate = gasErrorDetail.includes('Unknown action') || Boolean(settings.appsScriptUrl);
+    console.warn(`[Order Summary Email] Dispatch did not complete via Apps Script (${gasErrorDetail || 'no active mailer'}).`);
     return res.json({
-      success: true,
-      sent: true,
-      logged: true,
+      success: false,
+      sent: false,
+      needsAppsScriptUpdate,
       recipient: targetRecipient,
       subject,
-      rowCount: summaryRows.length
+      rowCount: summaryRows.length,
+      error: gasErrorDetail || 'Unable to send the order summary. Please try again.'
     });
   } catch (err) {
     console.error('Error sending order summary email:', err.message);
