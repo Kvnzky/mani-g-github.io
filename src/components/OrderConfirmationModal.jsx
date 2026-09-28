@@ -1,13 +1,26 @@
-import React, { useState } from 'react';
-import { CheckCircle2, Share2, Copy, Check, ShoppingBag, MapPin, CreditCard, Phone, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle2, Share2, Copy, Check, ShoppingBag } from 'lucide-react';
 import { formatPHP } from '../config/products';
 import { GCASH_NUMBER } from '../config/qrConfig';
 
-export default function OrderConfirmationModal({ order, onReset }) {
+export default function OrderConfirmationModal({ order, onReset, customQrs }) {
   const [copied, setCopied] = useState(false);
   const [copiedGcash, setCopiedGcash] = useState(false);
 
+  useEffect(() => {
+    if (!order) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && onReset) {
+        onReset();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [order, onReset]);
+
   if (!order) return null;
+
+  const gcashNumber = customQrs?.gcashNumber || GCASH_NUMBER;
 
   const orderSummaryText = `🥜 *Mani Wandering ORDER CONFIRMATION* 🥜
 Order #: ${order.orderId}
@@ -41,13 +54,18 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
   };
 
   const handleCopyGcash = () => {
-    navigator.clipboard.writeText(GCASH_NUMBER);
+    navigator.clipboard.writeText(gcashNumber);
     setCopiedGcash(true);
     setTimeout(() => setCopiedGcash(false), 2000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-mani-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="order-confirmed-heading"
+      className="fixed inset-0 z-50 overflow-y-auto bg-mani-950/70 backdrop-blur-sm flex items-center justify-center p-4"
+    >
       <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-amber-200 animate-fade-in space-y-6">
         {/* Celebration Header */}
         <div className="text-center space-y-2">
@@ -57,7 +75,7 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
           <span className="inline-block text-xs font-black uppercase tracking-widest text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
             Order Confirmed
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-mani-900 tracking-tight">
+          <h2 id="order-confirmed-heading" className="text-2xl sm:text-3xl font-black text-mani-900 tracking-tight">
             🎉 Order Received!
           </h2>
           <p className="text-sm text-mani-600 font-medium">
@@ -150,10 +168,10 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
                   onClick={handleCopyGcash}
                   className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-600 text-white"
                 >
-                  {copiedGcash ? 'Copied!' : 'Copy 09055182263'}
+                  {copiedGcash ? 'Copied!' : `Copy ${gcashNumber}`}
                 </button>
               </div>
-              <p>Please send {formatPHP(order.subtotal)} to GCash: <strong>09055182263</strong> (JO******N R.).</p>
+              <p>Please send {formatPHP(order.subtotal)} to GCash: <strong>{gcashNumber}</strong> (JO******N R.).</p>
             </div>
           )}
 

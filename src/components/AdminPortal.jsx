@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   ShieldCheck, RefreshCw, Search, Calendar, 
-  Settings, ExternalLink, Plus, Edit2, Edit3, Check, Package, DollarSign, QrCode, Upload, Copy, Phone, MapPin, CreditCard,
-  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, User, Power, BarChart3, TrendingUp, CalendarRange, Filter, X
+  Settings, ExternalLink, Plus, Edit2, Edit3, Check, Package, DollarSign, Upload, Phone, MapPin, CreditCard,
+  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, BarChart3, TrendingUp, CalendarRange, X
 } from 'lucide-react';
 import { formatPHP } from '../config/products';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from '../config/sheetsConfig';
@@ -78,9 +78,6 @@ const formatUtcYMD = (utcDate) => {
 };
 
 const getPresetDateRange = (preset) => {
-  if (preset === 'all-time') {
-    return { start: '', end: '' };
-  }
   const todayObj = getManilaTodayObj();
   const todayStr = formatUtcYMD(todayObj);
 
@@ -292,7 +289,6 @@ export default function AdminPortal({
   });
   const [settingsStatus, setSettingsStatus] = useState({ msg: '', type: '' });
   const [isTestingSheet, setIsTestingSheet] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   // QR Edit State
   const [localGcashNum, setLocalGcashNum] = useState(customQrs?.gcashNumber || '09055182263');
@@ -1472,13 +1468,6 @@ export default function AdminPortal({
     } finally {
       setIsTestingSheet(false);
     }
-  };
-
-  const handleToggleProduct = (id) => {
-    const updated = products.map((p) =>
-      p.id === id ? { ...p, available: p.available === false ? true : false } : p
-    );
-    onUpdateProducts(updated);
   };
 
   const handleSavePrice = (id) => {

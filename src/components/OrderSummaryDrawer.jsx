@@ -1,5 +1,5 @@
-import React from 'react';
-import { ShoppingBag, X, Plus, Minus, ArrowRight, Loader2, MapPin, Phone, User, CreditCard, Lock, Clock } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { X, Plus, Minus, ArrowRight, Loader2, MapPin, Phone, User, CreditCard, Lock, Clock } from 'lucide-react';
 import { formatPHP } from '../config/products';
 
 export default function OrderSummaryDrawer({
@@ -29,39 +29,36 @@ export default function OrderSummaryDrawer({
     !hasAnyPaymentMethod
   );
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <>
-      {/* Sticky Bottom Bar on Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-mani-200 p-3 sm:hidden shadow-warm-xl">
-        <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold text-sm flex items-center justify-between shadow-md active:scale-98 transition-all"
-          >
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4" />
-              <span>{hasItems ? `${totalPacks} Tubs` : 'Your Cart'}</span>
-            </div>
-            <span className="bg-mani-900/20 px-2.5 py-0.5 rounded-lg text-amber-100 font-black">
-              {formatPHP(subtotal)}
-            </span>
-          </button>
-        </div>
-      </div>
-
       {/* Backdrop */}
       {isOpen && (
         <div
           onClick={onClose}
+          aria-hidden="true"
           className="fixed inset-0 z-50 bg-mani-950/60 backdrop-blur-xs transition-opacity duration-200"
         />
       )}
 
       {/* Drawer Panel */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Order Summary"
+        aria-hidden={!isOpen}
         className={`fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+          isOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
         }`}
       >
         {/* Drawer Header */}
@@ -94,6 +91,7 @@ export default function OrderSummaryDrawer({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close Order Summary"
               className="w-8 h-8 rounded-xl bg-mani-100 text-mani-700 hover:bg-mani-200 flex items-center justify-center transition-colors"
             >
               <X className="w-4 h-4" />
@@ -165,6 +163,7 @@ export default function OrderSummaryDrawer({
                         <button
                           type="button"
                           onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+                          aria-label={`Decrease quantity of ${item.name}`}
                           className="w-7 h-7 rounded-lg bg-white border border-mani-200 hover:bg-mani-100 flex items-center justify-center text-mani-700"
                         >
                           <Minus className="w-3.5 h-3.5" />
@@ -175,6 +174,7 @@ export default function OrderSummaryDrawer({
                         <button
                           type="button"
                           onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+                          aria-label={`Increase quantity of ${item.name}`}
                           className="w-7 h-7 rounded-lg bg-white border border-mani-200 hover:bg-mani-100 flex items-center justify-center text-mani-700"
                         >
                           <Plus className="w-3.5 h-3.5" />

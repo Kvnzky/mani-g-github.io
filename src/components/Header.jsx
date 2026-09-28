@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, ShieldCheck, Sparkles, Lock, LogIn, LogOut, User, Clock } from 'lucide-react';
+import { ShoppingBag, ShieldCheck, Sparkles, Lock, LogOut, Clock } from 'lucide-react';
 import { getManilaCutoffTimestampMs } from '../utils/phtTime';
 
 export default function Header({ 
@@ -49,8 +49,17 @@ export default function Header({
         <div className="flex items-center justify-between">
           {/* Logo & Branding */}
           <div 
+            role="button"
+            tabIndex={0}
+            aria-label="Go to Mani Wandering shop home"
             onClick={() => onNavigate ? onNavigate('order') : setCurrentView('order')}
-            className="cursor-pointer flex items-center gap-2.5 sm:gap-3 group"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onNavigate ? onNavigate('order') : setCurrentView('order');
+              }
+            }}
+            className="cursor-pointer flex items-center gap-2.5 sm:gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-2xl"
           >
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-50/90 flex items-center justify-center p-0.5 shadow-md shadow-amber-900/10 group-hover:scale-105 transition-transform duration-200 border border-amber-200 overflow-hidden shrink-0">
               <img src="./images/logo.png" alt="Mani Wandering Logo" className="w-full h-full object-contain" />
@@ -116,6 +125,7 @@ export default function Header({
             {isAdminAuthenticated ? (
               <div className="flex items-center gap-1.5">
                 <button
+                  type="button"
                   onClick={() => onNavigate ? onNavigate(currentView === 'admin' ? 'order' : 'admin') : setCurrentView(currentView === 'admin' ? 'order' : 'admin')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
                     currentView === 'admin'
@@ -129,6 +139,7 @@ export default function Header({
                 </button>
 
                 <button
+                  type="button"
                   onClick={onLogout}
                   className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1 cursor-pointer"
                   title="Log out of Admin"
@@ -142,7 +153,9 @@ export default function Header({
             {/* Customer Cart Button (only visible in ordering view) */}
             {currentView === 'order' && (
               <button
+                type="button"
                 onClick={onOpenCart}
+                aria-label={`Open Order Summary${totalItems > 0 ? ` (${totalItems} items)` : ''}`}
                 className="relative px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-sm hover:shadow transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4" />

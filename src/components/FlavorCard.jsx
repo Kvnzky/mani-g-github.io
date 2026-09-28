@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Minus, Check, ShoppingBag } from 'lucide-react';
+import { Plus, Minus, Check } from 'lucide-react';
 import { formatPHP } from '../config/products';
 
 export default function FlavorCard({ 

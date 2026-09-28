@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Lock, User, Key, Eye, EyeOff, X, AlertCircle, Loader2 } from 'lucide-react';
 
 // Cryptographic SHA-256 hash of admin password 'Bunny_016' (for static fallback mode)
@@ -12,6 +12,17 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -96,7 +107,13 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-mani-950/60 backdrop-blur-xs animate-fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="admin-login-heading"
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-mani-950/60 backdrop-blur-xs animate-fade-in"
+    >
       <div 
         className="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-mani-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -108,13 +125,15 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-mani-900">Admin Login</h2>
+              <h2 id="admin-login-heading" className="text-lg font-black text-mani-900">Admin Login</h2>
               <p className="text-xs text-mani-500 font-medium">Store Management & Settings</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-mani-400 hover:text-mani-800 hover:bg-mani-100 transition-colors"
+            aria-label="Close login modal"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-mani-400 hover:text-mani-800 hover:bg-mani-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -132,11 +151,13 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {/* Username */}
           <div>
-            <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
+            <label htmlFor="admin-username" className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-amber-600" />
               Username
             </label>
             <input
+              id="admin-username"
+              name="username"
               type="text"
               autoComplete="username"
               value={username}
@@ -149,12 +170,14 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
 
           {/* Password (Masked with Show/Hide toggle) */}
           <div>
-            <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
+            <label htmlFor="admin-password" className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
               <Key className="w-3.5 h-3.5 text-amber-600" />
               Password
             </label>
             <div className="relative">
               <input
+                id="admin-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 value={password}
@@ -166,6 +189,7 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-mani-400 hover:text-mani-700 p-1 transition-colors cursor-pointer"
                 title={showPassword ? 'Hide password' : 'Show password'}
               >

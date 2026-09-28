@@ -74,12 +74,15 @@ export default function CustomerForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Customer Name */}
           <div>
-            <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
+            <label htmlFor="customer-name" className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-amber-600" />
               Customer Name <span className="text-red-500">*</span>
             </label>
             <input
+              id="customer-name"
+              name="customerName"
               type="text"
+              autoComplete="name"
               value={formData.customerName || ''}
               onChange={(e) => handleInputChange('customerName', e.target.value)}
               placeholder="e.g. Juan Dela Cruz"
@@ -96,12 +99,15 @@ export default function CustomerForm({
 
           {/* Mobile Number */}
           <div>
-            <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
+            <label htmlFor="customer-mobile" className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
               <Phone className="w-3.5 h-3.5 text-amber-600" />
               Mobile Number <span className="text-red-500">*</span>
             </label>
             <input
+              id="customer-mobile"
+              name="mobileNumber"
               type="tel"
+              autoComplete="tel"
               value={formData.mobileNumber || ''}
               onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
               placeholder="0917 123 4567 or +639171234567"
@@ -122,12 +128,15 @@ export default function CustomerForm({
 
           {/* Address / To Be Delivered To */}
           <div id="shipping-info-section" className="sm:col-span-2">
-            <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
+            <label htmlFor="customer-address" className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-amber-600" />
               Address / To Be Delivered To <span className="text-red-500">*</span>
             </label>
             <textarea
+              id="customer-address"
+              name="deliveryAddress"
               rows="2"
+              autoComplete="street-address"
               value={formData.deliveryAddress || ''}
               onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
               placeholder="House/Unit No., Street Name, Barangay, City, Landmark (e.g. Near St. Jude Church)"
@@ -178,6 +187,7 @@ export default function CustomerForm({
             {isCodEnabled && (
               <button
                 type="button"
+                aria-pressed={formData.paymentMethod === 'Cash on Delivery'}
                 onClick={() => handleInputChange('paymentMethod', 'Cash on Delivery')}
                 className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
                   formData.paymentMethod === 'Cash on Delivery'
@@ -206,6 +216,7 @@ export default function CustomerForm({
             {isMaribankEnabled && (
               <button
                 type="button"
+                aria-pressed={formData.paymentMethod === 'Maribank'}
                 onClick={() => handleInputChange('paymentMethod', 'Maribank')}
                 className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
                   formData.paymentMethod === 'Maribank'
@@ -234,6 +245,7 @@ export default function CustomerForm({
             {isGcashEnabled && (
               <button
                 type="button"
+                aria-pressed={formData.paymentMethod === 'GCash'}
                 onClick={() => handleInputChange('paymentMethod', 'GCash')}
                 className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
                   formData.paymentMethod === 'GCash'

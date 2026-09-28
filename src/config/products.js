@@ -95,8 +95,6 @@ export const DEFAULT_PRODUCTS = [
   }
 ];
 
-export const SPECIAL_ORDER_DEFAULT_PRICE = 55;
-
 export const formatPHP = (amount) => {
   return new Intl.NumberFormat('en-PH', {
     style: 'currency',

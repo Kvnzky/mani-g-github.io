@@ -11,14 +11,14 @@ import OrderCutoffBanner from './components/OrderCutoffBanner';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
-import { DEFAULT_PAYMENT_METHODS, getPaymentMethodIdByName, isPaymentMethodEnabled } from './config/paymentConfig';
+import { DEFAULT_PAYMENT_METHODS, getPaymentMethodIdByName } from './config/paymentConfig';
 import {
   evaluateClientCutoff,
   getManilaDateStr,
   getManilaTimeStr12,
   normalizeCutoffTime
 } from './utils/phtTime';
-import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock, Clock, X } from 'lucide-react';
+import { AlertCircle, ChevronRight, Lock, X } from 'lucide-react';
 
 // Helper to detect if current URL or hash targets the admin route
 const parseAdminRoute = () => {
@@ -156,15 +156,18 @@ export default function App() {
 
   // Automatically update customer paymentMethod if the selected method is disabled
   useEffect(() => {
+    const fallback = paymentMethods.cod ? 'Cash on Delivery'
+      : paymentMethods.maribank ? 'Maribank'
+      : paymentMethods.gcash ? 'GCash'
+      : '';
+
     if (customerData.paymentMethod) {
       const currentId = getPaymentMethodIdByName(customerData.paymentMethod);
       if (paymentMethods[currentId] === false) {
-        const fallback = paymentMethods.cod ? 'Cash on Delivery'
-          : paymentMethods.gcash ? 'GCash'
-          : paymentMethods.maribank ? 'Maribank'
-          : '';
         setCustomerData((prev) => ({ ...prev, paymentMethod: fallback }));
       }
+    } else if (fallback) {
+      setCustomerData((prev) => ({ ...prev, paymentMethod: fallback }));
     }
   }, [paymentMethods, customerData.paymentMethod]);
 
@@ -190,12 +193,18 @@ export default function App() {
     }
   }, [toast.show]);
 
-  // Reset cart quantities for any unavailable flavors
+  // Reset cart quantities for any unavailable flavors in a single batched state update
   useEffect(() => {
-    products.forEach((p) => {
-      if (p.available === false && quantities[p.id] > 0) {
-        setQuantities((prev) => ({ ...prev, [p.id]: 0 }));
-      }
+    setQuantities((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      products.forEach((p) => {
+        if (p.available === false && next[p.id] > 0) {
+          next[p.id] = 0;
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
     });
   }, [products]);
 
@@ -442,7 +451,11 @@ export default function App() {
   // Initial Data Fetching & Real-Time Sync Polling
   useEffect(() => {
     fetchCutoff();
-    const syncInterval = setInterval(fetchCutoff, 10000); // Check cloud every 10s
+    const syncInterval = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState !== 'hidden') {
+        fetchCutoff();
+      }
+    }, 10000); // Check cloud every 10s
 
     // Real-time mobile wakeup: refresh settings immediately when user switches tabs or unlocks phone
     const handleVisibilityChange = () => {
@@ -795,6 +808,8 @@ export default function App() {
 
   // Order Submission (Client & Server Cutoff + Manual Form Status Enforced)
   const handleSubmitOrder = async () => {
+    if (isSubmitting) return;
+
     if (isOrdersClosed) {
       setSubmissionError(
         cutoffInfo?.manualFormOpen === false
@@ -1228,6 +1243,7 @@ export default function App() {
         <OrderConfirmationModal
           order={confirmedOrder}
           onReset={handleResetForNewOrder}
+          customQrs={customQrs}
         />
       )}
 
