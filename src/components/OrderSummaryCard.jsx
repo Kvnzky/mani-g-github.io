@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Plus, Minus, Sparkles, ArrowDown } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, ArrowDown } from 'lucide-react';
 import { formatPHP, getFlavorPersonality } from '../config/products';
 
 export default function OrderSummaryCard({
@@ -74,12 +74,6 @@ export default function OrderSummaryCard({
             <p className="text-xs text-mani-600 max-w-xs mx-auto mt-1 font-medium leading-relaxed">
               Tap <strong>+ Add to Order</strong> on any flavor card to start building your Mani Wandering stash.
             </p>
-          </div>
-          <div className="pt-1">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-mani-950 bg-amber-200/90 px-3 py-1 rounded-full border border-mani-900/20">
-              <Sparkles className="w-3.5 h-3.5 text-amber-800" />
-              <span>₱50–₱60 / tub • Bagong Luto Weekly</span>
-            </span>
           </div>
         </div>
       ) : (
