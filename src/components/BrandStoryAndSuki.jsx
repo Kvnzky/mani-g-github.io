@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Flame, Users, HeartHandshake, Plus, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { Sparkles, Flame, HeartHandshake, Plus, ArrowUpRight } from 'lucide-react';
 import { formatPHP } from '../config/products';
 
 const SUKI_COMBOS = [
@@ -208,95 +208,6 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
               </div>
             );
           })}
-        </div>
-
-        {/* Mga Suki Quality Pillars + Authentic Suki Leaderboard & Feedback Slot */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-2">
-          {/* Left 8 cols: 4 Snack Quality Pillars */}
-          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="p-4 rounded-2xl bg-white border-2 border-mani-900/15 flex items-start gap-3 shadow-warm">
-              <span className="text-2xl shrink-0">🧄</span>
-              <div>
-                <h4 className="font-display font-bold text-sm text-mani-950">Tunay na Bawang Chips</h4>
-                <p className="text-[11px] text-mani-600 font-medium mt-0.5">
-                  Generously topped with crispy golden garlic slices in every tub.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white border-2 border-mani-900/15 flex items-start gap-3 shadow-warm">
-              <span className="text-2xl shrink-0">🔥</span>
-              <div>
-                <h4 className="font-display font-bold text-sm text-mani-950">Small-Batch Lutong</h4>
-                <p className="text-[11px] text-mani-600 font-medium mt-0.5">
-                  Cooked in small batches so you never get stale or soggy peanuts.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white border-2 border-mani-900/15 flex items-start gap-3 shadow-warm">
-              <span className="text-2xl shrink-0">🫙</span>
-              <div>
-                <h4 className="font-display font-bold text-sm text-mani-950">Crunch-Lock Tubs</h4>
-                <p className="text-[11px] text-mani-600 font-medium mt-0.5">
-                  Packed in reusable, resealable tubs that keep the crunch alive for days.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white border-2 border-mani-900/15 flex items-start gap-3 shadow-warm">
-              <span className="text-2xl shrink-0">🇵🇭</span>
-              <div>
-                <h4 className="font-display font-bold text-sm text-mani-950">Sulit Presyong Suki</h4>
-                <p className="text-[11px] text-mani-600 font-medium mt-0.5">
-                  Premium snack experience at street-friendly prices (₱50–₱60/tub).
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right 4 cols: Authentic Suki Feedback / Best-Seller Spotlight (Zero Fake Testimonials) */}
-          <div className="lg:col-span-4 rounded-2xl bg-amber-100/80 border-2 border-mani-900/20 p-4 sm:p-5 flex flex-col justify-between shadow-warm">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-mani-900 text-amber-300">
-                  <Users className="w-3 h-3" /> Mga Suki Corner
-                </span>
-                <span className="font-display text-xs font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-300 rotate-2">
-                  CRUNCH! 🥜
-                </span>
-              </div>
-              <h3 className="font-display text-base sm:text-lg font-bold text-mani-950">
-                Top Picks & Suki Feedback
-              </h3>
-              {VERIFIED_SUKI_REVIEWS.length > 0 ? (
-                <div className="space-y-2">
-                  {VERIFIED_SUKI_REVIEWS.map((rev, idx) => (
-                    <blockquote key={idx} className="p-2.5 rounded-xl bg-white border border-mani-200 text-xs text-mani-800">
-                      “{rev.comment}” — <strong className="text-mani-950">{rev.name}</strong>
-                    </blockquote>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-1.5 text-[11px] font-extrabold">
-                    <span className="px-2.5 py-1 rounded-xl bg-white text-mani-950 border border-mani-300">
-                      🥇 #1 Best Seller: 🌶️ Spicy
-                    </span>
-                    <span className="px-2.5 py-1 rounded-xl bg-white text-mani-950 border border-mani-300">
-                      🥈 Classic Pick: 🧂 Salted
-                    </span>
-                    <span className="px-2.5 py-1 rounded-xl bg-white text-mani-950 border border-mani-300">
-                      🧄 Cult Fave: Bawang Only
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-mani-700 font-medium leading-relaxed">
-                    Already tried a tub? Send us your honest feedback or tag <strong className="text-mani-950">Mani Wandering</strong> on Messenger/Facebook to be featured on our Suki Wall!
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </section>
 
