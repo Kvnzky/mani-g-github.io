@@ -95,9 +95,6 @@ export default function Header({
                   Bagong Luto!
                 </span>
               </div>
-              <p className="text-[11px] font-bold text-mani-600 hidden sm:block mt-0.5">
-                🥜 Crispy na, Crunchy pa • ₱50–₱60 / tub
-              </p>
             </div>
           </div>
 
