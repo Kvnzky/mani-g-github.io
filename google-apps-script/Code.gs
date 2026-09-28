@@ -138,10 +138,27 @@ function doGet(e) {
     var enabled = e.parameter.enabled === 'true';
     var date = e.parameter.date || Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
     var time = e.parameter.time || '23:59';
-    var saveCutoffRes = handleSaveSettings({
-      cutoff: { enabled: enabled, date: date, time: time }
-    });
+    var deliveryDay = e.parameter.deliveryDay || undefined;
+    var updatedAt = e.parameter.updatedAt ? Number(e.parameter.updatedAt) : new Date().getTime();
+    var cutoffPayload = {
+      cutoff: { enabled: enabled, date: date, time: time, deliveryDay: deliveryDay, updatedAt: updatedAt }
+    };
+    if (deliveryDay) cutoffPayload.deliveryDay = deliveryDay;
+    if (e.parameter.manualFormOpen !== undefined) {
+      cutoffPayload.manualFormOpen = e.parameter.manualFormOpen !== 'false';
+    }
+    var saveCutoffRes = handleSaveSettings(cutoffPayload);
     return formatResponse(saveCutoffRes, e);
+  }
+
+  // Fast path for Manual Form Status update via GET (instant sync from mobile/desktop)
+  if (action === 'saveFormStatus') {
+    var manualOpen = e.parameter.manualFormOpen !== 'false';
+    var saveFormRes = handleSaveSettings({
+      manualFormOpen: manualOpen,
+      updatedAt: e.parameter.updatedAt ? Number(e.parameter.updatedAt) : new Date().getTime()
+    });
+    return formatResponse(saveFormRes, e);
   }
 
   // Fast path for Payment Methods update via GET (instant sync from mobile/desktop)
@@ -190,9 +207,9 @@ function doGet(e) {
     } else if (action === 'fixSheet' || action === 'repairLayout') {
       result = handleFixAllSheets(ss);
     } else if (action === 'updateStatus') {
-      result = handleUpdateStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.status);
+      result = handleUpdateStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.status, e.parameter.customerName, e.parameter.orderTime);
     } else if (action === 'updatePaymentStatus') {
-      result = handleUpdatePaymentStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.paymentStatus);
+      result = handleUpdatePaymentStatus(ss, e.parameter.orderId, e.parameter.orderDate, e.parameter.paymentStatus, e.parameter.customerName, e.parameter.orderTime);
     } else if (action === 'sendOrderSummaryEmail') {
       result = handleSendOrderSummaryEmail(ss, e.parameter);
     }
@@ -262,10 +279,10 @@ function doPost(e) {
       var result = handleCleanAllSheets(ss);
       return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'updateStatus') {
-      var result = handleUpdateStatus(ss, payload.orderId, payload.orderDate, payload.status);
+      var result = handleUpdateStatus(ss, payload.orderId, payload.orderDate, payload.status, payload.customerName, payload.orderTime);
       return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'updatePaymentStatus') {
-      var result = handleUpdatePaymentStatus(ss, payload.orderId, payload.orderDate, payload.paymentStatus);
+      var result = handleUpdatePaymentStatus(ss, payload.orderId, payload.orderDate, payload.paymentStatus, payload.customerName, payload.orderTime);
       return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'fixSheet' || action === 'repairLayout') {
       var result = handleFixAllSheets(ss);
@@ -304,10 +321,13 @@ function handleGetSettings() {
   // Fallback defaults
   if (!settings.cutoff) {
     settings.cutoff = {
-      enabled: true,
+      enabled: false,
       date: Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd'),
       time: '23:59'
     };
+  }
+  if (settings.manualFormOpen === undefined) {
+    settings.manualFormOpen = true;
   }
   if (!settings.paymentMethods) {
     settings.paymentMethods = {
@@ -339,7 +359,20 @@ function handleSaveSettings(newSettings) {
     } catch (e) {}
   }
 
-  if (payload.cutoff) existing.cutoff = payload.cutoff;
+  if (payload.cutoff) {
+    existing.cutoff = existing.cutoff || {};
+    if (payload.cutoff.enabled !== undefined) existing.cutoff.enabled = Boolean(payload.cutoff.enabled);
+    if (payload.cutoff.date) existing.cutoff.date = payload.cutoff.date;
+    if (payload.cutoff.time) existing.cutoff.time = payload.cutoff.time;
+    if (payload.cutoff.deliveryDay) existing.cutoff.deliveryDay = payload.cutoff.deliveryDay;
+    existing.cutoff.updatedAt = payload.cutoff.updatedAt || new Date().getTime();
+  }
+  if (payload.manualFormOpen !== undefined) {
+    existing.manualFormOpen = Boolean(payload.manualFormOpen);
+  }
+  if (payload.updatedAt) {
+    existing.updatedAt = payload.updatedAt;
+  }
   if (payload.products) existing.products = payload.products;
   if (payload.qrs) existing.qrs = payload.qrs;
   if (payload.deliveryDay) existing.deliveryDay = payload.deliveryDay;
@@ -434,6 +467,7 @@ function handleGetOrders(ss, dateFilter) {
     var status = hasCheese ? String(r[17] || 'New') : String(r[16] || 'New');
 
     orders.push({
+      id: 'ord_sheet_row_' + (i + 8) + '_' + ordId,
       orderId: ordId,
       orderDate: oDate,
       orderTime: oTime,
@@ -1183,21 +1217,21 @@ function fixAndAlignSheet(sheet, dateStr) {
 }
 
 /**
- * Handle Updating Order Status in Google Sheet (Col 17 / Q)
+ * Handle Updating Order Status in Google Sheet (Col 17 / Q or Col 18 / R)
  */
-function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
+function handleUpdateStatus(ss, orderId, orderDate, newStatus, customerName, orderTime) {
   if (!orderId) return { success: false, error: 'Missing orderId' };
   
   // 1. Search Master list first
   var sheet = ss.getSheetByName(MASTER_SHEET_NAME);
-  var row = sheet ? findOrderInSheet(sheet, orderId) : -1;
+  var row = sheet ? findOrderInSheet(sheet, orderId, customerName, orderTime) : -1;
 
   // 2. Fallback search across other sheets if needed
   if (row === -1) {
     var targetDate = orderDate || Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
     var dateSheet = ss.getSheetByName(targetDate);
     if (dateSheet) {
-      var dRow = findOrderInSheet(dateSheet, orderId);
+      var dRow = findOrderInSheet(dateSheet, orderId, customerName, orderTime);
       if (dRow > 0) {
         sheet = dateSheet;
         row = dRow;
@@ -1209,7 +1243,7 @@ function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
     var sheets = ss.getSheets();
     for (var i = 0; i < sheets.length; i++) {
       if (sheets[i].getName() === MASTER_SHEET_NAME) continue;
-      var foundRow = findOrderInSheet(sheets[i], orderId);
+      var foundRow = findOrderInSheet(sheets[i], orderId, customerName, orderTime);
       if (foundRow > 0) {
         sheet = sheets[i];
         row = foundRow;
@@ -1217,6 +1251,8 @@ function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
       }
     }
   }
+
+  if (!sheet || row === -1) return { success: false, error: 'Order ' + orderId + ' not found in sheet' };
 
   var statusCol = (sheet.getLastColumn() >= 18 || String(sheet.getRange(7, 14).getValue() || '').indexOf('Cheese') !== -1) ? 18 : 17;
   var cell = sheet.getRange(row, statusCol);
@@ -1237,19 +1273,19 @@ function handleUpdateStatus(ss, orderId, orderDate, newStatus) {
 /**
  * Handle Updating Paid Status in Google Sheet (Col 8 / H)
  */
-function handleUpdatePaymentStatus(ss, orderId, orderDate, newPaymentStatus) {
+function handleUpdatePaymentStatus(ss, orderId, orderDate, newPaymentStatus, customerName, orderTime) {
   if (!orderId) return { success: false, error: 'Missing orderId' };
   
   // 1. Search Master list first
   var sheet = ss.getSheetByName(MASTER_SHEET_NAME);
-  var row = sheet ? findOrderInSheet(sheet, orderId) : -1;
+  var row = sheet ? findOrderInSheet(sheet, orderId, customerName, orderTime) : -1;
 
   // 2. Fallback search across other sheets if needed
   if (row === -1) {
     var targetDate = orderDate || Utilities.formatDate(new Date(), getTimezone(), 'yyyy-MM-dd');
     var dateSheet = ss.getSheetByName(targetDate);
     if (dateSheet) {
-      var dRow = findOrderInSheet(dateSheet, orderId);
+      var dRow = findOrderInSheet(dateSheet, orderId, customerName, orderTime);
       if (dRow > 0) {
         sheet = dateSheet;
         row = dRow;
@@ -1261,7 +1297,7 @@ function handleUpdatePaymentStatus(ss, orderId, orderDate, newPaymentStatus) {
     var sheets = ss.getSheets();
     for (var i = 0; i < sheets.length; i++) {
       if (sheets[i].getName() === MASTER_SHEET_NAME) continue;
-      var foundRow = findOrderInSheet(sheets[i], orderId);
+      var foundRow = findOrderInSheet(sheets[i], orderId, customerName, orderTime);
       if (foundRow > 0) {
         sheet = sheets[i];
         row = foundRow;
@@ -1286,16 +1322,40 @@ function handleUpdatePaymentStatus(ss, orderId, orderDate, newPaymentStatus) {
   return { success: true, orderId: orderId, paymentStatus: newPaymentStatus, tabName: sheet.getName(), row: row };
 }
 
-function findOrderInSheet(sheet, orderId) {
+function findOrderInSheet(sheet, orderId, customerName, orderTime) {
   var lastRow = sheet.getLastRow();
   if (lastRow < 8) return -1;
-  var orderIds = sheet.getRange(8, 1, lastRow - 7, 1).getValues();
-  for (var i = 0; i < orderIds.length; i++) {
-    if (orderIds[i][0] === orderId) {
-      return i + 8;
+  var rows = sheet.getRange(8, 1, lastRow - 7, 4).getValues();
+  var matches = [];
+  for (var i = 0; i < rows.length; i++) {
+    if (String(rows[i][0] || '').trim() === String(orderId).trim()) {
+      matches.push({
+        rowNum: i + 8,
+        time: String(rows[i][2] || '').trim(),
+        customer: String(rows[i][3] || '').trim()
+      });
     }
   }
-  return -1;
+  if (matches.length === 0) return -1;
+  if (matches.length === 1) return matches[0].rowNum;
+
+  if (customerName) {
+    var cleanName = String(customerName).trim().toLowerCase();
+    for (var j = 0; j < matches.length; j++) {
+      if (matches[j].customer.toLowerCase() === cleanName) {
+        return matches[j].rowNum;
+      }
+    }
+  }
+  if (orderTime) {
+    var cleanTime = String(orderTime).trim();
+    for (var k = 0; k < matches.length; k++) {
+      if (matches[k].time === cleanTime) {
+        return matches[k].rowNum;
+      }
+    }
+  }
+  return matches[0].rowNum;
 }
 
 /**

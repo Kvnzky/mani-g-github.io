@@ -2,13 +2,20 @@
   "spreadsheetId": "1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI",
   "appsScriptUrl": "https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec",
   "timezone": "Asia/Manila",
+  "manualFormOpen": true,
   "cutoff": {
     "enabled": false,
-    "date": "2026-09-17",
+    "date": "2026-09-28",
     "time": "23:59",
-    "deliveryDay": "Wednesday"
+    "deliveryDay": "Wednesday",
+    "updatedAt": 0
   },
   "deliveryDay": "Wednesday",
+  "paymentMethods": {
+    "cod": true,
+    "maribank": true,
+    "gcash": true
+  },
   "flavorAvailability": {
     "salted": true,
     "unsalted": true,

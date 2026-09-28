@@ -1,25 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Lock, CheckCircle2, Calendar, Truck } from 'lucide-react';
+import {
+  getManilaCutoffTimestampMs,
+  formatManilaDateNice,
+  formatManilaTime12
+} from '../utils/phtTime';
 
 export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
   const [remainingSec, setRemainingSec] = useState(() => {
-    if (!cutoffInfo || !cutoffInfo.cutoffIso) return 0;
-    const diff = Math.floor((new Date(cutoffInfo.cutoffIso).getTime() - Date.now()) / 1000);
+    if (!cutoffInfo || !cutoffInfo.cutoffDate) return 0;
+    const targetMs = getManilaCutoffTimestampMs(cutoffInfo.cutoffDate, cutoffInfo.cutoffTime);
+    if (targetMs === null) return 0;
+    const diff = Math.floor((targetMs - Date.now()) / 1000);
     return Math.max(0, diff);
   });
 
   useEffect(() => {
-    if (!cutoffInfo || !cutoffInfo.enabled || !cutoffInfo.cutoffIso) return;
+    if (!cutoffInfo || !cutoffInfo.cutoffDate) return;
 
-    const targetTimestamp = new Date(cutoffInfo.cutoffIso).getTime();
+    const targetTimestamp = getManilaCutoffTimestampMs(cutoffInfo.cutoffDate, cutoffInfo.cutoffTime);
+    if (targetTimestamp === null) return;
 
     const updateRemaining = () => {
       const diff = Math.floor((targetTimestamp - Date.now()) / 1000);
       const remaining = Math.max(0, diff);
       setRemainingSec(remaining);
 
-      // If reached 0 while page was open, notify parent to refresh cutoff state
-      if (remaining === 0 && cutoffInfo.isOpen && onRefreshCutoff) {
+      // If reached 0 while page was open and cutoff timer is enabled, notify parent to refresh cutoff state
+      if (cutoffInfo.enabled && remaining === 0 && cutoffInfo.isOpen && onRefreshCutoff) {
         onRefreshCutoff();
       }
     };
@@ -27,33 +35,13 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
     updateRemaining();
     const interval = setInterval(updateRemaining, 1000);
     return () => clearInterval(interval);
-  }, [cutoffInfo?.cutoffIso, cutoffInfo?.enabled, cutoffInfo?.isOpen]);
+  }, [cutoffInfo?.cutoffDate, cutoffInfo?.cutoffTime, cutoffInfo?.enabled, cutoffInfo?.isOpen]);
 
-  // Format military time (e.g. 23:59, 17:00) to normal 12-hour format (e.g. 11:59 PM, 5:00 PM)
-  const formatNormalTime = (timeStr) => {
-    if (!timeStr) return '';
-    const parts = timeStr.split(':');
-    if (parts.length < 2) return timeStr;
-    let hours = parseInt(parts[0], 10);
-    const minutes = parts[1];
-    if (isNaN(hours)) return timeStr;
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    return `${hours}:${minutes} ${ampm}`;
-  };
+  // Format military time (e.g. 23:59, 17:00) to normal 12-hour format in PHT
+  const formatNormalTime = (timeStr) => formatManilaTime12(timeStr);
 
-  // Format date nicely (e.g. "Thursday, Sep 24")
-  const formatDateNice = (dateStr) => {
-    if (!dateStr) return '';
-    try {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const dt = new Date(y, m - 1, d);
-      return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(dt);
-    } catch (e) {
-      return dateStr;
-    }
-  };
+  // Format date nicely in Asia/Manila timezone
+  const formatDateNice = (dateStr) => formatManilaDateNice(dateStr);
 
   // Extract hours, minutes, seconds for digital display cards
   const hours = Math.floor(remainingSec / 3600);
@@ -61,9 +49,42 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
   const seconds = remainingSec % 60;
   const pad = (n) => String(n).padStart(2, '0');
 
-  const isClosed = !cutoffInfo?.isOpen || (cutoffInfo?.enabled && remainingSec <= 0);
+  const isManuallyClosed = cutoffInfo?.manualFormOpen === false;
+  const isTimerClosed = Boolean(cutoffInfo?.enabled && remainingSec <= 0);
+  const isClosed = isManuallyClosed || cutoffInfo?.isOpen === false || isTimerClosed;
 
-  // If cutoff timer is disabled (continuous orders open)
+  // 1. If orders are closed (either manually via Admin toggle or via Cutoff Timer)
+  if (isClosed) {
+    return (
+      <div 
+        id="order-cutoff-section"
+        data-testid="orders-closed-banner"
+        className="w-full rounded-3xl p-5 sm:p-6 bg-white border border-red-200/90 shadow-sm text-stone-900 animate-fade-in"
+      >
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+          <div className="w-11 h-11 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-200/60 shadow-2xs">
+            <Lock className="w-5 h-5" />
+          </div>
+          <div className="space-y-1 flex-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              Orders Closed
+            </div>
+            <h3 className="text-base sm:text-lg font-extrabold text-stone-900">
+              Orders are currently closed. Please check back soon.
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-600 font-medium">
+              {isManuallyClosed
+                ? 'Our order form is temporarily closed for new submissions. Please check back soon!'
+                : `Order cutoff has ended for the current batch. We are preparing active orders for delivery on ${cutoffInfo?.deliveryDay || 'Wednesday'}.`}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. If cutoff timer is disabled and manual form status is Open (continuous orders open)
   if (cutoffInfo && !cutoffInfo.enabled) {
     return (
       <div 
@@ -84,35 +105,6 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
             </h3>
             <p className="text-xs sm:text-sm text-stone-600 font-medium">
               Fresh artisanal batches prepared daily. Next delivery:{' '}
-              <span className="font-bold text-stone-900">{cutoffInfo?.deliveryDay || 'Wednesday'}</span>.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // If orders are closed
-  if (isClosed) {
-    return (
-      <div 
-        id="order-cutoff-section"
-        className="w-full rounded-3xl p-5 sm:p-6 bg-white border border-red-200/90 shadow-sm text-stone-900 animate-fade-in"
-      >
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
-          <div className="w-11 h-11 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-200/60 shadow-2xs">
-            <Lock className="w-5 h-5" />
-          </div>
-          <div className="space-y-1 flex-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200/60">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              Orders Closed
-            </div>
-            <h3 className="text-base sm:text-lg font-extrabold text-stone-900">
-              Order Cutoff Has Ended for Current Batch
-            </h3>
-            <p className="text-xs sm:text-sm text-stone-600 font-medium">
-              We are roasting and preparing active orders for delivery on{' '}
               <span className="font-bold text-stone-900">{cutoffInfo?.deliveryDay || 'Wednesday'}</span>.
             </p>
           </div>

@@ -77,6 +77,7 @@ let settings = {
   spreadsheetId: process.env.GOOGLE_SHEET_ID || '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI',
   appsScriptUrl: process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec',
   timezone: TIMEZONE,
+  manualFormOpen: true,
   paymentMethods: {
     cod: true,
     maribank: true,
@@ -84,8 +85,10 @@ let settings = {
   },
   cutoff: {
     enabled: false,
-    date: '2026-09-17',
-    time: '23:59'
+    date: '2026-09-28',
+    time: '23:59',
+    deliveryDay: 'Wednesday',
+    updatedAt: 0
   }
 };
 
@@ -95,6 +98,7 @@ if (fs.existsSync(SETTINGS_FILE)) {
     settings = {
       ...settings,
       ...loaded,
+      manualFormOpen: loaded.manualFormOpen !== undefined ? Boolean(loaded.manualFormOpen) : true,
       paymentMethods: {
         cod: true,
         maribank: true,
@@ -121,14 +125,6 @@ const saveSettings = () => {
 
 // Orders Storage
 let orders = [];
-if (fs.existsSync(ORDERS_FILE)) {
-  try {
-    orders = JSON.parse(fs.readFileSync(ORDERS_FILE, 'utf8'));
-  } catch (err) {
-    console.error('Error reading orders.json:', err.message);
-  }
-}
-
 const saveOrders = () => {
   try {
     fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2), 'utf8');
@@ -137,7 +133,60 @@ const saveOrders = () => {
   }
 };
 
-// Philippine Time Helpers (Asia/Manila)
+// Ensure every order has its own strictly unique `id` and unique `orderId`
+const normalizeAndDeduplicateOrders = (rawOrders) => {
+  if (!Array.isArray(rawOrders)) return { list: [], changed: false };
+  const seenIds = new Set();
+  const seenOrderIds = new Set();
+  let changed = false;
+
+  // Process from oldest to newest so earlier orders keep their original sequence number
+  const reversed = [...rawOrders].reverse();
+  const normalizedReversed = reversed.map((orig, idx) => {
+    const o = { ...orig };
+    const datePart = (o.orderDate || '2026-09-20').replace(/-/g, '');
+    const prefix = `MANI-${datePart}-`;
+
+    let ordId = String(o.orderId || '').trim();
+    if (!ordId || seenOrderIds.has(ordId)) {
+      let seqNum = 1;
+      while (seenOrderIds.has(`${prefix}${String(seqNum).padStart(3, '0')}`)) {
+        seqNum++;
+      }
+      ordId = `${prefix}${String(seqNum).padStart(3, '0')}`;
+      o.orderId = ordId;
+      changed = true;
+    }
+    seenOrderIds.add(ordId);
+
+    let recId = String(o.id || '').trim();
+    if (!recId || seenIds.has(recId)) {
+      recId = `ord_${datePart}_${idx + 1}_${ordId}`;
+      o.id = recId;
+      changed = true;
+    }
+    seenIds.add(recId);
+
+    return o;
+  });
+
+  return { list: normalizedReversed.reverse(), changed };
+};
+
+if (fs.existsSync(ORDERS_FILE)) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(ORDERS_FILE, 'utf8'));
+    const { list, changed } = normalizeAndDeduplicateOrders(raw);
+    orders = list;
+    if (changed) {
+      saveOrders();
+    }
+  } catch (err) {
+    console.error('Error reading orders.json:', err.message);
+  }
+}
+
+// Philippine Time Helpers (Asia/Manila, UTC+8)
 const getPhilippineDateTime = (date = new Date()) => {
   const dateStr = new Intl.DateTimeFormat('en-CA', {
     timeZone: TIMEZONE,
@@ -157,13 +206,26 @@ const getPhilippineDateTime = (date = new Date()) => {
   return { dateStr, timeStr };
 };
 
-// Generate sequential Order ID: MANI-YYYYMMDD-001
+// Generate strictly unique sequential Order ID: MANI-YYYYMMDD-001
 const generateOrderId = (dateStr) => {
   const compactDate = dateStr.replace(/-/g, '');
   const prefix = `MANI-${compactDate}-`;
-  const countToday = orders.filter(o => o.orderDate === dateStr).length + 1;
-  const seq = String(countToday).padStart(3, '0');
-  return `${prefix}${seq}`;
+  let maxSeq = 0;
+  orders.forEach((o) => {
+    if (o && typeof o.orderId === 'string' && o.orderId.startsWith(prefix)) {
+      const num = parseInt(o.orderId.slice(prefix.length), 10);
+      if (!Number.isNaN(num) && num > maxSeq) {
+        maxSeq = num;
+      }
+    }
+  });
+  let nextSeq = Math.max(maxSeq + 1, orders.filter(o => o.orderDate === dateStr).length + 1);
+  let candidate = `${prefix}${String(nextSeq).padStart(3, '0')}`;
+  while (orders.some((o) => o.orderId === candidate)) {
+    nextSeq++;
+    candidate = `${prefix}${String(nextSeq).padStart(3, '0')}`;
+  }
+  return candidate;
 };
 
 // Mobile Number Validation
@@ -180,24 +242,51 @@ const formatPhilippineMobile = (mobile) => {
   return cleaned;
 };
 
+// Compute exact UTC timestamp for YYYY-MM-DD and HH:MM in Asia/Manila (UTC+8)
+const getManilaCutoffTimestamp = (dateStr, timeStr) => {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr).trim())) return null;
+  const [year, month, day] = String(dateStr).trim().split('-').map(Number);
+  const cleanTime = String(timeStr || '23:59').trim();
+  const timeMatch = cleanTime.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (!timeMatch) return null;
+  const hour = parseInt(timeMatch[1], 10);
+  const minute = parseInt(timeMatch[2], 10);
+  const second = parseInt(timeMatch[3] || '0', 10);
+  return Date.UTC(year, month - 1, day, hour - 8, minute, second, 0);
+};
+
 // -------------------------------------------------------------
-// Cutoff Evaluation Engine
+// Cutoff & Manual Form Status Evaluation Engine (Asia/Manila UTC+8)
 // -------------------------------------------------------------
 const evaluateCutoff = () => {
-  const cutoff = settings.cutoff || { enabled: false, date: '', time: '' };
+  const cutoff = settings.cutoff || { enabled: false, date: '', time: '23:59' };
   const now = new Date();
   const { dateStr, timeStr } = getPhilippineDateTime(now);
 
+  const manualFormOpen = settings.manualFormOpen !== false;
   const deliveryDay = settings.deliveryDay || cutoff.deliveryDay || 'Wednesday';
   const flavorAvailability = settings.flavorAvailability || null;
+  const savedDate = cutoff.date || dateStr;
+  const savedTime = (cutoff.time || '23:59').slice(0, 5);
+  const normalizedTime = savedTime.length === 5 ? `${savedTime}:00` : savedTime;
+  const cutoffIso = savedDate ? `${savedDate}T${normalizedTime}+08:00` : null;
+  const updatedAt = Number(cutoff.updatedAt || settings.updatedAt || 0);
 
   if (!cutoff.enabled || !cutoff.date || !cutoff.time) {
+    const isOpen = manualFormOpen;
+    const status = isOpen ? 'OPEN' : 'CLOSED';
+    const closedReason = isOpen ? null : 'manual';
     return {
       enabled: false,
-      isOpen: true,
-      status: 'OPEN',
-      cutoffDate: cutoff.date || dateStr,
-      cutoffTime: cutoff.time || '23:59',
+      manualFormOpen,
+      formStatus: manualFormOpen ? 'open' : 'closed',
+      isOpen,
+      closedReason,
+      status,
+      date: savedDate,
+      time: savedTime,
+      cutoffDate: savedDate,
+      cutoffTime: savedTime,
       deliveryDay,
       flavorAvailability,
       paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
@@ -206,26 +295,32 @@ const evaluateCutoff = () => {
       currentPhilippineDate: dateStr,
       currentPhilippineTime: timeStr,
       remainingSeconds: null,
-      cutoffIso: null
+      cutoffIso,
+      updatedAt
     };
   }
 
-  // Construct standard ISO string in Asia/Manila (+08:00)
-  const normalizedTime = cutoff.time.length === 5 ? `${cutoff.time}:00` : cutoff.time;
-  const cutoffIso = `${cutoff.date}T${normalizedTime}+08:00`;
-  const cutoffTimestamp = new Date(cutoffIso).getTime();
+  // Strictly evaluate in Asia/Manila (UTC+8)
+  const cutoffTimestamp = getManilaCutoffTimestamp(savedDate, savedTime);
   const currentTimestamp = now.getTime();
-  const diffSec = Math.floor((cutoffTimestamp - currentTimestamp) / 1000);
+  const diffSec = cutoffTimestamp !== null ? Math.floor((cutoffTimestamp - currentTimestamp) / 1000) : 0;
 
-  const isOpen = diffSec > 0;
-  const status = isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED';
+  const isCutoffExpired = diffSec <= 0;
+  const isOpen = manualFormOpen && !isCutoffExpired;
+  const closedReason = !manualFormOpen ? 'manual' : (isCutoffExpired ? 'cutoff' : null);
+  const status = !isOpen ? 'CLOSED' : 'CUTOFF SCHEDULED';
 
   return {
     enabled: true,
+    manualFormOpen,
+    formStatus: manualFormOpen ? 'open' : 'closed',
     isOpen,
+    closedReason,
     status,
-    cutoffDate: cutoff.date,
-    cutoffTime: cutoff.time,
+    date: savedDate,
+    time: savedTime,
+    cutoffDate: savedDate,
+    cutoffTime: savedTime,
     deliveryDay,
     flavorAvailability,
     paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
@@ -234,7 +329,8 @@ const evaluateCutoff = () => {
     currentPhilippineDate: dateStr,
     currentPhilippineTime: timeStr,
     remainingSeconds: Math.max(0, diffSec),
-    cutoffIso
+    cutoffIso,
+    updatedAt
   };
 };
 
@@ -325,29 +421,39 @@ app.get('/api/cutoff', (req, res) => {
 
 // Admin Cutoff Update (Protected)
 app.post('/api/admin/cutoff', requireAdminAuth, (req, res) => {
-  const { enabled, date, time, deliveryDay, flavorAvailability } = req.body || {};
+  const { enabled, date, time, deliveryDay, flavorAvailability, manualFormOpen } = req.body || {};
 
   if (enabled !== undefined) {
     settings.cutoff.enabled = Boolean(enabled);
   }
 
   if (date) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    const cleanDate = String(date).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
       return res.status(400).json({ error: 'Invalid date format. Expected YYYY-MM-DD.' });
     }
-    settings.cutoff.date = date;
+    settings.cutoff.date = cleanDate;
   }
 
   if (time) {
-    if (!/^\d{2}:\d{2}(:\d{2})?$/.test(time)) {
+    const cleanTime = String(time).trim();
+    const match = cleanTime.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (!match) {
       return res.status(400).json({ error: 'Invalid time format. Expected HH:MM.' });
     }
-    settings.cutoff.time = time.slice(0, 5);
+    const hh = String(Math.min(23, Math.max(0, parseInt(match[1], 10)))).padStart(2, '0');
+    const mm = String(Math.min(59, Math.max(0, parseInt(match[2], 10)))).padStart(2, '0');
+    settings.cutoff.time = `${hh}:${mm}`;
   }
 
   if (deliveryDay !== undefined) {
     settings.deliveryDay = String(deliveryDay).trim();
     settings.cutoff.deliveryDay = String(deliveryDay).trim();
+  }
+
+  // Only update manualFormOpen if explicitly provided; never let cutoff timer updates reset manualFormOpen
+  if (manualFormOpen !== undefined) {
+    settings.manualFormOpen = Boolean(manualFormOpen);
   }
 
   if (flavorAvailability && typeof flavorAvailability === 'object') {
@@ -357,12 +463,50 @@ app.post('/api/admin/cutoff', requireAdminAuth, (req, res) => {
     };
   }
 
+  const nowTs = Date.now();
+  settings.cutoff.updatedAt = nowTs;
+  settings.updatedAt = nowTs;
+
   saveSettings();
   const updatedCutoff = evaluateCutoff();
 
   res.json({
     success: true,
     message: 'Cutoff settings updated successfully.',
+    cutoff: updatedCutoff
+  });
+});
+
+// Admin Manual Order Form Status Toggle (Protected & Independent from Cutoff Timer)
+app.post('/api/admin/form-status', requireAdminAuth, (req, res) => {
+  const { manualFormOpen, formStatus } = req.body || {};
+
+  let nextOpenState;
+  if (manualFormOpen !== undefined) {
+    nextOpenState = Boolean(manualFormOpen);
+  } else if (formStatus !== undefined) {
+    nextOpenState = String(formStatus).toLowerCase() !== 'closed';
+  } else {
+    return res.status(400).json({ error: 'Missing manualFormOpen or formStatus in request body.' });
+  }
+
+  settings.manualFormOpen = nextOpenState;
+  const nowTs = Date.now();
+  settings.updatedAt = nowTs;
+  if (settings.cutoff) {
+    settings.cutoff.updatedAt = nowTs;
+  }
+
+  saveSettings();
+  const updatedCutoff = evaluateCutoff();
+
+  res.json({
+    success: true,
+    manualFormOpen: settings.manualFormOpen,
+    formStatus: settings.manualFormOpen ? 'open' : 'closed',
+    message: settings.manualFormOpen
+      ? 'Order form is now OPEN.'
+      : 'Order form is now CLOSED.',
     cutoff: updatedCutoff
   });
 });
@@ -645,6 +789,8 @@ const formatServerOrderItems = (order) => {
   return parts.length > 0 ? parts.join(', ') : 'N/A';
 };
 
+const isValidDateParam = (str) => typeof str === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(str.trim());
+
 // Protected Admin Endpoint: Send Order Summary Email to engrkevinramirez@gmail.com
 app.post('/api/admin/send-order-summary', requireAdminAuth, async (req, res) => {
   try {
@@ -882,15 +1028,18 @@ app.post('/api/admin/send-order-summary', requireAdminAuth, async (req, res) => 
   }
 });
 
-// Public: Submit Order (Enforces Server-Side Cutoff + Validation)
+// Public: Submit Order (Enforces Server-Side Manual Form Status + Cutoff + Validation)
 app.post('/api/orders', orderLimiter, async (req, res) => {
   try {
-    // 1. Authoritative Server-Side Cutoff Enforcement
+    // 1. Authoritative Server-Side Form Status & Cutoff Enforcement
     const cutoffStatus = evaluateCutoff();
-    if (cutoffStatus.enabled && !cutoffStatus.isOpen) {
+    if (!cutoffStatus.isOpen || cutoffStatus.manualFormOpen === false) {
       return res.status(403).json({
-        error: 'Orders are now closed. The cutoff time for accepting orders has ended.',
-        code: 'ORDERS_CLOSED'
+        error: cutoffStatus.manualFormOpen === false
+          ? 'Orders are currently closed. Please check back soon.'
+          : 'Orders are now closed. The cutoff time for accepting orders has ended.',
+        code: 'ORDERS_CLOSED',
+        closedReason: cutoffStatus.closedReason
       });
     }
 
@@ -1118,23 +1267,51 @@ app.get('/api/orders', requireAdminAuth, (req, res) => {
   });
 });
 
+// Helper to locate a single specific order by its unique `id` first, then disambiguated `orderId`
+const findTargetOrderIndex = (targetId, { orderDate, orderTime, customerName } = {}) => {
+  if (!targetId) return -1;
+  // 1. Prioritize exact match on unique record `id`
+  let idx = orders.findIndex((o) => o && o.id === targetId);
+  if (idx !== -1) return idx;
+
+  // 2. Fallback if caller passed `orderId` with disambiguating fields
+  if (orderDate || orderTime || customerName) {
+    idx = orders.findIndex(
+      (o) =>
+        o &&
+        o.orderId === targetId &&
+        (!orderDate || o.orderDate === orderDate) &&
+        (!orderTime || o.orderTime === orderTime) &&
+        (!customerName || o.customerName === customerName)
+    );
+    if (idx !== -1) return idx;
+  }
+
+  // 3. Final fallback to exact orderId match
+  return orders.findIndex((o) => o && o.orderId === targetId);
+};
+
 // API: Update Order Status (Protected)
 app.patch('/api/orders/:id/status', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, orderDate, orderTime, customerName } = req.body || {};
 
   const validStatuses = ['New', 'Confirmed', 'Preparing', 'Ready', 'Completed', 'Cancelled'];
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
   }
 
-  const orderIndex = orders.findIndex(o => o.id === id || o.orderId === id);
+  const orderIndex = findTargetOrderIndex(id, { orderDate, orderTime, customerName });
   if (orderIndex === -1) {
     return res.status(404).json({ error: 'Order not found.' });
   }
 
-  orders[orderIndex].status = status;
-  orders[orderIndex].updatedAt = new Date().toISOString();
+  const updatedOrder = {
+    ...orders[orderIndex],
+    status,
+    updatedAt: new Date().toISOString()
+  };
+  orders[orderIndex] = updatedOrder;
   saveOrders();
 
   if (settings.appsScriptUrl) {
@@ -1145,8 +1322,11 @@ app.patch('/api/orders/:id/status', requireAdminAuth, async (req, res) => {
         body: JSON.stringify({
           action: 'updateStatus',
           spreadsheetId: settings.spreadsheetId,
-          orderId: orders[orderIndex].orderId,
-          orderDate: orders[orderIndex].orderDate,
+          id: updatedOrder.id,
+          orderId: updatedOrder.orderId,
+          orderDate: updatedOrder.orderDate,
+          orderTime: updatedOrder.orderTime,
+          customerName: updatedOrder.customerName,
           status
         }),
         redirect: 'follow'
@@ -1154,26 +1334,30 @@ app.patch('/api/orders/:id/status', requireAdminAuth, async (req, res) => {
     } catch (e) {}
   }
 
-  res.json({ success: true, order: orders[orderIndex] });
+  res.json({ success: true, order: updatedOrder });
 });
 
 // API: Update Payment Status (Protected)
 app.patch('/api/orders/:id/payment-status', requireAdminAuth, async (req, res) => {
   const { id } = req.params;
-  const { paymentStatus } = req.body;
+  const { paymentStatus, orderDate, orderTime, customerName } = req.body || {};
 
   const validPaymentStatuses = ['Paid', 'Unpaid'];
   if (!validPaymentStatuses.includes(paymentStatus)) {
     return res.status(400).json({ error: `Invalid paymentStatus. Must be one of: ${validPaymentStatuses.join(', ')}` });
   }
 
-  const orderIndex = orders.findIndex(o => o.id === id || o.orderId === id);
+  const orderIndex = findTargetOrderIndex(id, { orderDate, orderTime, customerName });
   if (orderIndex === -1) {
     return res.status(404).json({ error: 'Order not found.' });
   }
 
-  orders[orderIndex].paymentStatus = paymentStatus;
-  orders[orderIndex].updatedAt = new Date().toISOString();
+  const updatedOrder = {
+    ...orders[orderIndex],
+    paymentStatus,
+    updatedAt: new Date().toISOString()
+  };
+  orders[orderIndex] = updatedOrder;
   saveOrders();
 
   if (settings.appsScriptUrl) {
@@ -1184,8 +1368,11 @@ app.patch('/api/orders/:id/payment-status', requireAdminAuth, async (req, res) =
         body: JSON.stringify({
           action: 'updatePaymentStatus',
           spreadsheetId: settings.spreadsheetId,
-          orderId: orders[orderIndex].orderId,
-          orderDate: orders[orderIndex].orderDate,
+          id: updatedOrder.id,
+          orderId: updatedOrder.orderId,
+          orderDate: updatedOrder.orderDate,
+          orderTime: updatedOrder.orderTime,
+          customerName: updatedOrder.customerName,
           paymentStatus
         }),
         redirect: 'follow'
@@ -1193,7 +1380,7 @@ app.patch('/api/orders/:id/payment-status', requireAdminAuth, async (req, res) =
     } catch (e) {}
   }
 
-  res.json({ success: true, order: orders[orderIndex] });
+  res.json({ success: true, order: updatedOrder });
 });
 
 // API: Get Settings (Protected)
@@ -1202,6 +1389,7 @@ app.get('/api/settings', requireAdminAuth, (req, res) => {
     spreadsheetId: settings.spreadsheetId,
     appsScriptUrl: settings.appsScriptUrl,
     timezone: settings.timezone,
+    manualFormOpen: settings.manualFormOpen !== false,
     paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
     cutoff: evaluateCutoff()
   });
@@ -1209,9 +1397,10 @@ app.get('/api/settings', requireAdminAuth, (req, res) => {
 
 // API: Update Settings (Protected)
 app.post('/api/settings', requireAdminAuth, (req, res) => {
-  const { appsScriptUrl, spreadsheetId, paymentMethods } = req.body;
+  const { appsScriptUrl, spreadsheetId, paymentMethods, manualFormOpen } = req.body || {};
   if (appsScriptUrl !== undefined) settings.appsScriptUrl = appsScriptUrl.trim();
   if (spreadsheetId !== undefined) settings.spreadsheetId = spreadsheetId.trim();
+  if (manualFormOpen !== undefined) settings.manualFormOpen = Boolean(manualFormOpen);
   if (paymentMethods && typeof paymentMethods === 'object') {
     settings.paymentMethods = {
       cod: paymentMethods.cod !== undefined ? Boolean(paymentMethods.cod) : (settings.paymentMethods?.cod ?? true),

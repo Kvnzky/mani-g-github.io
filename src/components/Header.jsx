@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, ShieldCheck, Sparkles, Lock, LogIn, LogOut, User, Clock } from 'lucide-react';
+import { getManilaCutoffTimestampMs } from '../utils/phtTime';
 
 export default function Header({ 
   currentView, 
@@ -13,14 +14,17 @@ export default function Header({
   cutoffInfo
 }) {
   const [remainingSec, setRemainingSec] = useState(() => {
-    if (!cutoffInfo || !cutoffInfo.cutoffIso) return 0;
-    const diff = Math.floor((new Date(cutoffInfo.cutoffIso).getTime() - Date.now()) / 1000);
+    if (!cutoffInfo || !cutoffInfo.cutoffDate) return 0;
+    const targetMs = getManilaCutoffTimestampMs(cutoffInfo.cutoffDate, cutoffInfo.cutoffTime);
+    if (targetMs === null) return 0;
+    const diff = Math.floor((targetMs - Date.now()) / 1000);
     return Math.max(0, diff);
   });
 
   useEffect(() => {
-    if (!cutoffInfo || !cutoffInfo.enabled || !cutoffInfo.cutoffIso) return;
-    const targetTimestamp = new Date(cutoffInfo.cutoffIso).getTime();
+    if (!cutoffInfo || !cutoffInfo.cutoffDate) return;
+    const targetTimestamp = getManilaCutoffTimestampMs(cutoffInfo.cutoffDate, cutoffInfo.cutoffTime);
+    if (targetTimestamp === null) return;
     const updateTicker = () => {
       const diff = Math.floor((targetTimestamp - Date.now()) / 1000);
       setRemainingSec(Math.max(0, diff));
@@ -28,7 +32,7 @@ export default function Header({
     updateTicker();
     const timer = setInterval(updateTicker, 1000);
     return () => clearInterval(timer);
-  }, [cutoffInfo?.cutoffIso, cutoffInfo?.enabled]);
+  }, [cutoffInfo?.cutoffDate, cutoffInfo?.cutoffTime, cutoffInfo?.enabled]);
 
   const formatCountdown = (totalSec) => {
     if (totalSec <= 0) return '00:00:00';
@@ -75,19 +79,21 @@ export default function Header({
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 border shadow-2xs cursor-pointer ${
-                  !cutoffInfo.isOpen || (cutoffInfo.enabled && remainingSec <= 0)
+                  cutoffInfo.manualFormOpen === false || !cutoffInfo.isOpen || (cutoffInfo.enabled && remainingSec <= 0)
                     ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
                     : cutoffInfo.enabled
                     ? 'bg-amber-100/90 text-amber-950 border-amber-300 hover:bg-amber-200'
                     : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
                 }`}
                 title={
-                  cutoffInfo.enabled
+                  cutoffInfo.manualFormOpen === false
+                    ? 'Orders are currently closed'
+                    : cutoffInfo.enabled
                     ? `Order Cutoff: ${cutoffInfo.cutoffDate} at ${cutoffInfo.cutoffTime} PHT`
                     : cutoffInfo.isOpen ? 'Orders Open' : 'Orders Closed'
                 }
               >
-                {!cutoffInfo.isOpen || (cutoffInfo.enabled && remainingSec <= 0) ? (
+                {cutoffInfo.manualFormOpen === false || !cutoffInfo.isOpen || (cutoffInfo.enabled && remainingSec <= 0) ? (
                   <>
                     <Lock className="w-3.5 h-3.5 text-red-600" />
                     <span>Closed</span>

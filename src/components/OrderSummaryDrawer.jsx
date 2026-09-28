@@ -248,7 +248,7 @@ export default function OrderSummaryDrawer({
           {isOrdersClosed ? (
             <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-bold flex items-center gap-2">
               <Lock className="w-4 h-4 text-red-600 shrink-0" />
-              <span>Orders are now closed. The cutoff time for accepting orders has ended.</span>
+              <span>Orders are currently closed. Please check back soon.</span>
             </div>
           ) : Object.keys(validationErrors || {}).length > 0 ? (
             <div className="p-2 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
@@ -264,7 +264,7 @@ export default function OrderSummaryDrawer({
               className="w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 bg-red-100 border border-red-300 text-red-700 cursor-not-allowed shadow-none"
             >
               <Lock className="w-5 h-5 text-red-600" />
-              <span>Orders Closed (Cutoff Ended)</span>
+              <span>Orders Closed</span>
             </button>
           ) : (
             <button

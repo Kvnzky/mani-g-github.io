@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   ShieldCheck, RefreshCw, Search, Calendar, 
   Settings, ExternalLink, Plus, Edit2, Edit3, Check, Package, DollarSign, QrCode, Upload, Copy, Phone, MapPin, CreditCard,
@@ -7,11 +7,65 @@ import {
 import { formatPHP } from '../config/products';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from '../config/sheetsConfig';
 import { DEFAULT_PAYMENT_METHODS, PAYMENT_METHOD_METADATA } from '../config/paymentConfig';
+import { getManilaDateStr, normalizeCutoffTime, formatManilaTime12 } from '../utils/phtTime';
+
+// Ensure every order in Order Manager has a strictly unique `id` and apply any saved per-order status overrides
+const getSavedStatusOverrides = () => {
+  try {
+    return JSON.parse(localStorage.getItem('mani_order_status_overrides') || '{}') || {};
+  } catch (e) {
+    return {};
+  }
+};
+
+const saveOrderStatusOverride = (uniqueId, fields) => {
+  if (!uniqueId) return;
+  try {
+    const current = getSavedStatusOverrides();
+    current[uniqueId] = {
+      ...(current[uniqueId] || {}),
+      ...fields,
+      updatedAt: Date.now()
+    };
+    localStorage.setItem('mani_order_status_overrides', JSON.stringify(current));
+  } catch (e) {}
+};
+
+const normalizeOrdersWithUniqueIds = (rawOrders) => {
+  if (!Array.isArray(rawOrders)) return [];
+  const overrides = getSavedStatusOverrides();
+  const seenIds = new Set();
+
+  return rawOrders.map((ord, idx) => {
+    if (!ord || typeof ord !== 'object') return ord;
+    const copy = { ...ord };
+
+    // Build a deterministic unique ID if missing or duplicated
+    const fallbackDeterministicId = `ord_${copy.orderId || idx}_${copy.orderDate || 'nodate'}_${(copy.orderTime || '').replace(/\s+/g, '')}_${(copy.customerName || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+    let candidateId = (copy.id && typeof copy.id === 'string' && copy.id.trim())
+      ? copy.id.trim()
+      : fallbackDeterministicId;
+
+    if (seenIds.has(candidateId)) {
+      candidateId = `${fallbackDeterministicId}_dup_${idx}`;
+    }
+    seenIds.add(candidateId);
+    copy.id = candidateId;
+
+    // Apply any persisted per-order status override if backend/cloud hasn't caught up yet
+    const ov = overrides[candidateId];
+    if (ov) {
+      if (ov.status) copy.status = ov.status;
+      if (ov.paymentStatus) copy.paymentStatus = ov.paymentStatus;
+    }
+
+    return copy;
+  });
+};
 
 // Asia/Manila (PHT, UTC+8) Date Preset Helpers
 const getManilaTodayObj = () => {
-  const now = new Date();
-  const manilaStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(now);
+  const manilaStr = getManilaDateStr();
   const [y, m, d] = manilaStr.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d));
 };
@@ -140,6 +194,7 @@ export default function AdminPortal({
   adminUser, 
   onLogout,
   cutoffInfo,
+  onUpdateCutoff,
   onRefreshCutoff,
   activeTab: controlledTab,
   onTabChange
@@ -172,23 +227,59 @@ export default function AdminPortal({
   const [isSendingSummaryEmail, setIsSendingSummaryEmail] = useState(false);
   const [summaryEmailStatus, setSummaryEmailStatus] = useState({ msg: '', type: '' });
 
-  // Cutoff Form State
-  const [cutoffEnabled, setCutoffEnabled] = useState(cutoffInfo?.enabled || false);
-  const [cutoffDate, setCutoffDate] = useState(cutoffInfo?.cutoffDate || '');
-  const [cutoffTime, setCutoffTime] = useState(cutoffInfo?.cutoffTime || '23:59');
-  const [deliveryDay, setDeliveryDay] = useState(cutoffInfo?.deliveryDay || 'Wednesday');
+  // Read authoritative saved cutoff settings from localStorage + cutoffInfo prop
+  const initialSavedCutoff = useMemo(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
+      if (local && typeof local === 'object') return local;
+    } catch (e) {}
+    return null;
+  }, []);
+
+  // Cutoff & Manual Order Form Status State (Fixed to Asia/Manila PHT)
+  const [manualFormOpen, setManualFormOpen] = useState(() => {
+    if (initialSavedCutoff && initialSavedCutoff.manualFormOpen !== undefined) {
+      return Boolean(initialSavedCutoff.manualFormOpen);
+    }
+    return cutoffInfo?.manualFormOpen !== false;
+  });
+  const [cutoffEnabled, setCutoffEnabled] = useState(() => {
+    if (initialSavedCutoff && initialSavedCutoff.enabled !== undefined) {
+      return Boolean(initialSavedCutoff.enabled);
+    }
+    return Boolean(cutoffInfo?.enabled);
+  });
+  const [cutoffDate, setCutoffDate] = useState(() => {
+    return initialSavedCutoff?.date || cutoffInfo?.cutoffDate || getManilaDateStr();
+  });
+  const [cutoffTime, setCutoffTime] = useState(() => {
+    return normalizeCutoffTime(initialSavedCutoff?.time || cutoffInfo?.cutoffTime || '23:59');
+  });
+  const [deliveryDay, setDeliveryDay] = useState(() => {
+    return initialSavedCutoff?.deliveryDay || cutoffInfo?.deliveryDay || 'Wednesday';
+  });
   const [isSavingCutoff, setIsSavingCutoff] = useState(false);
   const [cutoffSaveMsg, setCutoffSaveMsg] = useState({ msg: '', type: '' });
+  const [formStatusSaveMsg, setFormStatusSaveMsg] = useState({ msg: '', type: '' });
 
-  // Sync cutoff local form when cutoffInfo prop updates
+  // Track last local edit/save timestamp so background polling NEVER resets admin's date/time inputs
+  const lastAdminEditTsRef = useRef(Number(initialSavedCutoff?.updatedAt || cutoffInfo?.updatedAt || 0));
+
+  // Sync cutoff local form ONLY when cutoffInfo has a genuinely newer updatedAt from server
   useEffect(() => {
-    if (cutoffInfo) {
+    if (!cutoffInfo) return;
+    const incomingUpdatedAt = Number(cutoffInfo.updatedAt || 0);
+    if (incomingUpdatedAt > 0 && incomingUpdatedAt > lastAdminEditTsRef.current) {
+      lastAdminEditTsRef.current = incomingUpdatedAt;
       setCutoffEnabled(Boolean(cutoffInfo.enabled));
       if (cutoffInfo.cutoffDate) setCutoffDate(cutoffInfo.cutoffDate);
-      if (cutoffInfo.cutoffTime) setCutoffTime(cutoffInfo.cutoffTime);
+      if (cutoffInfo.cutoffTime) setCutoffTime(normalizeCutoffTime(cutoffInfo.cutoffTime));
       if (cutoffInfo.deliveryDay) setDeliveryDay(cutoffInfo.deliveryDay);
+      if (cutoffInfo.manualFormOpen !== undefined) {
+        setManualFormOpen(Boolean(cutoffInfo.manualFormOpen));
+      }
     }
-  }, [cutoffInfo]);
+  }, [cutoffInfo?.updatedAt]);
 
   const [settings, setSettings] = useState({
     spreadsheetId: localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID || '',
@@ -293,17 +384,19 @@ export default function AdminPortal({
       if (res.ok && contentType.includes('application/json')) {
         const data = await res.json();
         if (data && data.orders) {
-          setOrders(data.orders);
+          const normalizedOrders = normalizeOrdersWithUniqueIds(data.orders);
+          setOrders(normalizedOrders);
           if (Array.isArray(data.allOrders)) {
-            setAllOrders(data.allOrders);
+            setAllOrders(normalizeOrdersWithUniqueIds(data.allOrders));
           } else {
-            setAllOrders((prev) => (prev.length > 0 ? prev : data.orders));
+            setAllOrders((prev) => (prev.length > 0 ? prev : normalizedOrders));
           }
           setDailySummary(data.dailySummary);
           if (!selectedDate && data.todayDate) {
             setSelectedDate(data.todayDate);
           }
           ordersFetched = true;
+          setIsLoading(false);
           return;
         }
       }
@@ -321,13 +414,14 @@ export default function AdminPortal({
           if (res.ok) {
             const cloudData = await res.json();
             if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
-              let filtered = cloudData.orders;
+              const normalizedCloud = normalizeOrdersWithUniqueIds(cloudData.orders);
+              let filtered = normalizedCloud;
               if (statusFilter && statusFilter !== 'all') {
                 filtered = filtered.filter(o => o.status === statusFilter);
               }
               setOrders(filtered);
               if (!qDate || allOrders.length === 0) {
-                setAllOrders(cloudData.orders);
+                setAllOrders(normalizedCloud);
               }
               if (cloudData.dailySummary) {
                 setDailySummary(cloudData.dailySummary);
@@ -336,6 +430,7 @@ export default function AdminPortal({
                 setSelectedDate(cloudData.todayDate);
               }
               ordersFetched = true;
+              setIsLoading(false);
               return;
             }
           }
@@ -347,13 +442,14 @@ export default function AdminPortal({
             const qDate = selectedDate || '';
             window[cbName] = (cloudData) => {
               if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
-                let filtered = cloudData.orders;
+                const normalizedCloud = normalizeOrdersWithUniqueIds(cloudData.orders);
+                let filtered = normalizedCloud;
                 if (statusFilter && statusFilter !== 'all') {
                   filtered = filtered.filter(o => o.status === statusFilter);
                 }
                 setOrders(filtered);
                 if (!qDate || allOrders.length === 0) {
-                  setAllOrders(cloudData.orders);
+                  setAllOrders(normalizedCloud);
                 }
                 if (cloudData.dailySummary) {
                   setDailySummary(cloudData.dailySummary);
@@ -378,7 +474,7 @@ export default function AdminPortal({
     }
 
     if (!ordersFetched) {
-      const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+      const local = normalizeOrdersWithUniqueIds(JSON.parse(localStorage.getItem('mani_orders') || '[]'));
       setOrders(local);
       if (allOrders.length === 0) {
         setAllOrders(local);
@@ -401,8 +497,9 @@ export default function AdminPortal({
               ? data.allOrders 
               : (Array.isArray(data.orders) ? data.orders : []);
             if (list.length > 0) {
-              setAllOrders(list);
-              latestList = list;
+              const normalized = normalizeOrdersWithUniqueIds(list);
+              setAllOrders(normalized);
+              latestList = normalized;
               fetched = true;
             }
           }
@@ -419,8 +516,9 @@ export default function AdminPortal({
           if (res.ok) {
             const cloudData = await res.json();
             if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
-              setAllOrders(cloudData.orders);
-              latestList = cloudData.orders;
+              const normalized = normalizeOrdersWithUniqueIds(cloudData.orders);
+              setAllOrders(normalized);
+              latestList = normalized;
               fetched = true;
             }
           }
@@ -438,8 +536,9 @@ export default function AdminPortal({
               window[cbName] = (cloudData) => {
                 clearTimeout(timeoutId);
                 if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
-                  setAllOrders(cloudData.orders);
-                  latestList = cloudData.orders;
+                  const normalized = normalizeOrdersWithUniqueIds(cloudData.orders);
+                  setAllOrders(normalized);
+                  latestList = normalized;
                   fetched = true;
                 }
                 delete window[cbName];
@@ -461,7 +560,7 @@ export default function AdminPortal({
     }
 
     if (!fetched) {
-      const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
+      const local = normalizeOrdersWithUniqueIds(JSON.parse(localStorage.getItem('mani_orders') || '[]'));
       if (local.length > 0) {
         setAllOrders(local);
         latestList = local;
@@ -924,57 +1023,76 @@ export default function AdminPortal({
     }
   };
 
-  // Handle Cutoff & Delivery Day Save with Cross-Device Cloud Sync
-  const handleSaveCutoffSettings = async (e) => {
-    e.preventDefault();
+  // Core helper to permanently save cutoff date, cutoff time, delivery day, and manual form status (PHT Asia/Manila)
+  const persistCutoffAndFormSettings = async (overrides = {}, showFeedback = false) => {
+    const nowTs = Date.now();
+    lastAdminEditTsRef.current = nowTs;
 
-    if (cutoffEnabled && (!cutoffDate || !cutoffTime)) {
-      setCutoffSaveMsg({ msg: 'Please select both a cutoff date and time.', type: 'error' });
-      return;
-    }
-
-    const currentDelivery = (deliveryDay || 'Wednesday').trim();
-    const confirmMsg = cutoffEnabled
-      ? `Are you sure you want to set the order cutoff to ${cutoffDate} at ${cutoffTime} with delivery on ${currentDelivery}? Orders will automatically close once this time is reached.`
-      : `Are you sure you want to DISABLE the cutoff timer? Order submissions will remain open continuously with delivery on ${currentDelivery}.`;
-
-    if (!window.confirm(confirmMsg)) {
-      return;
-    }
-
-    setIsSavingCutoff(true);
-    setCutoffSaveMsg({ msg: '', type: '' });
+    const nextEnabled = overrides.enabled !== undefined ? Boolean(overrides.enabled) : Boolean(cutoffEnabled);
+    const nextDate = (overrides.date !== undefined ? overrides.date : cutoffDate) || getManilaDateStr();
+    const nextTime = normalizeCutoffTime(overrides.time !== undefined ? overrides.time : cutoffTime);
+    const nextDelivery = ((overrides.deliveryDay !== undefined ? overrides.deliveryDay : deliveryDay) || 'Wednesday').trim();
+    const nextManualOpen = overrides.manualFormOpen !== undefined ? Boolean(overrides.manualFormOpen) : Boolean(manualFormOpen);
 
     const availabilityMap = {};
-    products.forEach(p => {
+    products.forEach((p) => {
       availabilityMap[p.id] = p.available !== false;
     });
 
-    // 1. Try local Express backend if running
+    const savedPayload = {
+      enabled: nextEnabled,
+      date: nextDate,
+      time: nextTime,
+      deliveryDay: nextDelivery,
+      manualFormOpen: nextManualOpen,
+      flavorAvailability: availabilityMap,
+      updatedAt: nowTs
+    };
+
+    // 1. Immediately persist to localStorage and update parent App state + PHT countdown timer
+    localStorage.setItem('mani_cutoff_settings', JSON.stringify(savedPayload));
+    if (onUpdateCutoff) {
+      onUpdateCutoff(savedPayload);
+    }
+
+    // 2. Persist to local Express backend if running
     try {
       const res = await fetch('/api/admin/cutoff', {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({
-          enabled: cutoffEnabled,
-          date: cutoffDate,
-          time: cutoffTime,
-          deliveryDay: currentDelivery,
-          flavorAvailability: availabilityMap
-        })
+        body: JSON.stringify(savedPayload)
       });
 
       if (res.status === 401) {
         onLogout();
-        setIsSavingCutoff(false);
-        return;
+        return false;
+      }
+      if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const serverData = await res.json();
+          if (serverData && serverData.cutoff && onUpdateCutoff) {
+            const finalTs = Math.max(nowTs, Number(serverData.cutoff.updatedAt || 0));
+            lastAdminEditTsRef.current = finalTs;
+            const syncedPayload = {
+              ...savedPayload,
+              enabled: Boolean(serverData.cutoff.enabled),
+              date: serverData.cutoff.cutoffDate || nextDate,
+              time: normalizeCutoffTime(serverData.cutoff.cutoffTime || nextTime),
+              deliveryDay: serverData.cutoff.deliveryDay || nextDelivery,
+              manualFormOpen: serverData.cutoff.manualFormOpen !== false,
+              updatedAt: finalTs
+            };
+            localStorage.setItem('mani_cutoff_settings', JSON.stringify(syncedPayload));
+            onUpdateCutoff(syncedPayload);
+          }
+        }
       }
     } catch (err) {}
 
-    // 2. Synchronize to Google Apps Script cloud (Shared across Desktop & Mobile)
+    // 3. Synchronize to Google Apps Script cloud (Shared across Desktop & Mobile)
     const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (appsUrl) {
-      // POST sync
       fetch(appsUrl, {
         method: 'POST',
         mode: 'no-cors',
@@ -983,101 +1101,293 @@ export default function AdminPortal({
           action: 'saveSettings',
           settings: {
             cutoff: {
-              enabled: cutoffEnabled,
-              date: cutoffDate,
-              time: cutoffTime,
-              deliveryDay: currentDelivery
+              enabled: nextEnabled,
+              date: nextDate,
+              time: nextTime,
+              deliveryDay: nextDelivery,
+              manualFormOpen: nextManualOpen,
+              updatedAt: nowTs
             },
-            deliveryDay: currentDelivery,
+            manualFormOpen: nextManualOpen,
+            deliveryDay: nextDelivery,
+            updatedAt: nowTs,
             products,
             flavorAvailability: availabilityMap
           }
         })
       }).catch(() => {});
 
-      // GET sync fast-path
-      fetch(`${appsUrl}?action=saveCutoff&enabled=${cutoffEnabled}&date=${encodeURIComponent(cutoffDate)}&time=${encodeURIComponent(cutoffTime)}&deliveryDay=${encodeURIComponent(currentDelivery)}`, {
+      fetch(
+        `${appsUrl}?action=saveCutoff&enabled=${nextEnabled}&date=${encodeURIComponent(nextDate)}&time=${encodeURIComponent(nextTime)}&deliveryDay=${encodeURIComponent(nextDelivery)}&manualFormOpen=${nextManualOpen}&updatedAt=${nowTs}`,
+        { mode: 'no-cors' }
+      ).catch(() => {});
+    }
+
+    if (showFeedback) {
+      setCutoffSaveMsg({
+        msg: `Saved permanently! Cutoff set to ${nextDate} at ${formatManilaTime12(nextTime)} PHT (Asia/Manila, UTC+8) • Delivery: ${nextDelivery}.`,
+        type: 'success'
+      });
+      setTimeout(() => setCutoffSaveMsg({ msg: '', type: '' }), 4500);
+    }
+
+    return true;
+  };
+
+  // Independent Manual Order Form Open/Close Toggle Handler
+  const handleToggleManualFormStatus = async (targetOpenState) => {
+    const nextOpen = typeof targetOpenState === 'boolean' ? targetOpenState : !manualFormOpen;
+    const nowTs = Date.now();
+    lastAdminEditTsRef.current = nowTs;
+    setManualFormOpen(nextOpen);
+
+    // Update localStorage & parent cutoffInfo without altering cutoff timer settings
+    let existingLocal = {};
+    try {
+      existingLocal = JSON.parse(localStorage.getItem('mani_cutoff_settings') || '{}') || {};
+    } catch (e) {}
+
+    const updatedLocal = {
+      ...existingLocal,
+      enabled: cutoffEnabled,
+      date: cutoffDate,
+      time: normalizeCutoffTime(cutoffTime),
+      deliveryDay: (deliveryDay || 'Wednesday').trim(),
+      manualFormOpen: nextOpen,
+      updatedAt: nowTs
+    };
+    localStorage.setItem('mani_cutoff_settings', JSON.stringify(updatedLocal));
+    if (onUpdateCutoff) {
+      onUpdateCutoff(updatedLocal);
+    }
+
+    // Persist to dedicated backend endpoint `/api/admin/form-status`
+    try {
+      const res = await fetch('/api/admin/form-status', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ manualFormOpen: nextOpen })
+      });
+      if (res.status === 401) {
+        onLogout();
+        return;
+      }
+    } catch (e) {}
+
+    // Sync to Google Apps Script cloud
+    const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      fetch(appsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveFormStatus',
+          manualFormOpen: nextOpen,
+          updatedAt: nowTs
+        })
+      }).catch(() => {});
+
+      fetch(`${appsUrl}?action=saveFormStatus&manualFormOpen=${nextOpen}&updatedAt=${nowTs}`, {
         mode: 'no-cors'
       }).catch(() => {});
     }
 
-    // 3. Update localStorage cache
-    localStorage.setItem('mani_cutoff_settings', JSON.stringify({
-      enabled: cutoffEnabled,
-      date: cutoffDate,
-      time: cutoffTime,
-      deliveryDay: currentDelivery,
-      flavorAvailability: availabilityMap
-    }));
+    setFormStatusSaveMsg({
+      msg: nextOpen
+        ? '🟢 Order Form is now OPEN (Accepting Orders).'
+        : '🔴 Order Form is now CLOSED ("Orders are currently closed. Please check back soon.").',
+      type: nextOpen ? 'success' : 'closed'
+    });
+    setTimeout(() => setFormStatusSaveMsg({ msg: '', type: '' }), 4500);
+  };
 
-    if (onRefreshCutoff) onRefreshCutoff();
+  // Immediate change handlers for Cutoff Date, Cutoff Time, Cutoff Enabled, and Delivery Day
+  const handleCutoffEnabledChange = (nextEnabled) => {
+    setCutoffEnabled(nextEnabled);
+    persistCutoffAndFormSettings({ enabled: nextEnabled }, true);
+  };
 
-    setCutoffSaveMsg({ msg: 'Cutoff and Delivery Day settings saved & synchronized across desktop & mobile devices!', type: 'success' });
-    setTimeout(() => setCutoffSaveMsg({ msg: '', type: '' }), 4000);
+  const handleCutoffDateChange = (newDate) => {
+    setCutoffDate(newDate);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+      persistCutoffAndFormSettings({ date: newDate }, false);
+    }
+  };
+
+  const handleCutoffTimeChange = (newTime) => {
+    setCutoffTime(newTime);
+    if (/^\d{2}:\d{2}/.test(newTime)) {
+      persistCutoffAndFormSettings({ time: normalizeCutoffTime(newTime) }, false);
+    }
+  };
+
+  const handleDeliveryDayChange = (newDay) => {
+    setDeliveryDay(newDay);
+    if (newDay) {
+      persistCutoffAndFormSettings({ deliveryDay: newDay }, false);
+    }
+  };
+
+  // Handle Cutoff & Delivery Day Save Form Submission
+  const handleSaveCutoffSettings = async (e) => {
+    if (e) e.preventDefault();
+
+    if (!cutoffDate || !cutoffTime) {
+      setCutoffSaveMsg({ msg: 'Please select both a cutoff date and time.', type: 'error' });
+      return;
+    }
+
+    setIsSavingCutoff(true);
+    setCutoffSaveMsg({ msg: '', type: '' });
+    await persistCutoffAndFormSettings(
+      {
+        enabled: cutoffEnabled,
+        date: cutoffDate,
+        time: normalizeCutoffTime(cutoffTime),
+        deliveryDay: (deliveryDay || 'Wednesday').trim(),
+        manualFormOpen
+      },
+      true
+    );
     setIsSavingCutoff(false);
   };
 
-  const handleUpdateStatus = async (orderId, newStatus, orderDate) => {
-    setUpdatingOrderId(orderId);
+  // Independent per-order status update (strictly targets ONLY the selected order by its unique `id`)
+  const handleUpdateStatus = async (targetOrderOrId, newStatus, fallbackOrderDate) => {
+    const targetOrder = typeof targetOrderOrId === 'object' && targetOrderOrId !== null
+      ? targetOrderOrId
+      : (orders.find((o) => o.id === targetOrderOrId) || orders.find((o) => o.orderId === targetOrderOrId) || { id: targetOrderOrId, orderId: targetOrderOrId, orderDate: fallbackOrderDate });
+
+    const uniqueKey = targetOrder.id || targetOrder.orderId;
+    const displayOrderId = targetOrder.orderId || targetOrder.id;
+    const dateStr = targetOrder.orderDate || fallbackOrderDate || '';
+    const timeStr = targetOrder.orderTime || '';
+    const custName = targetOrder.customerName || '';
+
+    setUpdatingOrderId(uniqueKey);
+
+    // 1. Persist local per-order status override immediately so refresh never loses or cross-contaminates status
+    saveOrderStatusOverride(uniqueKey, { status: newStatus });
+
+    const matchesTargetOrder = (o) => {
+      if (!o) return false;
+      if (uniqueKey && o.id) return o.id === uniqueKey;
+      return (
+        o.orderId === displayOrderId &&
+        (dateStr ? o.orderDate === dateStr : true) &&
+        (timeStr ? o.orderTime === timeStr : true) &&
+        (custName ? o.customerName === custName : true)
+      );
+    };
+
+    // 2. Update React state & localStorage orders immutably for ONLY the matching order
+    setOrders((prev) => prev.map((o) => (matchesTargetOrder(o) ? { ...o, status: newStatus } : o)));
+    setAllOrders((prev) => prev.map((o) => (matchesTargetOrder(o) ? { ...o, status: newStatus } : o)));
+
     try {
-      const res = await fetch(`/api/orders/${orderId}/status`, {
+      const local = normalizeOrdersWithUniqueIds(JSON.parse(localStorage.getItem('mani_orders') || '[]'));
+      const updatedLocal = local.map((o) => (matchesTargetOrder(o) ? { ...o, status: newStatus } : o));
+      localStorage.setItem('mani_orders', JSON.stringify(updatedLocal));
+    } catch (e) {}
+
+    // 3. Persist to Express backend using the unique order identifier + disambiguation metadata
+    try {
+      const res = await fetch(`/api/orders/${encodeURIComponent(uniqueKey)}/status`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({
+          status: newStatus,
+          id: uniqueKey,
+          orderId: displayOrderId,
+          orderDate: dateStr,
+          orderTime: timeStr,
+          customerName: custName
+        })
       });
       if (res.status === 401) {
         onLogout();
+        setUpdatingOrderId(null);
         return;
       }
     } catch (e) {}
 
-    // Cloud sync to Google Sheets via Apps Script Web App
+    // 4. Cloud sync to Google Sheets via Apps Script Web App with customerName & orderTime disambiguation
     const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (appsUrl) {
-      const target = orders.find(o => o.orderId === orderId);
-      const dateStr = orderDate || (target ? target.orderDate : '') || '';
-      fetch(`${appsUrl}?action=updateStatus&orderId=${encodeURIComponent(orderId)}&orderDate=${encodeURIComponent(dateStr)}&status=${encodeURIComponent(newStatus)}`, {
-        mode: 'no-cors'
-      }).catch(() => {});
+      fetch(
+        `${appsUrl}?action=updateStatus&id=${encodeURIComponent(uniqueKey)}&orderId=${encodeURIComponent(displayOrderId)}&orderDate=${encodeURIComponent(dateStr)}&orderTime=${encodeURIComponent(timeStr)}&customerName=${encodeURIComponent(custName)}&status=${encodeURIComponent(newStatus)}`,
+        { mode: 'no-cors' }
+      ).catch(() => {});
     }
 
-    const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
-    const updated = local.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
-    localStorage.setItem('mani_orders', JSON.stringify(updated));
-    setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
-    setAllOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
     setUpdatingOrderId(null);
   };
 
-  const handleUpdatePaymentStatus = async (orderId, newPaymentStatus, orderDate) => {
-    setUpdatingPaymentId(orderId);
+  // Independent per-order payment status update (strictly targets ONLY the selected order by its unique `id`)
+  const handleUpdatePaymentStatus = async (targetOrderOrId, newPaymentStatus, fallbackOrderDate) => {
+    const targetOrder = typeof targetOrderOrId === 'object' && targetOrderOrId !== null
+      ? targetOrderOrId
+      : (orders.find((o) => o.id === targetOrderOrId) || orders.find((o) => o.orderId === targetOrderOrId) || { id: targetOrderOrId, orderId: targetOrderOrId, orderDate: fallbackOrderDate });
+
+    const uniqueKey = targetOrder.id || targetOrder.orderId;
+    const displayOrderId = targetOrder.orderId || targetOrder.id;
+    const dateStr = targetOrder.orderDate || fallbackOrderDate || '';
+    const timeStr = targetOrder.orderTime || '';
+    const custName = targetOrder.customerName || '';
+
+    setUpdatingPaymentId(uniqueKey);
+
+    saveOrderStatusOverride(uniqueKey, { paymentStatus: newPaymentStatus });
+
+    const matchesTargetOrder = (o) => {
+      if (!o) return false;
+      if (uniqueKey && o.id) return o.id === uniqueKey;
+      return (
+        o.orderId === displayOrderId &&
+        (dateStr ? o.orderDate === dateStr : true) &&
+        (timeStr ? o.orderTime === timeStr : true) &&
+        (custName ? o.customerName === custName : true)
+      );
+    };
+
+    setOrders((prev) => prev.map((o) => (matchesTargetOrder(o) ? { ...o, paymentStatus: newPaymentStatus } : o)));
+    setAllOrders((prev) => prev.map((o) => (matchesTargetOrder(o) ? { ...o, paymentStatus: newPaymentStatus } : o)));
+
     try {
-      const res = await fetch(`/api/orders/${orderId}/payment-status`, {
+      const local = normalizeOrdersWithUniqueIds(JSON.parse(localStorage.getItem('mani_orders') || '[]'));
+      const updatedLocal = local.map((o) => (matchesTargetOrder(o) ? { ...o, paymentStatus: newPaymentStatus } : o));
+      localStorage.setItem('mani_orders', JSON.stringify(updatedLocal));
+    } catch (e) {}
+
+    try {
+      const res = await fetch(`/api/orders/${encodeURIComponent(uniqueKey)}/payment-status`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ paymentStatus: newPaymentStatus })
+        body: JSON.stringify({
+          paymentStatus: newPaymentStatus,
+          id: uniqueKey,
+          orderId: displayOrderId,
+          orderDate: dateStr,
+          orderTime: timeStr,
+          customerName: custName
+        })
       });
       if (res.status === 401) {
         onLogout();
+        setUpdatingPaymentId(null);
         return;
       }
     } catch (e) {}
 
-    // Cloud sync to Google Sheets via Apps Script Web App
     const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (appsUrl) {
-      const target = orders.find(o => o.orderId === orderId);
-      const dateStr = orderDate || (target ? target.orderDate : '') || '';
-      fetch(`${appsUrl}?action=updatePaymentStatus&orderId=${encodeURIComponent(orderId)}&orderDate=${encodeURIComponent(dateStr)}&paymentStatus=${encodeURIComponent(newPaymentStatus)}`, {
-        mode: 'no-cors'
-      }).catch(() => {});
+      fetch(
+        `${appsUrl}?action=updatePaymentStatus&id=${encodeURIComponent(uniqueKey)}&orderId=${encodeURIComponent(displayOrderId)}&orderDate=${encodeURIComponent(dateStr)}&orderTime=${encodeURIComponent(timeStr)}&customerName=${encodeURIComponent(custName)}&paymentStatus=${encodeURIComponent(newPaymentStatus)}`,
+        { mode: 'no-cors' }
+      ).catch(() => {});
     }
 
-    const local = JSON.parse(localStorage.getItem('mani_orders') || '[]');
-    const updated = local.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o);
-    localStorage.setItem('mani_orders', JSON.stringify(updated));
-    setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
-    setAllOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, paymentStatus: newPaymentStatus } : o));
     setUpdatingPaymentId(null);
   };
 
@@ -1276,7 +1586,7 @@ export default function AdminPortal({
           {/* Live Order Status Indicator */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border bg-cream text-xs font-bold">
             <span className="text-mani-600 font-medium">Form Status:</span>
-            {cutoffInfo?.status === 'CLOSED' ? (
+            {!manualFormOpen || cutoffInfo?.status === 'CLOSED' || cutoffInfo?.isOpen === false ? (
               <span className="text-red-700 bg-red-100 px-2 py-0.5 rounded-lg border border-red-300">
                 🔴 CLOSED
               </span>
@@ -1344,13 +1654,13 @@ export default function AdminPortal({
                   Order Form Availability & Cutoff Timer Settings
                 </h3>
                 <p className="text-xs sm:text-sm text-mani-600">
-                  Control whether customers can place orders and schedule automatic end times.
+                  Control whether customers can place orders manually or schedule automatic cutoff times in Philippine Time (Asia/Manila, UTC+8).
                 </p>
               </div>
 
               {/* Status Pill */}
               <div className="self-start sm:self-auto">
-                {cutoffInfo?.status === 'CLOSED' ? (
+                {!manualFormOpen || cutoffInfo?.status === 'CLOSED' || cutoffInfo?.isOpen === false ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-800 border border-red-300">
                     <Lock className="w-3.5 h-3.5 text-red-600" /> CLOSED (Orders Blocked)
                   </span>
@@ -1366,27 +1676,129 @@ export default function AdminPortal({
               </div>
             </div>
 
-            {/* Alert Message */}
+            {/* Alert Messages */}
+            {formStatusSaveMsg.msg && (
+              <div className={`p-4 rounded-2xl text-xs sm:text-sm font-bold border flex items-center gap-2 animate-fade-in ${
+                formStatusSaveMsg.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                  : 'bg-red-50 text-red-900 border-red-300'
+              }`}>
+                {formStatusSaveMsg.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                ) : (
+                  <Lock className="w-4 h-4 text-red-600 shrink-0" />
+                )}
+                <span>{formStatusSaveMsg.msg}</span>
+              </div>
+            )}
+
             {cutoffSaveMsg.msg && (
-              <div className={`p-4 rounded-2xl text-xs sm:text-sm font-bold border flex items-center gap-2 ${
+              <div className={`p-4 rounded-2xl text-xs sm:text-sm font-bold border flex items-center gap-2 animate-fade-in ${
                 cutoffSaveMsg.type === 'success' 
                   ? 'bg-emerald-50 text-emerald-900 border-emerald-300' 
                   : 'bg-red-50 text-red-900 border-red-300'
               }`}>
-                {cutoffSaveMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertTriangle className="w-4 h-4 text-red-600" />}
+                {cutoffSaveMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />}
                 <span>{cutoffSaveMsg.msg}</span>
               </div>
             )}
 
+            {/* MANUAL ORDER FORM OPEN / CLOSE TOGGLE CARD */}
+            <div
+              data-testid="order-form-status-card"
+              className={`p-5 rounded-2xl border-2 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                manualFormOpen
+                  ? 'bg-emerald-50/70 border-emerald-300 shadow-xs'
+                  : 'bg-red-50/80 border-red-300 shadow-xs'
+              }`}
+            >
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <Power className={`w-5 h-5 ${manualFormOpen ? 'text-emerald-700' : 'text-red-700'}`} />
+                  <h4 className="text-sm sm:text-base font-black text-mani-950">
+                    Order Form Status
+                  </h4>
+                  <span
+                    data-testid="order-form-status-badge"
+                    className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-black border ${
+                      manualFormOpen
+                        ? 'bg-emerald-100 text-emerald-900 border-emerald-400'
+                        : 'bg-red-100 text-red-900 border-red-400'
+                    }`}
+                  >
+                    {manualFormOpen ? '🟢 Open (Accepting Orders)' : '🔴 Closed (Not Accepting Orders)'}
+                  </span>
+                </div>
+                <p className="text-xs text-mani-700 font-medium">
+                  {manualFormOpen
+                    ? 'Customers can currently access the order form, select items, and submit orders.'
+                    : 'Customers cannot submit new orders and see: "Orders are currently closed. Please check back soon." (Works independently from the cutoff timer).'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 self-start md:self-auto shrink-0">
+                <div className="inline-flex rounded-xl bg-white p-1 border border-mani-200 shadow-2xs">
+                  <button
+                    type="button"
+                    data-testid="manual-form-open-btn"
+                    onClick={() => handleToggleManualFormStatus(true)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                      manualFormOpen
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-mani-600 hover:bg-emerald-50 hover:text-emerald-800'
+                    }`}
+                  >
+                    <span>🟢 Open</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="manual-form-close-btn"
+                    onClick={() => handleToggleManualFormStatus(false)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                      !manualFormOpen
+                        ? 'bg-red-600 text-white shadow-xs'
+                        : 'text-mani-600 hover:bg-red-50 hover:text-red-800'
+                    }`}
+                  >
+                    <span>🔴 Closed</span>
+                  </button>
+                </div>
+
+                {/* Toggle Switch */}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={manualFormOpen}
+                  aria-label="Toggle Order Form Status Open or Closed"
+                  data-testid="manual-form-status-toggle"
+                  onClick={() => handleToggleManualFormStatus(!manualFormOpen)}
+                  className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    manualFormOpen ? 'bg-emerald-600' : 'bg-red-600'
+                  }`}
+                  title={manualFormOpen ? 'Click to Close Order Form' : 'Click to Open Order Form'}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                      manualFormOpen ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
             {/* Dashboard Overview Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
               <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200">
-                <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Form Status</span>
+                <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">Order Form Status</span>
                 <div className="text-xl sm:text-2xl font-black text-amber-950 mt-1">
-                  {cutoffInfo?.isOpen ? '🟢 OPEN' : '🔴 CLOSED'}
+                  {manualFormOpen && cutoffInfo?.isOpen !== false ? '🟢 OPEN' : '🔴 CLOSED'}
                 </div>
                 <p className="text-[11px] text-mani-600 mt-1 font-medium">
-                  {cutoffInfo?.isOpen ? 'Customers can currently submit orders.' : 'Submissions are blocked by server.'}
+                  {!manualFormOpen
+                    ? 'Manually closed by admin toggle.'
+                    : cutoffInfo?.isOpen !== false
+                    ? 'Customers can currently submit orders.'
+                    : 'Closed by cutoff timer.'}
                 </p>
               </div>
 
@@ -1396,7 +1808,9 @@ export default function AdminPortal({
                   {cutoffEnabled ? 'ENABLED' : 'DISABLED'}
                 </div>
                 <p className="text-[11px] text-mani-600 mt-1 font-medium">
-                  {cutoffEnabled ? `Ending on ${cutoffDate} at ${cutoffTime}` : 'Form remains open continuously'}
+                  {cutoffEnabled
+                    ? `Scheduled: ${cutoffDate} at ${formatManilaTime12(cutoffTime)} PHT`
+                    : `Saved: ${cutoffDate} at ${formatManilaTime12(cutoffTime)} PHT (Timer Off)`}
                 </p>
               </div>
 
@@ -1414,10 +1828,10 @@ export default function AdminPortal({
               <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
                 <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Timezone Standard</span>
                 <div className="text-xl sm:text-2xl font-black text-emerald-950 mt-1">
-                  Asia/Manila
+                  Asia/Manila (UTC+8)
                 </div>
                 <p className="text-[11px] text-mani-600 mt-1 font-medium">
-                  Authoritative Philippine Time (PHT)
+                  Fixed Philippine Time (PHT)
                 </p>
               </div>
             </div>
@@ -1429,12 +1843,15 @@ export default function AdminPortal({
                 <div>
                   <h4 className="text-sm font-black text-mani-900">Enable Order-Cutoff Timer</h4>
                   <p className="text-xs text-mani-600 font-medium">
-                    When enabled, orders automatically close and reject submissions when the cutoff time arrives.
+                    When enabled, orders automatically close and reject submissions when the Philippine Time (Asia/Manila, UTC+8) cutoff arrives.
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setCutoffEnabled(!cutoffEnabled)}
+                  role="switch"
+                  aria-checked={cutoffEnabled}
+                  data-testid="cutoff-timer-enable-toggle"
+                  onClick={() => handleCutoffEnabledChange(!cutoffEnabled)}
                   className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                     cutoffEnabled ? 'bg-amber-600' : 'bg-mani-300'
                   }`}
@@ -1452,29 +1869,35 @@ export default function AdminPortal({
                 <div>
                   <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-amber-600" />
-                    Cutoff Date <span className="text-red-500">*</span>
+                    Cutoff Date (Asia/Manila PHT) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
+                    data-testid="cutoff-date-input"
                     value={cutoffDate}
-                    onChange={(e) => setCutoffDate(e.target.value)}
-                    disabled={!cutoffEnabled}
-                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all disabled:opacity-50 disabled:bg-mani-50"
+                    onChange={(e) => handleCutoffDateChange(e.target.value)}
+                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 bg-white font-bold text-mani-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
                   />
+                  <p className="text-[11px] text-mani-500 mt-1 font-medium">
+                    Saved Cutoff Date: <span className="font-bold text-mani-800">{cutoffDate || 'Not set'}</span>
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-mani-800 mb-1.5 flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-amber-600" />
-                    Cutoff Time (Philippine Time) <span className="text-red-500">*</span>
+                    Cutoff Time (Philippine Time UTC+8) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="time"
+                    data-testid="cutoff-time-input"
                     value={cutoffTime}
-                    onChange={(e) => setCutoffTime(e.target.value)}
-                    disabled={!cutoffEnabled}
-                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all disabled:opacity-50 disabled:bg-mani-50"
+                    onChange={(e) => handleCutoffTimeChange(e.target.value)}
+                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 bg-white font-bold text-mani-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all"
                   />
+                  <p className="text-[11px] text-mani-500 mt-1 font-medium">
+                    Saved Cutoff Time: <span className="font-bold text-mani-800">{formatManilaTime12(cutoffTime)} PHT</span>
+                  </p>
                 </div>
 
                 <div>
@@ -1483,8 +1906,9 @@ export default function AdminPortal({
                     Delivery Day <span className="text-red-500">*</span>
                   </label>
                   <select
+                    data-testid="delivery-day-select"
                     value={deliveryDay}
-                    onChange={(e) => setDeliveryDay(e.target.value)}
+                    onChange={(e) => handleDeliveryDayChange(e.target.value)}
                     className="w-full text-sm px-4 py-2.5 rounded-xl border border-mani-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white font-bold text-mani-900 cursor-pointer shadow-2xs"
                   >
                     {[
@@ -1708,6 +2132,7 @@ export default function AdminPortal({
               <div className="flex items-center gap-3 pt-2">
                 <button
                   type="submit"
+                  data-testid="save-cutoff-settings-btn"
                   disabled={isSavingCutoff}
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-black text-xs sm:text-sm shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
                 >
@@ -1763,7 +2188,7 @@ export default function AdminPortal({
               <button
                 type="button"
                 onClick={fetchOrders}
-                className="p-2 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-700 transition-colors"
+                className="p-2 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-700 transition-colors cursor-pointer"
                 title="Refresh orders"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -1780,11 +2205,13 @@ export default function AdminPortal({
           ) : (
             <div className="grid gap-3 sm:gap-4">
               {displayOrders.map((ord) => {
+                const uniqueOrdKey = ord.id || ord.orderId;
                 const statusInfo = STATUS_CONFIG[ord.status] || STATUS_CONFIG.New;
 
                 return (
                   <div
-                    key={ord.orderId}
+                    key={uniqueOrdKey}
+                    data-order-unique-id={uniqueOrdKey}
                     className="bg-white rounded-2xl p-4 sm:p-5 border border-mani-200 shadow-warm hover:shadow-warm-lg transition-shadow space-y-3"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-mani-100 pb-3">
@@ -1811,8 +2238,8 @@ export default function AdminPortal({
                           <span className="text-xs text-mani-500 font-medium">Payment:</span>
                           <select
                             value={ord.paymentStatus || 'Unpaid'}
-                            disabled={updatingPaymentId === ord.orderId}
-                            onChange={(e) => handleUpdatePaymentStatus(ord.orderId, e.target.value, ord.orderDate)}
+                            disabled={updatingPaymentId === uniqueOrdKey}
+                            onChange={(e) => handleUpdatePaymentStatus(ord, e.target.value, ord.orderDate)}
                             className={`text-xs font-black px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${
                               (ord.paymentStatus || 'Unpaid').toLowerCase() === 'paid'
                                 ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
@@ -1828,9 +2255,10 @@ export default function AdminPortal({
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-mani-500 font-medium">Status:</span>
                           <select
+                            data-testid={`order-status-select-${uniqueOrdKey}`}
                             value={ord.status}
-                            disabled={updatingOrderId === ord.orderId}
-                            onChange={(e) => handleUpdateStatus(ord.orderId, e.target.value, ord.orderDate)}
+                            disabled={updatingOrderId === uniqueOrdKey}
+                            onChange={(e) => handleUpdateStatus(ord, e.target.value, ord.orderDate)}
                             className={`text-xs font-bold px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${statusInfo.color}`}
                           >
                             <option value="New">🟡 New</option>

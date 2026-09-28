@@ -379,18 +379,19 @@ export default function CustomerForm({
         {onSubmitOrder && (
           <div className="pt-4 border-t border-mani-100">
             {isOrdersClosed ? (
-              <div className="space-y-2">
+              <div className="space-y-2.5" data-testid="customer-form-closed-notice">
+                <div className="p-3.5 rounded-2xl bg-red-50 border border-red-300 text-red-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 text-center">
+                  <Lock className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>Orders are currently closed. Please check back soon.</span>
+                </div>
                 <button
                   type="button"
                   disabled={true}
                   className="w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2 bg-red-100 border-2 border-red-300 text-red-800 cursor-not-allowed shadow-none"
                 >
                   <Lock className="w-5 h-5 text-red-600" />
-                  <span>Orders Closed (Cutoff Ended)</span>
+                  <span>Orders Closed</span>
                 </button>
-                <p className="text-center text-xs text-red-700 font-medium">
-                  The cutoff time for accepting orders has ended.
-                </p>
               </div>
             ) : (
               <button

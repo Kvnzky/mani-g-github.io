@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Header from './components/Header';
 import FlavorCard from './components/FlavorCard';
 import CustomerForm from './components/CustomerForm';
@@ -12,6 +12,12 @@ import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
 import { DEFAULT_PAYMENT_METHODS, getPaymentMethodIdByName, isPaymentMethodEnabled } from './config/paymentConfig';
+import {
+  evaluateClientCutoff,
+  getManilaDateStr,
+  getManilaTimeStr12,
+  normalizeCutoffTime
+} from './utils/phtTime';
 import { ArrowRight, AlertCircle, ShoppingBag, ChevronRight, Lock, Clock, X } from 'lucide-react';
 
 // Helper to detect if current URL or hash targets the admin route
@@ -76,39 +82,32 @@ export default function App() {
     }
   });
 
-  // Order Cutoff State - Initialized immediately from cache or PHT defaults so timer is ALWAYS visible to everyone without delay
+  // Track most recent local admin cutoff/form-status update timestamp so background polling never reverts admin edits
+  const lastLocalCutoffSaveRef = useRef((() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
+      return Number(saved?.updatedAt || 0);
+    } catch (e) {
+      return 0;
+    }
+  })());
+
+  // Order Cutoff State - Initialized immediately from cache or PHT (Asia/Manila, UTC+8) defaults
   const [cutoffInfo, setCutoffInfo] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
-      const now = new Date();
-      const manilaDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(now);
+      const manilaDateStr = getManilaDateStr();
       const conf = saved || {
         enabled: true,
         date: manilaDateStr,
         time: '23:59',
-        deliveryDay: 'Wednesday'
+        deliveryDay: 'Wednesday',
+        manualFormOpen: true,
+        updatedAt: 0
       };
-      const normalizedTime = conf.time?.length === 5 ? `${conf.time}:00` : (conf.time || '23:59:00');
-      const cutoffIso = conf.date ? `${conf.date}T${normalizedTime}+08:00` : null;
-      const cutoffTimestamp = cutoffIso ? new Date(cutoffIso).getTime() : null;
-      const diffSec = cutoffTimestamp ? Math.floor((cutoffTimestamp - now.getTime()) / 1000) : null;
-      const isOpen = conf.enabled ? (diffSec > 0) : true;
-      const status = !conf.enabled ? 'OPEN' : (isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED');
-      return {
-        enabled: Boolean(conf.enabled),
-        isOpen,
-        status,
-        cutoffDate: conf.date,
-        cutoffTime: conf.time,
-        deliveryDay: conf.deliveryDay || 'Wednesday',
-        flavorAvailability: conf.flavorAvailability || null,
-        timezone: 'Asia/Manila',
-        serverTime: now.toISOString(),
-        remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
-        cutoffIso
-      };
+      return evaluateClientCutoff(conf);
     } catch (e) {
-      return null;
+      return evaluateClientCutoff({});
     }
   });
 
@@ -200,40 +199,92 @@ export default function App() {
     });
   }, [products]);
 
-  // Apply cloud settings payload to React states & local cache
+  // Immediate local + state updater called by AdminPortal when cutoff or form status is changed/saved
+  const handleUpdateCutoffImmediate = useCallback((partialConfig) => {
+    const nowTs = Date.now();
+    lastLocalCutoffSaveRef.current = nowTs;
+
+    let existingLocal = {};
+    try {
+      existingLocal = JSON.parse(localStorage.getItem('mani_cutoff_settings') || '{}') || {};
+    } catch (e) {}
+
+    const merged = {
+      enabled: partialConfig.enabled !== undefined
+        ? Boolean(partialConfig.enabled)
+        : (existingLocal.enabled !== undefined ? Boolean(existingLocal.enabled) : Boolean(cutoffInfo?.enabled ?? true)),
+      date: partialConfig.date !== undefined
+        ? partialConfig.date
+        : ( partialConfig.cutoffDate !== undefined ? partialConfig.cutoffDate : (existingLocal.date || cutoffInfo?.cutoffDate || getManilaDateStr()) ),
+      time: normalizeCutoffTime(
+        partialConfig.time !== undefined
+          ? partialConfig.time
+          : (partialConfig.cutoffTime !== undefined ? partialConfig.cutoffTime : (existingLocal.time || cutoffInfo?.cutoffTime || '23:59'))
+      ),
+      deliveryDay: partialConfig.deliveryDay !== undefined
+        ? partialConfig.deliveryDay
+        : (existingLocal.deliveryDay || cutoffInfo?.deliveryDay || 'Wednesday'),
+      manualFormOpen: partialConfig.manualFormOpen !== undefined
+        ? Boolean(partialConfig.manualFormOpen)
+        : (existingLocal.manualFormOpen !== undefined ? Boolean(existingLocal.manualFormOpen) : (cutoffInfo?.manualFormOpen !== false)),
+      flavorAvailability: partialConfig.flavorAvailability !== undefined
+        ? partialConfig.flavorAvailability
+        : (existingLocal.flavorAvailability || cutoffInfo?.flavorAvailability || null),
+      updatedAt: partialConfig.updatedAt || nowTs
+    };
+
+    localStorage.setItem('mani_cutoff_settings', JSON.stringify(merged));
+    const evaluated = evaluateClientCutoff(merged);
+    setCutoffInfo(evaluated);
+    return evaluated;
+  }, [cutoffInfo]);
+
+  // Apply cloud settings payload to React states & local cache (respecting newer local admin saves)
   const applyCloudSettings = (settings, serverTimeStr) => {
     if (!settings) return;
 
-    // 1. Synchronize Cutoff Settings & Delivery Day
-    if (settings.cutoff || settings.deliveryDay) {
-      const saved = settings.cutoff || {};
-      const now = serverTimeStr ? new Date(serverTimeStr) : new Date();
-      const normalizedTime = saved.time?.length === 5 ? `${saved.time}:00` : (saved.time || '23:59:00');
-      const cutoffIso = saved.date ? `${saved.date}T${normalizedTime}+08:00` : null;
-      const cutoffTimestamp = cutoffIso ? new Date(cutoffIso).getTime() : null;
-      const diffSec = cutoffTimestamp ? Math.floor((cutoffTimestamp - now.getTime()) / 1000) : null;
-      const isOpen = saved.enabled ? (diffSec > 0) : true;
-      const status = !saved.enabled ? 'OPEN' : (isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED');
-      const deliveryDay = settings.deliveryDay || saved.deliveryDay || 'Wednesday';
+    // 1. Synchronize Cutoff Settings, Manual Form Status & Delivery Day
+    if (settings.cutoff || settings.deliveryDay || settings.manualFormOpen !== undefined) {
+      let localSaved = null;
+      try {
+        localSaved = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
+      } catch (e) {}
 
-      setCutoffInfo({
-        enabled: Boolean(saved.enabled),
-        isOpen,
-        status,
-        cutoffDate: saved.date,
-        cutoffTime: saved.time,
-        deliveryDay,
-        flavorAvailability: saved.flavorAvailability || settings.flavorAvailability || null,
-        timezone: 'Asia/Manila',
-        serverTime: now.toISOString(),
-        remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
-        cutoffIso
-      });
+      const localUpdatedAt = Number(localSaved?.updatedAt || lastLocalCutoffSaveRef.current || 0);
+      const cloudSaved = settings.cutoff || {};
+      const cloudUpdatedAt = Number(cloudSaved.updatedAt || settings.updatedAt || 0);
 
-      localStorage.setItem('mani_cutoff_settings', JSON.stringify({
-        ...saved,
-        deliveryDay
-      }));
+      // Do NOT allow stale cloud data to overwrite newer local admin settings
+      const isLocalNewer = localSaved && localUpdatedAt > 0 && (cloudUpdatedAt === 0 || localUpdatedAt > cloudUpdatedAt);
+
+      const effectiveConfig = isLocalNewer
+        ? {
+            enabled: Boolean(localSaved.enabled),
+            date: localSaved.date,
+            time: normalizeCutoffTime(localSaved.time),
+            deliveryDay: localSaved.deliveryDay || settings.deliveryDay || 'Wednesday',
+            manualFormOpen: localSaved.manualFormOpen !== undefined ? Boolean(localSaved.manualFormOpen) : true,
+            flavorAvailability: settings.flavorAvailability || localSaved.flavorAvailability || null,
+            updatedAt: localUpdatedAt
+          }
+        : {
+            enabled: cloudSaved.enabled !== undefined ? Boolean(cloudSaved.enabled) : Boolean(localSaved?.enabled ?? true),
+            date: cloudSaved.date || localSaved?.date || getManilaDateStr(),
+            time: normalizeCutoffTime(cloudSaved.time || localSaved?.time || '23:59'),
+            deliveryDay: settings.deliveryDay || cloudSaved.deliveryDay || localSaved?.deliveryDay || 'Wednesday',
+            manualFormOpen: settings.manualFormOpen !== undefined
+              ? Boolean(settings.manualFormOpen)
+              : (cloudSaved.manualFormOpen !== undefined
+                ? Boolean(cloudSaved.manualFormOpen)
+                : (localSaved?.manualFormOpen !== undefined ? Boolean(localSaved.manualFormOpen) : true)),
+            flavorAvailability: cloudSaved.flavorAvailability || settings.flavorAvailability || localSaved?.flavorAvailability || null,
+            updatedAt: cloudUpdatedAt || localUpdatedAt
+          };
+
+      const nowMs = serverTimeStr ? new Date(serverTimeStr).getTime() : Date.now();
+      const evaluated = evaluateClientCutoff(effectiveConfig, Number.isFinite(nowMs) ? nowMs : Date.now());
+      setCutoffInfo(evaluated);
+      localStorage.setItem('mani_cutoff_settings', JSON.stringify(effectiveConfig));
     }
 
     // 2. Synchronize Flavor Availability
@@ -285,41 +336,52 @@ export default function App() {
     try {
       const saved = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
       if (saved) {
-        const now = new Date();
-        const normalizedTime = saved.time?.length === 5 ? `${saved.time}:00` : (saved.time || '23:59:00');
-        const cutoffIso = saved.date ? `${saved.date}T${normalizedTime}+08:00` : null;
-        const cutoffTimestamp = cutoffIso ? new Date(cutoffIso).getTime() : null;
-        const diffSec = cutoffTimestamp ? Math.floor((cutoffTimestamp - now.getTime()) / 1000) : null;
-        const isOpen = saved.enabled ? (diffSec > 0) : true;
-        const status = !saved.enabled ? 'OPEN' : (isOpen ? 'CUTOFF SCHEDULED' : 'CLOSED');
-
-        setCutoffInfo({
-          enabled: Boolean(saved.enabled),
-          isOpen,
-          status,
-          cutoffDate: saved.date,
-          cutoffTime: saved.time,
-          deliveryDay: saved.deliveryDay || 'Wednesday',
-          flavorAvailability: saved.flavorAvailability || null,
-          timezone: 'Asia/Manila',
-          serverTime: now.toISOString(),
-          remainingSeconds: diffSec ? Math.max(0, diffSec) : null,
-          cutoffIso
-        });
+        setCutoffInfo(evaluateClientCutoff(saved));
       }
     } catch (e) {}
   };
 
   // Real-time Cloud Settings Synchronization (Desktop <-> Mobile)
   const fetchCutoff = async () => {
-    // 1. Try local Express backend if running (development mode)
+    // 1. Try local Express backend if running (development/server mode)
     try {
       const res = await fetch('/api/cutoff');
       const contentType = res.headers.get('content-type') || '';
       if (res.ok && contentType.includes('application/json')) {
         const data = await res.json();
         if (data && data.status) {
-          setCutoffInfo(data);
+          let localSaved = null;
+          try {
+            localSaved = JSON.parse(localStorage.getItem('mani_cutoff_settings') || 'null');
+          } catch (e) {}
+
+          const serverUpdatedAt = Number(data.updatedAt || 0);
+          const localUpdatedAt = Number(localSaved?.updatedAt || lastLocalCutoffSaveRef.current || 0);
+
+          // If local storage was just updated more recently than the server, preserve local settings
+          if (localSaved && localUpdatedAt > serverUpdatedAt && serverUpdatedAt === 0) {
+            const evaluatedLocal = evaluateClientCutoff(localSaved);
+            setCutoffInfo(evaluatedLocal);
+          } else {
+            const normalizedTime = normalizeCutoffTime(data.cutoffTime || '23:59');
+            const syncedLocal = {
+              enabled: Boolean(data.enabled),
+              date: data.cutoffDate || getManilaDateStr(),
+              time: normalizedTime,
+              deliveryDay: data.deliveryDay || 'Wednesday',
+              manualFormOpen: data.manualFormOpen !== false,
+              flavorAvailability: data.flavorAvailability || null,
+              updatedAt: Math.max(serverUpdatedAt, localUpdatedAt)
+            };
+            localStorage.setItem('mani_cutoff_settings', JSON.stringify(syncedLocal));
+            setCutoffInfo({
+              ...data,
+              cutoffTime: normalizedTime,
+              manualFormOpen: data.manualFormOpen !== false,
+              timezone: 'Asia/Manila'
+            });
+          }
+
           if (data.flavorAvailability && typeof data.flavorAvailability === 'object') {
             setProducts((prev) =>
               prev.map((p) => {
@@ -683,8 +745,14 @@ export default function App() {
     return sum + qty * (p.price || 50);
   }, 0);
 
-  // Authoritative Cutoff Status
-  const isOrdersClosed = Boolean(cutoffInfo?.enabled && !cutoffInfo?.isOpen);
+  // Authoritative Cutoff & Manual Form Open/Close Status
+  const isOrdersClosed = Boolean(
+    cutoffInfo && (
+      cutoffInfo.manualFormOpen === false ||
+      cutoffInfo.isOpen === false ||
+      (cutoffInfo.enabled && cutoffInfo.remainingSeconds !== null && cutoffInfo.remainingSeconds <= 0)
+    )
+  );
 
   // Validation Logic
   const validateForm = () => {
@@ -725,10 +793,14 @@ export default function App() {
     return Object.keys(errors).length === 0;
   };
 
-  // Order Submission (Client & Server Cutoff Enforced)
+  // Order Submission (Client & Server Cutoff + Manual Form Status Enforced)
   const handleSubmitOrder = async () => {
     if (isOrdersClosed) {
-      setSubmissionError('Orders are now closed. The cutoff time for accepting orders has ended.');
+      setSubmissionError(
+        cutoffInfo?.manualFormOpen === false
+          ? 'Orders are currently closed. Please check back soon.'
+          : 'Orders are currently closed. Please check back soon.'
+      );
       return;
     }
 
@@ -791,7 +863,7 @@ export default function App() {
 
         if (response.status === 403 || data.code === 'ORDERS_CLOSED') {
           fetchCutoff();
-          throw new Error(data.error || 'Orders are now closed. The cutoff time for accepting orders has ended.');
+          throw new Error(data.error || 'Orders are currently closed. Please check back soon.');
         }
 
         if (!response.ok || !data.success) {
@@ -803,7 +875,7 @@ export default function App() {
         return;
       }
     } catch (apiErr) {
-      if (apiErr.message && apiErr.message.includes('Orders are now closed')) {
+      if (apiErr.message && (apiErr.message.includes('Orders are now closed') || apiErr.message.includes('Orders are currently closed'))) {
         setSubmissionError(apiErr.message);
         setIsSubmitting(false);
         return;
@@ -814,13 +886,24 @@ export default function App() {
     // Static GitHub Pages fallback
     try {
       const now = new Date();
-      const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-      const timeStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).format(now);
+      const dateStr = getManilaDateStr(now);
+      const timeStr = getManilaTimeStr12(now);
       const savedOrders = JSON.parse(localStorage.getItem('mani_orders') || '[]');
-      const countToday = savedOrders.filter(o => o.orderDate === dateStr).length + 1;
-      const orderId = `MANI-${dateStr.replace(/-/g, '')}-${String(countToday).padStart(3, '0')}`;
+      const prefix = `MANI-${dateStr.replace(/-/g, '')}-`;
+      let maxSeq = 0;
+      savedOrders.forEach((o) => {
+        if (o && typeof o.orderId === 'string' && o.orderId.startsWith(prefix)) {
+          const seqNum = parseInt(o.orderId.slice(prefix.length), 10);
+          if (Number.isFinite(seqNum) && seqNum > maxSeq) maxSeq = seqNum;
+        } else if (o && o.orderDate === dateStr) {
+          maxSeq += 1;
+        }
+      });
+      const orderId = `${prefix}${String(maxSeq + 1).padStart(3, '0')}`;
+      const uniqueId = `ord_${now.getTime()}_${Math.random().toString(36).substring(2, 8)}`;
 
       const clientOrder = {
+        id: uniqueId,
         orderId,
         orderDate: dateStr,
         orderTime: timeStr,
@@ -934,6 +1017,7 @@ export default function App() {
             adminUser={adminUser}
             onLogout={handleLogout}
             cutoffInfo={cutoffInfo}
+            onUpdateCutoff={handleUpdateCutoffImmediate}
             onRefreshCutoff={fetchCutoff}
             activeTab={adminTab}
             onTabChange={handleAdminTabChange}
