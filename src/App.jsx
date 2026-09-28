@@ -197,6 +197,7 @@ export default function App() {
   const [toast, setToast] = useState({ show: false, message: '', icon: '' });
   const [recentlyAddedId, setRecentlyAddedId] = useState(null);
   const [cartBounce, setCartBounce] = useState(false);
+  const [flavorFilter, setFlavorFilter] = useState('all');
 
   // Auto-dismiss toast notification
   useEffect(() => {
@@ -743,6 +744,48 @@ export default function App() {
     });
   };
 
+  // 1-click Combo / Bundle adder for Suki Favorites
+  const handleAddCombo = (comboIds, comboTitle, comboIcon = '🔥') => {
+    const availableComboIds = comboIds.filter((id) => {
+      const prod = products.find((p) => p.id === id);
+      return prod && prod.available !== false;
+    });
+    if (availableComboIds.length === 0) return;
+
+    setQuantities((prev) => {
+      const next = { ...prev };
+      availableComboIds.forEach((id) => {
+        next[id] = (next[id] || 0) + 1;
+      });
+      return next;
+    });
+
+    setRecentlyAddedId(availableComboIds[0]);
+    setTimeout(() => setRecentlyAddedId(null), 1800);
+    setCartBounce(true);
+    setTimeout(() => setCartBounce(false), 450);
+
+    setToast({
+      show: true,
+      message: `Added ${comboTitle} (${availableComboIds.length} tubs) to your box!`,
+      icon: comboIcon
+    });
+  };
+
+  // Filtered products based on active flavor category tab
+  const filteredProducts = products.filter((p) => {
+    if (flavorFilter === 'bestsellers') {
+      return ['salted', 'spicy', 'sour-cream', 'bawang-only'].includes(p.id);
+    }
+    if (flavorFilter === 'savory') {
+      return ['spicy', 'bbq', 'sour-cream', 'cheese'].includes(p.id);
+    }
+    if (flavorFilter === 'classic') {
+      return ['salted', 'unsalted', 'bawang-only'].includes(p.id);
+    }
+    return true;
+  });
+
   // Calculate totals
   const totalPacks = Object.values(quantities).reduce((a, b) => a + (Number(b) || 0), 0);
 
@@ -973,18 +1016,41 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FDFBF7] text-mani-900 selection:bg-amber-200">
+    <div className="min-h-screen flex flex-col bg-[#FDF9F0] bg-snack-pattern text-mani-900 selection:bg-amber-200">
+      {/* Top Filipino Snack Culture Ribbon (Customer View) */}
+      {currentView === 'order' && (
+        <div className="bg-mani-950 text-amber-200 border-b border-amber-500/30 py-1.5 px-3 text-[11px] sm:text-xs font-extrabold tracking-wide text-center">
+          <div className="max-w-7xl mx-auto flex items-center justify-center flex-wrap gap-x-4 gap-y-1">
+            <span className="inline-flex items-center gap-1 text-amber-300">
+              <span>🥜</span> BAGONG LUTO EVERY BATCH
+            </span>
+            <span className="hidden sm:inline text-amber-500/60">•</span>
+            <span className="inline-flex items-center gap-1">
+              <span>🧄</span> LOADED WITH REAL CRISPY BAWANG
+            </span>
+            <span className="hidden md:inline text-amber-500/60">•</span>
+            <span className="hidden md:inline-flex items-center gap-1 text-orange-300">
+              <span>🔥</span> 7 ADDICTING FLAVORS IN REUSABLE TUBS
+            </span>
+            <span className="hidden lg:inline text-amber-500/60">•</span>
+            <span className="hidden lg:inline-flex items-center gap-1 text-emerald-300">
+              <span>🇵🇭</span> STARTS AT ₱50 / TUB
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Sleek Floating Toast Notification */}
       {toast.show && (
         <div
           role="status"
           aria-live="polite"
-          className="fixed top-20 right-4 sm:right-6 z-50 flex items-center gap-3 bg-mani-950/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-amber-500/40 animate-fade-in transition-all max-w-sm"
+          className="fixed top-20 right-4 sm:right-6 z-50 flex items-center gap-3 bg-mani-950 text-white px-4 py-3 rounded-2xl shadow-snack border-2 border-amber-400 animate-fade-in transition-all max-w-sm"
         >
-          <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-amber-400 text-mani-950 border border-mani-950 flex items-center justify-center text-lg shrink-0 font-black">
             {toast.icon}
           </div>
-          <div className="text-xs sm:text-sm font-bold pr-1">
+          <div className="text-xs sm:text-sm font-extrabold pr-1">
             {toast.message}
           </div>
           <button
@@ -1004,6 +1070,8 @@ export default function App() {
         setCurrentView={setCurrentView}
         onNavigate={navigateTo}
         totalItems={totalPacks}
+        subtotal={subtotal}
+        cartBounce={cartBounce}
         onOpenCart={() => setIsDrawerOpen(true)}
         isAdminAuthenticated={Boolean(adminToken)}
         adminUser={adminUser}
@@ -1012,7 +1080,7 @@ export default function App() {
       />
 
       {/* Main Content */}
-      <main className={`flex-1 ${totalPacks > 0 ? 'pb-32 sm:pb-16' : 'pb-24 sm:pb-12'}`}>
+      <main className={`flex-1 ${totalPacks > 0 ? 'pb-32 sm:pb-20' : 'pb-24 sm:pb-16'}`}>
         {currentView === 'admin' && adminToken ? (
           <AdminPortal
             products={products}
@@ -1033,10 +1101,10 @@ export default function App() {
         ) : currentView === 'admin' && !adminToken ? (
           /* Dedicated unauthenticated /admin screen holding the AdminLoginModal */
           <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4 animate-fade-in">
-            <div className="w-16 h-16 rounded-3xl bg-amber-100 text-amber-900 mx-auto flex items-center justify-center border border-amber-300 shadow-sm">
+            <div className="w-16 h-16 rounded-3xl bg-amber-100 text-amber-900 mx-auto flex items-center justify-center border-2 border-mani-950 shadow-snack-sm">
               <Lock className="w-8 h-8 text-amber-700" />
             </div>
-            <h2 className="text-2xl font-black text-mani-950">Admin Access Required</h2>
+            <h2 className="font-display text-2xl font-black text-mani-950">Admin Access Required</h2>
             <p className="text-xs sm:text-sm text-mani-600 font-medium">
               Please sign in with authorized administrator credentials to manage orders, products, and store settings.
             </p>
@@ -1044,42 +1112,171 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsLoginModalOpen(true)}
-                className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-mani-950 font-extrabold text-xs sm:text-sm border-2 border-mani-950 shadow-snack-sm transition-all cursor-pointer"
               >
                 Open Admin Login
               </button>
               <button
                 type="button"
                 onClick={() => navigateTo('order')}
-                className="px-4 py-2.5 rounded-xl bg-white hover:bg-mani-100 text-mani-700 font-bold text-xs sm:text-sm border border-mani-200 transition-all cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-white hover:bg-mani-100 text-mani-700 font-bold text-xs sm:text-sm border-2 border-mani-200 transition-all cursor-pointer"
               >
                 Return to Store
               </button>
             </div>
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-            {/* Friendly Hero Banner */}
-            <div className="text-center space-y-2 py-5 sm:py-7 bg-gradient-to-b from-amber-100/60 to-transparent rounded-3xl p-4 sm:p-8 border border-amber-200/50 shadow-xs">
-              <div className="flex justify-center mb-1">
-                <img 
-                  src="./images/logo.png" 
-                  alt="Mani Wandering" 
-                  className="w-32 sm:w-40 md:w-48 h-auto drop-shadow-md hover:scale-105 transition-transform duration-200" 
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-8">
+            {/* 🥜 High-Impact Filipino Snack Brand Hero Section */}
+            <section className="relative overflow-hidden rounded-[2rem] border-2 border-mani-950 bg-gradient-to-br from-[#FFF5D6] via-[#FFFDF7] to-[#FFE4B5] p-5 sm:p-8 lg:p-10 shadow-snack-lg">
+              {/* Decorative Floating Peanut & Garlic SVG Doodles */}
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 120 120"
+                className="hidden sm:block absolute -top-6 -right-6 w-36 h-36 text-amber-400/25 pointer-events-none animate-float-slow"
+              >
+                <path
+                  fill="currentColor"
+                  d="M42 18c14-6 30 2 33 16 2 9-2 17 4 24 7 9 20 14 21 27 1 15-14 27-29 25-13-2-23-12-30-23-6-9-4-18-11-26-9-10-12-28 12-43z"
                 />
-              </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
-                <span>🇵🇭</span> Crispy na, Crunchy pa.
-              </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-mani-950 tracking-tight">
-                Mani Wandering
-              </h2>
-              <p className="text-xs sm:text-sm text-mani-600 max-w-md mx-auto font-medium leading-relaxed">
-                Choose your favorite flavors, enter your delivery address, and pick your payment method!
-              </p>
-            </div>
+              </svg>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 100 100"
+                className="hidden lg:block absolute -bottom-8 left-1/2 w-28 h-28 text-orange-400/20 pointer-events-none animate-float-reverse"
+              >
+                <circle cx="50" cy="50" r="36" fill="currentColor" />
+              </svg>
 
-            {/* ⏰ Order Cutoff Timer Banner Prominently Placed at the Top */}
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
+                {/* Left Column: Brand Hook, Tagline, Value Props & CTAs */}
+                <div className="lg:col-span-7 text-center lg:text-left space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-mani-950 text-amber-300 border-2 border-mani-950 shadow-snack-sm">
+                    <span>🇵🇭</span>
+                    <span>Crispy na, Crunchy pa • Small-Batch Artisanal Mani</span>
+                  </div>
+
+                  <h1 className="font-display text-3xl sm:text-5xl lg:text-[3.35rem] font-extrabold text-mani-950 tracking-tight leading-[1.08]">
+                    Your Favorite Kanto-Style{' '}
+                    <span className="inline-block bg-amber-300 px-2.5 py-0.5 rounded-2xl border-2 border-mani-950 shadow-snack-sm -rotate-1">
+                      Mani &amp; Bawang
+                    </span>{' '}
+                    — Levelled Up in Tubs!
+                  </h1>
+
+                  <p className="text-sm sm:text-base text-mani-800 max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed">
+                    Golden-roasted peanuts generously loaded with real crispy garlic chips and bold, addicting seasonings. Sealed fresh in reusable tubs for maximum crunch from the first scoop to the last!
+                  </p>
+
+                  {/* Primary & Secondary CTAs */}
+                  <div className="pt-1 flex flex-wrap items-center justify-center lg:justify-start gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFlavorFilter('all');
+                        const el = document.getElementById('flavors-menu-section');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      className="px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-500 active:translate-y-0.5 text-mani-950 font-display font-black text-sm sm:text-base border-2 border-mani-950 shadow-snack flex items-center gap-2 transition-all cursor-pointer"
+                    >
+                      <span>Order Now 🥜</span>
+                      <span className="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-mani-950 text-amber-300">
+                        ₱50 / tub
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFlavorFilter('bestsellers');
+                        const el = document.getElementById('flavors-menu-section');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      className="px-5 py-3.5 rounded-2xl bg-white hover:bg-amber-50 active:translate-y-0.5 text-mani-950 font-display font-extrabold text-xs sm:text-sm border-2 border-mani-950 shadow-snack-sm flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <span>🔥 See Suki Bestsellers</span>
+                    </button>
+                  </div>
+
+                  {/* Quick Snack Highlights Strip */}
+                  <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-2 text-xs font-extrabold text-mani-900">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 border border-amber-300 shadow-2xs">
+                      <span>🧄</span> Real Fried Garlic Chips
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 border border-amber-300 shadow-2xs">
+                      <span>🥣</span> Mess-Free Resealable Tubs
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 border border-amber-300 shadow-2xs">
+                      <span>⚡</span> No Account Needed to Order
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right Column: Mascot Showcase + Floating Stickers + Quick-Tap Flavor Pills */}
+                <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
+                  <div className="relative bg-white/90 backdrop-blur-xs rounded-3xl p-5 sm:p-6 border-2 border-mani-950 shadow-snack w-full max-w-md mx-auto text-center">
+                    {/* Top Left Sticker */}
+                    <div className="absolute -top-3.5 -left-3 -rotate-6 bg-red-600 text-white font-display font-black text-[11px] sm:text-xs px-3 py-1 rounded-full border-2 border-mani-950 shadow-snack-sm uppercase tracking-wider">
+                      🔥 Mapapa-Extra Tub Ka!
+                    </div>
+
+                    {/* Top Right Price Sticker */}
+                    <div className="absolute -top-3.5 -right-2 rotate-6 bg-amber-300 text-mani-950 font-display font-black text-xs sm:text-sm px-3 py-1 rounded-2xl border-2 border-mani-950 shadow-snack-sm">
+                      ₱50 <span className="text-[10px] font-extrabold">/ tub</span>
+                    </div>
+
+                    <div className="py-2 flex justify-center">
+                      <img
+                        src="./images/logo.png"
+                        alt="Mani Wandering"
+                        className="w-36 sm:w-44 md:w-48 h-auto drop-shadow-md animate-float-slow select-none"
+                      />
+                    </div>
+
+                    <div className="mt-1 space-y-2">
+                      <div className="text-[11px] font-black uppercase tracking-wider text-amber-800">
+                        ⚡ Tap a Flavor Below to Quick-Add +1 Tub:
+                      </div>
+                      <div className="flex flex-wrap items-center justify-center gap-1.5">
+                        {products.slice(0, 5).map((prod) => {
+                          const isOut = prod.available === false;
+                          const currQty = quantities[prod.id] || 0;
+                          return (
+                            <button
+                              key={prod.id}
+                              type="button"
+                              disabled={isOut}
+                              onClick={() => {
+                                handleQuantityChange(prod.id, currQty + 1);
+                                handleAddToCartFeedback(prod, 1);
+                              }}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold border transition-all ${
+                                isOut
+                                  ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed line-through'
+                                  : currQty > 0
+                                  ? 'bg-amber-300 text-mani-950 border-mani-950 shadow-2xs cursor-pointer'
+                                  : 'bg-[#FDF9F0] hover:bg-amber-100 text-mani-900 border-amber-300 cursor-pointer active:scale-95'
+                              }`}
+                              title={isOut ? 'Currently Sold Out' : `Add 1 tub of ${prod.name}`}
+                            >
+                              <span>{prod.icon}</span>
+                              <span>{prod.name.replace(/^Mani\s+/i, '')}</span>
+                              {currQty > 0 && (
+                                <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-mani-950 text-amber-300 text-[10px] font-black">
+                                  {currQty}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ⏰ Order Cutoff Timer Banner Prominently Placed Below Hero */}
             <OrderCutoffBanner 
               cutoffInfo={cutoffInfo} 
               onRefreshCutoff={fetchCutoff} 
@@ -1087,36 +1284,78 @@ export default function App() {
 
             {/* Error Banner */}
             {submissionError && (
-              <div className="p-4 rounded-2xl bg-red-50 border border-red-300 text-sm font-semibold text-red-700 flex items-center gap-2.5 shadow-xs animate-fade-in">
+              <div className="p-4 rounded-2xl bg-red-50 border-2 border-red-400 text-sm font-bold text-red-800 flex items-center gap-2.5 shadow-xs animate-fade-in">
                 <AlertCircle className="w-5 h-5 shrink-0 text-red-600" />
                 <span>{submissionError}</span>
               </div>
             )}
 
             {/* Responsive 2-Column Desktop Grid / 1-Column Mobile Stack */}
-            <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start space-y-6 lg:space-y-0">
+            <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start space-y-8 lg:space-y-0">
               {/* Left Column (Desktop 7 cols): Flavors Catalog */}
-              <div className="lg:col-span-7 space-y-6">
+              <div id="flavors-menu-section" className="lg:col-span-7 space-y-5 scroll-mt-24">
                 <section className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-black text-mani-900 flex items-center gap-2">
-                        <span>🥜</span> Mani Flavors
-                      </h3>
-                      <p className="text-xs sm:text-sm text-mani-600">
-                        Select one or more flavors. Adjust quantities with the buttons.
-                      </p>
+                  {/* Menu Section Heading + Suki Trio Quick-Add */}
+                  <div className="bg-white rounded-3xl p-4 sm:p-5 border-2 border-mani-950 shadow-snack-sm space-y-3.5">
+                    <div className="flex items-start sm:items-center justify-between gap-3 flex-col sm:flex-row">
+                      <div>
+                        <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300 mb-1">
+                          <span>🥜</span> Choose Your Crunch
+                        </div>
+                        <h2 className="font-display text-xl sm:text-2xl font-extrabold text-mani-950 flex items-center gap-2">
+                          <span>Mani Flavors Menu</span>
+                        </h2>
+                        <p className="text-xs text-mani-600 font-medium">
+                          Mix and match tubs! Every flavor is roasted fresh per batch.
+                        </p>
+                      </div>
+
+                      {/* 1-Click Suki Trio Starter Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleAddCombo(['salted', 'spicy', 'sour-cream'], 'Suki Trio (Salted, Spicy & Sour Cream)', '🔥')}
+                        className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-amber-300 to-orange-300 hover:from-amber-400 hover:to-orange-400 text-mani-950 font-display font-extrabold text-xs border-2 border-mani-950 shadow-snack-sm active:translate-y-0.5 transition-all cursor-pointer"
+                      >
+                        <span>🔥</span>
+                        <span>+ Add Top 3 Suki Trio</span>
+                      </button>
                     </div>
-                    {totalPacks > 0 && (
-                      <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full border border-amber-200">
-                        {totalPacks} tub{totalPacks > 1 ? 's' : ''} in cart
-                      </span>
-                    )}
+
+                    {/* Interactive Flavor Category Filter Pills */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1">
+                      {[
+                        { id: 'all', label: '🥜 All 7 Flavors', count: products.length },
+                        { id: 'bestsellers', label: '🔥 Mga Suki Bestsellers', count: 4 },
+                        { id: 'savory', label: '🧀 Savory & Coated', count: 4 },
+                        { id: 'classic', label: '🧄 Classic & Bawang', count: 3 }
+                      ].map((tab) => {
+                        const isActive = flavorFilter === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setFlavorFilter(tab.id)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                              isActive
+                                ? 'bg-mani-950 text-amber-300 border-2 border-mani-950 shadow-2xs'
+                                : 'bg-[#FDF9F0] hover:bg-amber-100/80 text-mani-800 border border-mani-200'
+                            }`}
+                          >
+                            <span>{tab.label}</span>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                              isActive ? 'bg-amber-400 text-mani-950' : 'bg-mani-200/70 text-mani-700'
+                            }`}>
+                              {tab.count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Flavors Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4">
-                    {products.map((product) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+                    {filteredProducts.map((product) => (
                       <FlavorCard
                         key={product.id}
                         product={product}
@@ -1140,6 +1379,7 @@ export default function App() {
                     onClearOrder={handleClearOrder}
                     recentlyAddedId={recentlyAddedId}
                     cartBounce={cartBounce}
+                    onAddToCart={handleAddToCartFeedback}
                     onProceedToDetails={() => {
                       const el = document.getElementById('customer-info-section');
                       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1164,13 +1404,235 @@ export default function App() {
                 </section>
               </div>
             </div>
+
+            {/* 🔥 Paborito ng Mga Suki: Crowd-Favorite Combos & Bawang Mixer Pro-Tip */}
+            <section
+              id="suki-favorites-section"
+              className="scroll-mt-24 rounded-[2rem] border-2 border-mani-950 bg-gradient-to-br from-amber-100/90 via-white to-orange-100/80 p-5 sm:p-8 shadow-snack space-y-6"
+            >
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 border-b-2 border-mani-950/10 pb-4">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-600 text-white border-2 border-mani-950 shadow-2xs">
+                    <span>🔥</span> Paborito ng Mga Suki
+                  </span>
+                  <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-mani-950 mt-2">
+                    Not Sure Which Tubs to Pick? Try These Crowd Combos!
+                  </h2>
+                  <p className="text-xs sm:text-sm text-mani-700 font-medium mt-0.5">
+                    Our most re-ordered flavor pairings for office merienda, road trips, and barkada movie nights.
+                  </p>
+                </div>
+                <div className="text-xs font-extrabold text-amber-950 bg-amber-200/80 px-3.5 py-2 rounded-2xl border-2 border-mani-950 self-start md:self-auto">
+                  💡 1-Click adds 1 tub of each flavor in the combo!
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+                {/* Combo 1: The OG Kanto Duo */}
+                <div className="bg-white rounded-3xl p-5 border-2 border-mani-950 shadow-snack-sm flex flex-col justify-between space-y-4 hover:-translate-y-1 transition-transform">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-300 text-mani-950 border border-mani-950">
+                        🏆 #1 Most Ordered Duo
+                      </span>
+                      <span className="font-display font-black text-base text-mani-950">₱100</span>
+                    </div>
+                    <h3 className="font-display text-lg font-extrabold text-mani-950">
+                      The OG Kanto Duo 🥜🌶️
+                    </h3>
+                    <p className="text-xs text-mani-600 font-medium leading-relaxed">
+                      <strong className="text-mani-900">1x Mani Salted + 1x Mani Spicy.</strong> Classic savory rock-salt crunch paired with fiery chili-garlic heat.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddCombo(['salted', 'spicy'], 'The OG Kanto Duo', '🥜')}
+                    className="w-full py-2.5 px-4 rounded-2xl bg-amber-400 hover:bg-amber-500 active:translate-y-0.5 text-mani-950 font-display font-black text-xs border-2 border-mani-950 shadow-snack-sm transition-all cursor-pointer"
+                  >
+                    + Add OG Duo (2 Tubs)
+                  </button>
+                </div>
+
+                {/* Combo 2: Barkada Flavor Fiesta */}
+                <div className="bg-white rounded-3xl p-5 border-2 border-mani-950 shadow-snack-sm flex flex-col justify-between space-y-4 hover:-translate-y-1 transition-transform">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-200 text-emerald-950 border border-mani-950">
+                        🎬 Movie Night Pick
+                      </span>
+                      <span className="font-display font-black text-base text-mani-950">₱150</span>
+                    </div>
+                    <h3 className="font-display text-lg font-extrabold text-mani-950">
+                      Barkada Flavor Fiesta 🌿🍖🧀
+                    </h3>
+                    <p className="text-xs text-mani-600 font-medium leading-relaxed">
+                      <strong className="text-mani-900">Sour Cream + BBQ + Cheese.</strong> Tangy, smoky, and cheesy coated tubs that disappear fast during kwentuhan!
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddCombo(['sour-cream', 'bbq', 'cheese'], 'Barkada Flavor Fiesta', '🎉')}
+                    className="w-full py-2.5 px-4 rounded-2xl bg-amber-400 hover:bg-amber-500 active:translate-y-0.5 text-mani-950 font-display font-black text-xs border-2 border-mani-950 shadow-snack-sm transition-all cursor-pointer"
+                  >
+                    + Add Fiesta Trio (3 Tubs)
+                  </button>
+                </div>
+
+                {/* Combo 3: The Ultimate Garlic Lovers Box */}
+                <div className="bg-white rounded-3xl p-5 border-2 border-mani-950 shadow-snack-sm flex flex-col justify-between space-y-4 hover:-translate-y-1 transition-transform">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-yellow-300 text-mani-950 border border-mani-950">
+                        🧄 Bawang Overload
+                      </span>
+                      <span className="font-display font-black text-base text-mani-950">₱110</span>
+                    </div>
+                    <h3 className="font-display text-lg font-extrabold text-mani-950">
+                      Bawang Lovers Upgrade 🧄🥜
+                    </h3>
+                    <p className="text-xs text-mani-600 font-medium leading-relaxed">
+                      <strong className="text-mani-900">1x Mani Salted + 1x Bawang Only (₱60).</strong> Pour extra golden garlic chips into your peanut tub or over hot rice!
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddCombo(['salted', 'bawang-only'], 'Bawang Lovers Upgrade', '🧄')}
+                    className="w-full py-2.5 px-4 rounded-2xl bg-amber-400 hover:bg-amber-500 active:translate-y-0.5 text-mani-950 font-display font-black text-xs border-2 border-mani-950 shadow-snack-sm transition-all cursor-pointer"
+                  >
+                    + Add Garlic Upgrade (2 Tubs)
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* ✨ Brand Story & Filipino Snack Culture Section */}
+            <section
+              id="brand-story-section"
+              className="scroll-mt-24 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch"
+            >
+              {/* Left 7 Cols: Made for Every Filipino Craving */}
+              <div className="lg:col-span-7 bg-white rounded-[2rem] border-2 border-mani-950 p-5 sm:p-8 shadow-snack flex flex-col justify-between space-y-5">
+                <div className="space-y-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-300 text-mani-950 border border-mani-950">
+                    <span>🇵🇭</span> The Mani Wandering Story
+                  </span>
+                  <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-mani-950">
+                    Street-Snack Soul, Sealed Fresh for Your Desk &amp;Pantry
+                  </h2>
+                  <p className="text-xs sm:text-sm text-mani-700 font-medium leading-relaxed">
+                    Everyone loves warm, freshly fried kanto-style mani loaded with aromatic crispy bawang—until the paper bag gets soggy or the peanuts go stale. We created <strong className="text-mani-950">Mani Wandering</strong> so you can enjoy that unmistakable golden crunch anytime in clean, stackable, air-tight snack tubs.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="p-4 rounded-2xl bg-[#FDF9F0] border border-amber-200/90 space-y-1">
+                    <div className="text-xl">☕</div>
+                    <h3 className="font-display text-sm font-extrabold text-mani-950">3PM Merienda Rescue</h3>
+                    <p className="text-xs text-mani-600 font-medium">
+                      Pair Salted or Cheese Mani with iced coffee or cold softdrinks for an instant afternoon energy boost.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#FDF9F0] border border-amber-200/90 space-y-1">
+                    <div className="text-xl">💻</div>
+                    <h3 className="font-display text-sm font-extrabold text-mani-950">WFH &amp; Study Buddy</h3>
+                    <p className="text-xs text-mani-600 font-medium">
+                      Pop the lid open while working or gaming, then snap it shut to keep every peanut loud and crunchy.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#FDF9F0] border border-amber-200/90 space-y-1">
+                    <div className="text-xl">🍻</div>
+                    <h3 className="font-display text-sm font-extrabold text-mani-950">Barkada &amp; Pulutan Hero</h3>
+                    <p className="text-xs text-mani-600 font-medium">
+                      Spicy and BBQ tubs bring effortless heat and smokiness to weekend tambay and movie marathons.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#FDF9F0] border border-amber-200/90 space-y-1">
+                    <div className="text-xl">🧄</div>
+                    <h3 className="font-display text-sm font-extrabold text-mani-950">Never Tipid sa Bawang</h3>
+                    <p className="text-xs text-mani-600 font-medium">
+                      Everybody digs to the bottom for the garlic chips—so we pack every tub with real golden bawang slices!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right 5 Cols: 3-Step How Batch Ordering Works */}
+              <div className="lg:col-span-5 bg-mani-950 text-white rounded-[2rem] border-2 border-mani-950 p-5 sm:p-8 shadow-snack flex flex-col justify-between space-y-6">
+                <div className="space-y-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-400 text-mani-950">
+                    <span>⚡</span> Fast &amp; Easy Ordering
+                  </span>
+                  <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-amber-300">
+                    How Your Mani Order Works
+                  </h2>
+                  <p className="text-xs sm:text-sm text-amber-100/80 font-medium">
+                    We roast in scheduled batches so your tubs never sit on a dusty shelf.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3.5 bg-white/5 p-3.5 rounded-2xl border border-white/10">
+                    <div className="w-9 h-9 rounded-xl bg-amber-400 text-mani-950 font-display font-black text-base flex items-center justify-center shrink-0">
+                      1
+                    </div>
+                    <div>
+                      <h3 className="font-display text-sm font-extrabold text-white">
+                        Pick Your Tubs &amp; Flavors
+                      </h3>
+                      <p className="text-xs text-amber-100/75 font-medium mt-0.5">
+                        Choose from 7 flavors (₱50/tub, or ₱60 for pure Crispy Bawang Only).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3.5 bg-white/5 p-3.5 rounded-2xl border border-white/10">
+                    <div className="w-9 h-9 rounded-xl bg-amber-400 text-mani-950 font-display font-black text-base flex items-center justify-center shrink-0">
+                      2
+                    </div>
+                    <div>
+                      <h3 className="font-display text-sm font-extrabold text-white">
+                        Beat the Batch Cutoff Timer
+                      </h3>
+                      <p className="text-xs text-amber-100/75 font-medium mt-0.5">
+                        Enter your delivery details and pay via Cash on Delivery, GCash, or Maribank QR.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3.5 bg-white/5 p-3.5 rounded-2xl border border-white/10">
+                    <div className="w-9 h-9 rounded-xl bg-amber-400 text-mani-950 font-display font-black text-base flex items-center justify-center shrink-0">
+                      3
+                    </div>
+                    <div>
+                      <h3 className="font-display text-sm font-extrabold text-white">
+                        Freshly Roasted &amp; Delivered
+                      </h3>
+                      <p className="text-xs text-amber-100/75 font-medium mt-0.5">
+                        Your batch is roasted golden, sealed in tubs, and delivered straight to your doorstep!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('flavors-menu-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="w-full py-3.5 px-5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-black text-sm border-2 border-amber-300 shadow-xs transition-all cursor-pointer"
+                >
+                  Start Building Your Mani Box 🥜
+                </button>
+              </div>
+            </section>
           </div>
         )}
       </main>
 
       {/* Mobile Sticky Quick-Action Bar */}
       {currentView === 'order' && totalPacks > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-cream/95 backdrop-blur-md border-t border-amber-200 px-4 py-3 shadow-2xl lg:hidden animate-fade-in flex items-center justify-between">
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#FFFDF9]/95 backdrop-blur-md border-t-2 border-mani-950 px-4 py-3 shadow-2xl lg:hidden animate-fade-in flex items-center justify-between">
           <button
             type="button"
             onClick={() => {
@@ -1180,21 +1642,21 @@ export default function App() {
             className="text-left cursor-pointer active:opacity-80 transition-opacity"
             title="View Order Summary"
           >
-            <div className="text-[11px] font-bold text-mani-600 flex items-center gap-1.5">
-              <span>{totalPacks} tub{totalPacks > 1 ? 's' : ''} in cart</span>
+            <div className="text-[11px] font-extrabold text-mani-700 flex items-center gap-1.5">
+              <span>🥜 {totalPacks} tub{totalPacks > 1 ? 's' : ''} in box</span>
               {cutoffInfo?.isOpen && cutoffInfo?.enabled && (
-                <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded border border-amber-300">
+                <span className="text-[10px] font-bold text-amber-950 bg-amber-200 px-1.5 py-0.2 rounded border border-mani-950/30">
                   ⏰ Cutoff {cutoffInfo.cutoffTime || '23:59'}
                 </span>
               )}
             </div>
-            <div className="text-base font-black text-amber-900 flex items-center gap-1">
+            <div className="font-display text-lg font-black text-mani-950 flex items-center gap-1.5">
               <span>{formatPHP(subtotal)}</span>
-              <span className="text-[10px] text-amber-700 font-bold underline">Summary</span>
+              <span className="text-[10px] text-amber-800 font-extrabold underline">View Box</span>
             </div>
           </button>
           {isOrdersClosed ? (
-            <span className="px-3.5 py-2 rounded-xl bg-red-100 text-red-800 font-black text-xs border border-red-300 flex items-center gap-1">
+            <span className="px-3.5 py-2 rounded-xl bg-red-100 text-red-800 font-black text-xs border-2 border-red-300 flex items-center gap-1">
               <Lock className="w-3.5 h-3.5" /> Orders Closed
             </span>
           ) : (
@@ -1204,10 +1666,10 @@ export default function App() {
                 const el = document.getElementById('customer-info-section');
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
-              className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-amber-900/20 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 active:translate-y-0.5 text-mani-950 font-display font-black text-xs border-2 border-mani-950 shadow-snack-sm flex items-center gap-1 cursor-pointer"
             >
-              <span>Proceed to Details</span>
-              <ChevronRight className="w-4 h-4" />
+              <span>Checkout Now</span>
+              <ChevronRight className="w-4 h-4 stroke-[2.5]" />
             </button>
           )}
         </div>
@@ -1247,20 +1709,52 @@ export default function App() {
         onLoginSuccess={handleLoginSuccess}
       />
 
-      {/* Clean Footer (No Google Sheet IDs or connections displayed) */}
-      <footer className="border-t border-mani-200/80 bg-white py-6 text-center text-xs text-mani-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-1.5">
-          <p className="font-bold text-mani-700">
-            🥜 Mani Wandering
+      {/* Playful Brand Footer */}
+      <footer className="border-t-2 border-mani-950 bg-white py-8 text-center text-xs text-mani-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-lg">🥜</span>
+            <p className="font-display text-base font-extrabold text-mani-950">
+              Mani Wandering
+            </p>
+            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-300 text-mani-950 border border-mani-950">
+              🇵🇭 Gawang Pinoy
+            </span>
+          </div>
+          <p className="text-mani-500 text-xs font-medium max-w-md mx-auto">
+            Freshly roasted artisanal peanuts &amp; crispy garlic in reusable tubs • Crispy na, Crunchy pa!
           </p>
-          <p className="text-mani-400 text-[11px]">
-            Freshly roasted artisanal peanuts • Crispy na, Crunchy pa.
-          </p>
-          <div className="pt-1">
+          <div className="pt-1 flex items-center justify-center gap-4 text-[11px] font-bold text-mani-500">
+            {currentView === 'order' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('flavors-menu-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="hover:text-mani-950 transition-colors cursor-pointer"
+                >
+                  7 Flavors Menu
+                </button>
+                <span>•</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById('suki-favorites-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="hover:text-mani-950 transition-colors cursor-pointer"
+                >
+                  Mga Suki Combos
+                </button>
+                <span>•</span>
+              </>
+            )}
             <button
               type="button"
               onClick={() => navigateTo(currentView === 'admin' ? 'order' : 'admin')}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-mani-400 hover:text-amber-700 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-mani-500 hover:text-amber-800 transition-colors cursor-pointer"
             >
               <Lock className="w-3 h-3" />
               <span>{currentView === 'admin' ? 'Back to Store' : 'Admin Portal'}</span>

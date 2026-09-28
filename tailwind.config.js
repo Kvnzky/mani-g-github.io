@@ -32,12 +32,17 @@ export default {
       },
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
-        display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Bricolage Grotesque', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         'warm': '0 4px 20px -2px rgba(97, 63, 32, 0.08), 0 2px 6px -1px rgba(97, 63, 32, 0.04)',
+        'warm-md': '0 8px 24px -3px rgba(97, 63, 32, 0.12), 0 4px 10px -2px rgba(97, 63, 32, 0.06)',
         'warm-lg': '0 10px 25px -3px rgba(97, 63, 32, 0.12), 0 4px 10px -2px rgba(97, 63, 32, 0.06)',
         'warm-xl': '0 20px 35px -5px rgba(97, 63, 32, 0.15), 0 10px 15px -5px rgba(97, 63, 32, 0.08)',
+        'snack-sm': '0 3px 0 0 #372212',
+        'snack': '0 4px 0 0 #372212',
+        'snack-lg': '0 6px 0 0 #372212',
+        'snack-amber': '0 4px 0 0 #92400E',
       }
     },
   },
