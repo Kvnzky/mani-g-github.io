@@ -1225,48 +1225,6 @@ export default function App() {
                       />
                     </div>
 
-                    {/* Floating Tub Polaroid 1: Spicy Best Seller (Top Left) */}
-                    <a
-                      href="#flavors-menu"
-                      className="absolute -top-2 left-0 sm:-left-3 bg-white p-2 rounded-2xl border-2 border-mani-900 shadow-snack-sm -rotate-6 hover:rotate-0 hover:scale-105 transition-all flex items-center gap-2 animate-float-reverse"
-                      title="Order Spicy Mani"
-                    >
-                      <img
-                        src="./images/products/spicy.jpg"
-                        alt="Spicy Mani Tub"
-                        className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover border border-rose-200"
-                      />
-                      <div className="pr-1.5 text-left">
-                        <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-600 text-white block w-fit">
-                          BEST SELLER
-                        </span>
-                        <span className="font-display text-xs sm:text-sm font-bold text-mani-950 block leading-tight mt-0.5">
-                          🌶️ Spicy Tub
-                        </span>
-                      </div>
-                    </a>
-
-                    {/* Floating Tub Polaroid 2: Bawang Only (Bottom Right) */}
-                    <a
-                      href="#flavors-menu"
-                      className="absolute -bottom-2 right-0 sm:-right-3 bg-white p-2 rounded-2xl border-2 border-mani-900 shadow-snack-sm rotate-3 hover:rotate-0 hover:scale-105 transition-all flex items-center gap-2 animate-float-slow"
-                      title="Order Bawang Only"
-                    >
-                      <img
-                        src="./images/products/bawang-only.jpg"
-                        alt="Bawang Only Tub"
-                        className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover border border-amber-200"
-                      />
-                      <div className="pr-1.5 text-left">
-                        <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-mani-900 text-amber-300 block w-fit">
-                          MUST TRY
-                        </span>
-                        <span className="font-display text-xs sm:text-sm font-bold text-mani-950 block leading-tight mt-0.5">
-                          🧄 Bawang Chips
-                        </span>
-                      </div>
-                    </a>
-
                     {/* Playful Price Sticker Badge (Top Right) */}
                     <div className="absolute top-1 right-1 sm:right-0 bg-amber-400 text-mani-950 px-3 py-1.5 rounded-2xl border-2 border-mani-900 shadow-snack-sm rotate-6 select-none text-center">
                       <span className="block text-[9px] font-black uppercase tracking-wider leading-none">Starts At</span>
