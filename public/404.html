@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mani Wandering — Redirecting...</title>
+    <script>
+      (function () {
+        var path = window.location.pathname || '/';
+        var lower = path.toLowerCase();
+        var adminIdx = lower.indexOf('/admin');
+        if (adminIdx !== -1) {
+          var base = path.substring(0, adminIdx);
+          if (!base.endsWith('/')) base += '/';
+          var after = path.substring(adminIdx + 6).replace(/^\/+|\/+$/g, '');
+          window.location.replace(base + '#/admin' + (after ? '/' + after : ''));
+        } else {
+          window.location.replace('/');
+        }
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

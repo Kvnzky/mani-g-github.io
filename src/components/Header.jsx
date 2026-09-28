@@ -148,7 +148,18 @@ export default function Header({
                   <span className="hidden md:inline">Logout</span>
                 </button>
               </div>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                onClick={() => onNavigate ? onNavigate('admin') : setCurrentView('admin')}
+                aria-label="Open Admin Portal"
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-mani-700 bg-cream-warm hover:bg-amber-100/80 border border-mani-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Admin Portal"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                <span className="hidden sm:inline">Admin</span>
+              </button>
+            )}
 
             {/* Customer Cart Button (only visible in ordering view) */}
             {currentView === 'order' && (

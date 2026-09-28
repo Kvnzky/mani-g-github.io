@@ -20,6 +20,19 @@ import {
 } from './utils/phtTime';
 import { AlertCircle, ChevronRight, Lock, X } from 'lucide-react';
 
+// Helper to get the base root path (before any /admin segment) so relative assets never break on reload
+const getBaseRootPath = () => {
+  if (typeof window === 'undefined') return '/';
+  const pathname = window.location.pathname || '/';
+  const lower = pathname.toLowerCase();
+  const adminIdx = lower.indexOf('/admin');
+  if (adminIdx !== -1) {
+    const base = pathname.substring(0, adminIdx);
+    return base.endsWith('/') ? base : `${base}/`;
+  }
+  return pathname;
+};
+
 // Helper to detect if current URL or hash targets the admin route
 const parseAdminRoute = () => {
   if (typeof window === 'undefined') return { isAdmin: false, subroute: '' };
@@ -29,15 +42,17 @@ const parseAdminRoute = () => {
   let isAdmin = false;
   let subroute = '';
 
-  const adminPathIndex = pathname.indexOf('/admin');
-  if (adminPathIndex !== -1) {
-    isAdmin = true;
-    const afterAdmin = pathname.substring(adminPathIndex + 6).replace(/^\/+|\/+$/g, '');
-    subroute = afterAdmin.split('/')[0] || '';
-  } else if (hash.startsWith('admin')) {
+  if (hash.startsWith('admin')) {
     isAdmin = true;
     const afterAdmin = hash.replace(/^admin\/?/, '').replace(/^\/+|\/+$/g, '');
     subroute = afterAdmin.split('/')[0] || '';
+  } else {
+    const adminPathIndex = pathname.indexOf('/admin');
+    if (adminPathIndex !== -1) {
+      isAdmin = true;
+      const afterAdmin = pathname.substring(adminPathIndex + 6).replace(/^\/+|\/+$/g, '');
+      subroute = afterAdmin.split('/')[0] || '';
+    }
   }
 
   return { isAdmin, subroute };
@@ -487,6 +502,7 @@ export default function App() {
     const handleLocationChange = () => {
       const route = parseAdminRoute();
       const token = sessionStorage.getItem('mani_admin_token') || '';
+      const baseRoot = getBaseRootPath();
 
       if (route.isAdmin) {
         if (token) {
@@ -499,17 +515,15 @@ export default function App() {
             if (route.subroute === 'order-summary' || route.subroute === 'ordersummary') mappedTab = 'order-summary';
             setAdminTab(mappedTab);
           }
+          // Normalize pathname /admin/... to root + #/admin/... so page refresh never breaks relative ./assets/
+          if (window.location.pathname.toLowerCase().includes('/admin')) {
+            const sub = route.subroute || 'settings';
+            window.history.replaceState(null, '', `${baseRoot}#/admin/${sub}`);
+          }
         } else {
-          // Unauthenticated Admin access: redirect/normalize subroutes to /admin and prompt login
-          const pathname = window.location.pathname.toLowerCase();
-          const adminPathIndex = pathname.indexOf('/admin');
-          if (route.subroute) {
-            if (window.location.hash.includes('admin')) {
-              window.history.replaceState(null, '', '#/admin');
-            } else if (adminPathIndex !== -1) {
-              const basePath = pathname.substring(0, adminPathIndex) || '';
-              window.history.replaceState(null, '', `${basePath}/admin`);
-            }
+          // Unauthenticated Admin access: normalize to root + #/admin and prompt login
+          if (window.location.pathname.toLowerCase().includes('/admin') || route.subroute) {
+            window.history.replaceState(null, '', `${baseRoot}#/admin`);
           }
           setCurrentView('admin');
           setIsLoginModalOpen(true);
@@ -521,6 +535,7 @@ export default function App() {
       }
     };
 
+    handleLocationChange();
     window.addEventListener('popstate', handleLocationChange);
     window.addEventListener('hashchange', handleLocationChange);
     return () => {
@@ -530,52 +545,37 @@ export default function App() {
   }, []);
 
   const navigateTo = (view, tab = '') => {
-    const isHashMode = window.location.hash.includes('admin') || (!window.location.pathname.includes('/admin') && Boolean(window.location.hash));
+    const baseRoot = getBaseRootPath();
+    const activeToken = adminToken || sessionStorage.getItem('mani_admin_token') || '';
 
     if (view === 'admin') {
       const activeAdminTab = tab || adminTab || 'cutoff';
       const sub = (activeAdminTab === 'cutoff' || activeAdminTab === 'settings') ? 'settings' : activeAdminTab;
 
-      if (adminToken) {
+      if (activeToken) {
         setCurrentView('admin');
         setIsLoginModalOpen(false);
         setAdminTab(activeAdminTab);
-        if (isHashMode) {
-          window.location.hash = `/admin/${sub}`;
-        } else {
-          window.history.pushState(null, '', `/admin/${sub}`);
-        }
+        window.history.pushState(null, '', `${baseRoot}#/admin/${sub}`);
       } else {
-        // Unauthenticated access: prompt login modal at /admin
+        // Unauthenticated access: prompt login modal at #/admin
         setCurrentView('admin');
         setIsLoginModalOpen(true);
-        if (isHashMode) {
-          window.location.hash = '/admin';
-        } else {
-          window.history.pushState(null, '', '/admin');
-        }
+        window.history.pushState(null, '', `${baseRoot}#/admin`);
       }
     } else {
       // view === 'order' (customer guest store)
       setCurrentView('order');
       setIsLoginModalOpen(false);
-      if (window.location.hash) {
-        window.history.pushState(null, '', window.location.pathname || '/');
-      } else {
-        window.history.pushState(null, '', '/');
-      }
+      window.history.pushState(null, '', baseRoot);
     }
   };
 
   const handleAdminTabChange = (tabId) => {
     setAdminTab(tabId);
     const routeSegment = tabId === 'cutoff' ? 'settings' : tabId;
-    const isHashMode = window.location.hash.includes('admin') || (!window.location.pathname.includes('/admin') && Boolean(window.location.hash));
-    if (isHashMode) {
-      window.location.hash = `/admin/${routeSegment}`;
-    } else {
-      window.history.pushState(null, '', `/admin/${routeSegment}`);
-    }
+    const baseRoot = getBaseRootPath();
+    window.history.pushState(null, '', `${baseRoot}#/admin/${routeSegment}`);
   };
 
   const handleLoginSuccess = (token, user) => {
@@ -584,12 +584,8 @@ export default function App() {
     setIsLoginModalOpen(false);
     setCurrentView('admin');
     const sub = (adminTab === 'cutoff' || adminTab === 'settings') ? 'settings' : adminTab;
-    const isHashMode = window.location.hash.includes('admin');
-    if (isHashMode) {
-      window.location.hash = `/admin/${sub}`;
-    } else {
-      window.history.replaceState(null, '', `/admin/${sub}`);
-    }
+    const baseRoot = getBaseRootPath();
+    window.history.replaceState(null, '', `${baseRoot}#/admin/${sub}`);
   };
 
   const handleLogout = async () => {
@@ -605,17 +601,14 @@ export default function App() {
     setAdminUser(null);
     setCurrentView('admin');
     setIsLoginModalOpen(true);
-    const isHashMode = window.location.hash.includes('admin');
-    if (isHashMode) {
-      window.location.hash = '/admin';
-    } else {
-      window.history.replaceState(null, '', '/admin');
-    }
+    const baseRoot = getBaseRootPath();
+    window.history.replaceState(null, '', `${baseRoot}#/admin`);
   };
 
   const handleCloseLoginModal = () => {
     setIsLoginModalOpen(false);
-    if (!adminToken) {
+    const activeToken = adminToken || sessionStorage.getItem('mani_admin_token');
+    if (!activeToken) {
       // If user closes admin login modal while unauthenticated, redirect to customer store
       navigateTo('order');
     }
@@ -1256,13 +1249,23 @@ export default function App() {
 
       {/* Clean Footer (No Google Sheet IDs or connections displayed) */}
       <footer className="border-t border-mani-200/80 bg-white py-6 text-center text-xs text-mani-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-1.5">
           <p className="font-bold text-mani-700">
             🥜 Mani Wandering
           </p>
           <p className="text-mani-400 text-[11px]">
             Freshly roasted artisanal peanuts • Crispy na, Crunchy pa.
           </p>
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => navigateTo(currentView === 'admin' ? 'order' : 'admin')}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-mani-400 hover:text-amber-700 transition-colors cursor-pointer"
+            >
+              <Lock className="w-3 h-3" />
+              <span>{currentView === 'admin' ? 'Back to Store' : 'Admin Portal'}</span>
+            </button>
+          </div>
         </div>
       </footer>
     </div>

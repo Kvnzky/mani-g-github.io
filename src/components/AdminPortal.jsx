@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   ShieldCheck, RefreshCw, Search, Calendar, 
   Settings, ExternalLink, Plus, Edit2, Edit3, Check, Package, DollarSign, Upload, Phone, MapPin, CreditCard,
-  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, BarChart3, TrendingUp, CalendarRange, X
+  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, BarChart3, TrendingUp, CalendarRange, X, Power
 } from 'lucide-react';
 import { formatPHP } from '../config/products';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from '../config/sheetsConfig';
