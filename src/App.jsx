@@ -1708,60 +1708,6 @@ export default function App() {
         onClose={handleCloseLoginModal}
         onLoginSuccess={handleLoginSuccess}
       />
-
-      {/* Playful Brand Footer */}
-      <footer className="border-t-2 border-mani-950 bg-white py-8 text-center text-xs text-mani-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-lg">🥜</span>
-            <p className="font-display text-base font-extrabold text-mani-950">
-              Mani Wandering
-            </p>
-            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-300 text-mani-950 border border-mani-950">
-              🇵🇭 Gawang Pinoy
-            </span>
-          </div>
-          <p className="text-mani-500 text-xs font-medium max-w-md mx-auto">
-            Freshly roasted artisanal peanuts &amp; crispy garlic in reusable tubs • Crispy na, Crunchy pa!
-          </p>
-          <div className="pt-1 flex items-center justify-center gap-4 text-[11px] font-bold text-mani-500">
-            {currentView === 'order' && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const el = document.getElementById('flavors-menu-section');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="hover:text-mani-950 transition-colors cursor-pointer"
-                >
-                  7 Flavors Menu
-                </button>
-                <span>•</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const el = document.getElementById('suki-favorites-section');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="hover:text-mani-950 transition-colors cursor-pointer"
-                >
-                  Mga Suki Combos
-                </button>
-                <span>•</span>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={() => navigateTo(currentView === 'admin' ? 'order' : 'admin')}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-mani-500 hover:text-amber-800 transition-colors cursor-pointer"
-            >
-              <Lock className="w-3 h-3" />
-              <span>{currentView === 'admin' ? 'Back to Store' : 'Admin Portal'}</span>
-            </button>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
