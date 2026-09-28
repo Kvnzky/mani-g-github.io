@@ -168,26 +168,26 @@ export default function FlavorCard({
             </div>
           ) : !isSelected ? (
             /* Unselected State: Tactile Stepper + Prominent Add Button */
-            <div className="flex items-center gap-2 w-full">
+            <div className="flex items-center gap-1.5 w-full">
               {/* Staged Quantity Stepper */}
-              <div className="flex items-center bg-mani-100/90 rounded-2xl border-2 border-mani-900/15 p-1 shrink-0">
+              <div className="flex items-center bg-mani-100/90 rounded-xl border-2 border-mani-900/15 p-0.5 shrink-0">
                 <button
                   type="button"
                   onClick={handleMinusStaged}
                   disabled={stagedQty <= 1}
                   aria-label={`Decrease ${product.name} quantity to add`}
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold transition-all ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold transition-all ${
                     stagedQty <= 1 
                       ? 'text-mani-300 cursor-not-allowed' 
                       : 'bg-white text-mani-900 hover:bg-amber-100 shadow-2xs active:scale-90 cursor-pointer'
                   }`}
                 >
-                  <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <Minus className="w-3 h-3 stroke-[2.5]" />
                 </button>
 
                 <span 
                   aria-label={`Quantity to add: ${stagedQty}`}
-                  className="w-7 text-center font-display text-sm font-bold text-mani-950 select-none"
+                  className="w-6 text-center font-display text-xs font-bold text-mani-950 select-none"
                 >
                   {stagedQty}
                 </span>
@@ -196,9 +196,9 @@ export default function FlavorCard({
                   type="button"
                   onClick={handlePlusStaged}
                   aria-label={`Increase ${product.name} quantity to add`}
-                  className="w-8 h-8 rounded-xl bg-white text-mani-900 hover:bg-amber-100 active:scale-90 flex items-center justify-center shadow-2xs font-bold transition-all cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-white text-mani-900 hover:bg-amber-100 active:scale-90 flex items-center justify-center shadow-2xs font-bold transition-all cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <Plus className="w-3 h-3 stroke-[2.5]" />
                 </button>
               </div>
 
@@ -206,23 +206,23 @@ export default function FlavorCard({
               <button
                 type="button"
                 onClick={handleAddClick}
-                className="flex-1 min-h-[42px] py-2.5 px-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-xs sm:text-sm border-2 border-mani-900 shadow-snack-sm active:translate-y-0.5 flex items-center justify-center gap-1.5 whitespace-nowrap transition-all cursor-pointer"
+                className="flex-1 min-w-0 min-h-[38px] py-2 px-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-xs border-2 border-mani-900 shadow-snack-sm active:translate-y-0.5 flex items-center justify-center gap-1 whitespace-nowrap transition-all cursor-pointer"
               >
-                <Plus className="w-4 h-4 stroke-[3] shrink-0" />
-                <span>Add to Order</span>
+                <Plus className="w-3.5 h-3.5 stroke-[3] shrink-0" />
+                <span className="truncate">Add to Order</span>
               </button>
             </div>
           ) : (
             /* Selected / In-Cart Live Controller */
-            <div className="flex items-center justify-between gap-2 bg-amber-100/90 p-1.5 rounded-2xl border-2 border-mani-900 shadow-snack-sm w-full">
+            <div className="flex items-center justify-between gap-1.5 bg-amber-100/90 p-1.5 rounded-xl border-2 border-mani-900 shadow-snack-sm w-full">
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
                   onClick={handleMinusInCart}
                   aria-label={`Decrease ${product.name} quantity`}
-                  className="w-8 h-8 rounded-xl bg-white text-mani-950 hover:bg-red-50 hover:text-red-600 active:scale-90 flex items-center justify-center border border-mani-900/20 shadow-2xs font-bold transition-all cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-white text-mani-950 hover:bg-red-50 hover:text-red-600 active:scale-90 flex items-center justify-center border border-mani-900/20 shadow-2xs font-bold transition-all cursor-pointer"
                 >
-                  <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <Minus className="w-3 h-3 stroke-[2.5]" />
                 </button>
 
                 <input
@@ -232,24 +232,24 @@ export default function FlavorCard({
                   value={quantity}
                   onChange={handleDirectInput}
                   aria-label={`${product.name} quantity in order`}
-                  className="w-8 sm:w-9 text-center font-display text-sm sm:text-base font-bold bg-transparent text-mani-950 focus:outline-none rounded p-0"
+                  className="w-7 text-center font-display text-xs sm:text-sm font-bold bg-transparent text-mani-950 focus:outline-none rounded p-0"
                 />
 
                 <button
                   type="button"
                   onClick={handlePlusInCart}
                   aria-label={`Increase ${product.name} quantity`}
-                  className="w-8 h-8 rounded-xl bg-mani-900 text-amber-300 hover:bg-mani-800 active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-mani-900 text-amber-300 hover:bg-mani-800 active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <Plus className="w-3 h-3 stroke-[2.5]" />
                 </button>
               </div>
 
-              <div className="pr-2 text-right min-w-0">
-                <div className="font-display text-sm sm:text-base font-bold text-mani-950 truncate leading-tight">
+              <div className="pr-1.5 text-right min-w-0">
+                <div className="font-display text-xs sm:text-sm font-bold text-mani-950 truncate leading-tight">
                   {formatPHP(quantity * (product.price || 50))}
                 </div>
-                <div className="text-[10px] font-extrabold text-mani-700 uppercase tracking-wider">
+                <div className="text-[9px] font-extrabold text-mani-700 uppercase tracking-wider truncate">
                   {quantity} tub{quantity > 1 ? 's' : ''} added
                 </div>
               </div>
