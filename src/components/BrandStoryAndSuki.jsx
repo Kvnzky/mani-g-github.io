@@ -6,15 +6,38 @@ const SUKI_COMBOS = [
   {
     id: 'suki-duo',
     badge: 'MOST REORDERED',
-    badgeClass: 'bg-amber-400 text-mani-950',
+    badgeClass: 'bg-amber-600 text-white',
     title: 'The "Bitin ang Isa" Duo',
-    subtitle: '1 Salted + 1 Spicy Tub',
+    subtitle: '1 Salted + 1 Spicy',
     description: 'Our #1 repeat suki order! Classic rock-salt & bawang crunch paired with our bestselling fiery chili-garlic mani.',
     items: [
       { id: 'salted', qty: 1, label: '🧂 Salted × 1' },
       { id: 'spicy', qty: 1, label: '🌶️ Spicy × 1' }
-    ],
-    cardBg: 'from-amber-50 via-white to-orange-50/40'
+    ]
+  },
+  {
+    id: 'sawa-sa-sarap',
+    badge: 'SAFE PICK',
+    badgeClass: 'bg-amber-600 text-white',
+    title: 'Sawa sa Sarap Duo',
+    subtitle: '1 Salted + 1 Bawang Only',
+    description: 'Crunchy salted mani with extra crispy golden garlic. Simple, savory and hard to stop. Sawa sa sarap talaga!',
+    items: [
+      { id: 'salted', qty: 1, label: '🧂 Salted × 1' },
+      { id: 'bawang-only', qty: 1, label: '🧄 Bawang Only × 1' }
+    ]
+  },
+  {
+    id: 'anghang-usok',
+    badge: 'MAANGHANG',
+    badgeClass: 'bg-amber-600 text-white',
+    title: 'Anghang-Usok Duo',
+    subtitle: '1 Spicy + 1 BBQ',
+    description: 'Fiery chili-garlic meets smoky-sweet barbecue. Best with malamig na softdrinks or beer!',
+    items: [
+      { id: 'spicy', qty: 1, label: '🌶️ Spicy × 1' },
+      { id: 'bbq', qty: 1, label: '🍖 BBQ × 1' }
+    ]
   },
   {
     id: 'garlic-overload',
@@ -27,23 +50,37 @@ const SUKI_COMBOS = [
       { id: 'spicy', qty: 1, label: '🌶️ Spicy × 1' },
       { id: 'bbq', qty: 1, label: '🍖 BBQ × 1' },
       { id: 'bawang-only', qty: 1, label: '🧄 Bawang Only × 1' }
-    ],
-    cardBg: 'from-rose-50/60 via-white to-amber-50/40'
+    ]
   },
   {
     id: 'barkada-stash',
     badge: 'BARKADA TAMBAY',
     badgeClass: 'bg-emerald-600 text-white',
     title: 'Barkada Movie Night Stash',
-    subtitle: 'Salted • Cheese • Sour Cream • BBQ',
+    subtitle: '1 Salted + 1 Cheese + 1 Sour Cream + 1 BBQ',
     description: 'Four crowd-pleasing flavors so nobody fights over the last handful. Built for Netflix marathons and kwentuhan.',
     items: [
       { id: 'salted', qty: 1, label: '🧂 Salted × 1' },
       { id: 'cheese', qty: 1, label: '🧀 Cheese × 1' },
       { id: 'sour-cream', qty: 1, label: '🥛 Sour Cream × 1' },
       { id: 'bbq', qty: 1, label: '🍖 BBQ × 1' }
-    ],
-    cardBg: 'from-emerald-50/60 via-white to-yellow-50/40'
+    ]
+  },
+  {
+    id: 'walang-iwanan',
+    badge: 'BUONG BARKADA',
+    badgeClass: 'bg-purple-600 text-white',
+    title: 'Walang Iwanan Six-Pack',
+    subtitle: '1 Salted + 1 Spicy + 1 BBQ + 1 Sour Cream + 1 Cheese + 1 Bawang Only',
+    description: 'All six flavors, zero arguments. Walang maiiwan at walang mag-aaway sa last handful. The full suki lineup for handaan, reunion, or one very long weekend.',
+    items: [
+      { id: 'salted', qty: 1, label: '🧂 Salted × 1' },
+      { id: 'spicy', qty: 1, label: '🌶️ Spicy × 1' },
+      { id: 'bbq', qty: 1, label: '🍖 BBQ × 1' },
+      { id: 'sour-cream', qty: 1, label: '🥛 Sour Cream × 1' },
+      { id: 'cheese', qty: 1, label: '🧀 Cheese × 1' },
+      { id: 'bawang-only', qty: 1, label: '🧄 Bawang Only × 1' }
+    ]
   }
 ];
 
@@ -136,7 +173,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
           </a>
         </div>
 
-        {/* 3 Combo Cards */}
+        {/* 6 Combo Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
           {SUKI_COMBOS.map((combo) => {
             const comboPrice = computeComboPrice(combo.items);
@@ -146,14 +183,14 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             return (
               <div
                 key={combo.id}
-                className={`rounded-3xl p-5 sm:p-6 bg-gradient-to-br ${combo.cardBg} border-2 border-mani-900/20 hover:border-mani-900 shadow-snack-card hover:shadow-snack-card-hover hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between`}
+                className="rounded-3xl p-5 sm:p-6 bg-white border border-mani-200 hover:border-mani-900 shadow-warm hover:shadow-snack-card-hover hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-mani-900/20 -rotate-1 ${combo.badgeClass}`}>
+                    <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${combo.badgeClass}`}>
                       {combo.badge}
                     </span>
-                    <span className="font-display text-lg font-bold text-mani-950 bg-white px-3 py-0.5 rounded-xl border border-mani-200 shadow-2xs">
+                    <span className="font-display text-lg font-bold text-mani-950 bg-white px-3.5 py-0.5 rounded-xl border border-mani-200 shadow-2xs">
                       {formatPHP(comboPrice)}
                     </span>
                   </div>
@@ -170,40 +207,42 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                   <p className="text-xs sm:text-[13px] text-mani-700 font-medium leading-relaxed">
                     {combo.description}
                   </p>
+                </div>
 
+                <div className="pt-4 mt-auto">
                   {/* Flavor Pills inside Combo */}
-                  <div className="flex flex-wrap gap-1.5 pt-1">
+                  <div className="flex flex-wrap gap-1.5 pb-4">
                     {combo.items.map((item) => (
                       <span
                         key={item.id}
-                        className="text-[11px] font-extrabold px-2.5 py-1 rounded-xl bg-white text-mani-900 border border-mani-200 shadow-2xs"
+                        className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-white text-mani-900 border border-mani-200 shadow-2xs"
                       >
                         {item.label}
                       </span>
                     ))}
                   </div>
-                </div>
 
-                <div className="pt-4 mt-4 border-t border-mani-200/70">
-                  <button
-                    type="button"
-                    disabled={!available || isOrdersClosed}
-                    onClick={() => onAddCombo && onAddCombo(combo)}
-                    className={`w-full py-2.5 px-4 rounded-2xl font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
-                      !available || isOrdersClosed
-                        ? 'bg-mani-100 text-mani-400 border border-mani-200 cursor-not-allowed'
-                        : 'bg-mani-900 hover:bg-mani-800 text-amber-300 border-2 border-mani-950 shadow-snack-sm active:translate-y-0.5 cursor-pointer'
-                    }`}
-                  >
-                    <Plus className="w-4 h-4 stroke-[2.5]" />
-                    <span>
-                      {!available
-                        ? 'Some Flavors Unavailable'
-                        : isOrdersClosed
-                        ? 'Orders Currently Closed'
-                        : `Add ${totalTubs}-Tub Combo (${formatPHP(comboPrice)})`}
-                    </span>
-                  </button>
+                  <div className="pt-4 border-t border-mani-200/70">
+                    <button
+                      type="button"
+                      disabled={!available || isOrdersClosed}
+                      onClick={() => onAddCombo && onAddCombo(combo)}
+                      className={`w-full py-2.5 px-4 rounded-xl font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
+                        !available || isOrdersClosed
+                          ? 'bg-mani-100 text-mani-400 border border-mani-200 cursor-not-allowed'
+                          : 'bg-mani-900 hover:bg-mani-800 text-amber-400 active:translate-y-0.5 cursor-pointer'
+                      }`}
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>
+                        {!available
+                          ? 'Some Flavors Unavailable'
+                          : isOrdersClosed
+                          ? 'Orders Currently Closed'
+                          : `Add ${totalTubs}-Tub Combo (${formatPHP(comboPrice)})`}
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
