@@ -25,7 +25,7 @@ const BASE_URL = 'http://127.0.0.1:3001';
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function waitForServer(maxAttempts = 30) {
+async function waitForServer(maxAttempts = 80) {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       const res = await fetch(`${BASE_URL}/api/cutoff`);
