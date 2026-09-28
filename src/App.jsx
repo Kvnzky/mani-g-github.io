@@ -1198,16 +1198,27 @@ export default function App() {
                     </button>
                   </div>
 
-                  {/* Quick Snack Highlights Strip */}
+                  {/* 3-Step Quick Ordering Flow Strip */}
                   <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-2 text-xs font-extrabold text-mani-900">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 border border-amber-300 shadow-2xs">
-                      <span>🧄</span> Real Fried Garlic Chips
+                    <span className="inline-flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-xl border border-amber-300/80 shadow-2xs">
+                      <span className="w-5 h-5 rounded-full bg-mani-950 text-amber-300 flex items-center justify-center text-[10px] font-black">
+                        1
+                      </span>
+                      <span>Pick Your Tubs</span>
                     </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 border border-amber-300 shadow-2xs">
-                      <span>🥣</span> Mess-Free Resealable Tubs
+                    <span className="text-amber-700/70 hidden sm:inline">→</span>
+                    <span className="inline-flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-xl border border-amber-300/80 shadow-2xs">
+                      <span className="w-5 h-5 rounded-full bg-mani-950 text-amber-300 flex items-center justify-center text-[10px] font-black">
+                        2
+                      </span>
+                      <span>Enter Delivery Address</span>
                     </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 border border-amber-300 shadow-2xs">
-                      <span>⚡</span> No Account Needed to Order
+                    <span className="text-amber-700/70 hidden sm:inline">→</span>
+                    <span className="inline-flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-xl border border-amber-300/80 shadow-2xs">
+                      <span className="w-5 h-5 rounded-full bg-mani-950 text-amber-300 flex items-center justify-center text-[10px] font-black">
+                        3
+                      </span>
+                      <span>COD, GCash or Maribank</span>
                     </span>
                   </div>
                 </div>
