@@ -1399,7 +1399,7 @@ export default function App() {
                   </div>
 
                   {/* Flavors Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-4.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4 xl:gap-3.5">
                     {filteredProducts.map((product) => (
                       <FlavorCard
                         key={product.id}

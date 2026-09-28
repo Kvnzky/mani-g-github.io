@@ -66,7 +66,7 @@ export default function FlavorCard({
 
   return (
     <article
-      className={`relative rounded-3xl p-4 sm:p-4.5 transition-all duration-200 flex flex-col justify-between overflow-hidden group bg-gradient-to-b ${personality.cardBg} ${
+      className={`relative rounded-3xl p-3.5 sm:p-4 transition-all duration-200 flex flex-col justify-between overflow-hidden group bg-gradient-to-b ${personality.cardBg} ${
         isSelected
           ? 'border-2 border-mani-900 shadow-snack ring-4 ring-amber-300/60 -translate-y-0.5'
           : `border-2 border-mani-900/15 shadow-snack-card hover:border-mani-900/80 hover:shadow-snack-card-hover hover:-translate-y-1 ${personality.tiltClass}`
@@ -74,7 +74,7 @@ export default function FlavorCard({
     >
       {/* Product Tub Image Showcase */}
       {product.image && (
-        <div className={`relative w-full aspect-[4/3] mb-3.5 rounded-2xl overflow-hidden border-2 ${personality.frameBg} shadow-inner`}>
+        <div className={`relative w-full aspect-[4/3] mb-3 rounded-2xl overflow-hidden border-2 ${personality.frameBg} shadow-inner`}>
           <img
             src={product.image}
             alt={`${product.name} Mani Tub`}
@@ -140,7 +140,7 @@ export default function FlavorCard({
           </div>
 
           {/* Appetizing Description */}
-          <p className="text-xs sm:text-[13px] text-mani-700 font-medium leading-relaxed mt-2.5 mb-4">
+          <p className="text-xs sm:text-[13px] text-mani-700 font-medium leading-relaxed mt-2 mb-3.5">
             {product.description}
           </p>
         </div>
@@ -170,13 +170,13 @@ export default function FlavorCard({
             /* Unselected State: Tactile Stepper + Prominent Add Button */
             <div className="flex items-center gap-1.5 w-full">
               {/* Staged Quantity Stepper */}
-              <div className="flex items-center bg-mani-100/90 rounded-xl border-2 border-mani-900/15 p-0.5 shrink-0">
+              <div className="flex items-center bg-mani-100/90 rounded-xl border border-mani-900/15 p-0.5 shrink-0">
                 <button
                   type="button"
                   onClick={handleMinusStaged}
                   disabled={stagedQty <= 1}
                   aria-label={`Decrease ${product.name} quantity to add`}
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold transition-all ${
+                  className={`w-6 h-7 rounded-lg flex items-center justify-center font-bold transition-all ${
                     stagedQty <= 1 
                       ? 'text-mani-300 cursor-not-allowed' 
                       : 'bg-white text-mani-900 hover:bg-amber-100 shadow-2xs active:scale-90 cursor-pointer'
@@ -187,7 +187,7 @@ export default function FlavorCard({
 
                 <span 
                   aria-label={`Quantity to add: ${stagedQty}`}
-                  className="w-6 text-center font-display text-xs font-bold text-mani-950 select-none"
+                  className="w-5 text-center font-display text-xs font-bold text-mani-950 select-none"
                 >
                   {stagedQty}
                 </span>
@@ -196,7 +196,7 @@ export default function FlavorCard({
                   type="button"
                   onClick={handlePlusStaged}
                   aria-label={`Increase ${product.name} quantity to add`}
-                  className="w-7 h-7 rounded-lg bg-white text-mani-900 hover:bg-amber-100 active:scale-90 flex items-center justify-center shadow-2xs font-bold transition-all cursor-pointer"
+                  className="w-6 h-7 rounded-lg bg-white text-mani-900 hover:bg-amber-100 active:scale-90 flex items-center justify-center shadow-2xs font-bold transition-all cursor-pointer"
                 >
                   <Plus className="w-3 h-3 stroke-[2.5]" />
                 </button>
@@ -206,10 +206,10 @@ export default function FlavorCard({
               <button
                 type="button"
                 onClick={handleAddClick}
-                className="flex-1 min-w-0 min-h-[38px] py-2 px-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-xs border-2 border-mani-900 shadow-snack-sm active:translate-y-0.5 flex items-center justify-center gap-1 whitespace-nowrap transition-all cursor-pointer"
+                className="flex-1 min-h-[36px] py-2 px-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-[11px] sm:text-xs border-2 border-mani-900 shadow-snack-sm active:translate-y-0.5 flex items-center justify-center gap-1 whitespace-nowrap transition-all cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 stroke-[3] shrink-0" />
-                <span className="truncate">Add to Order</span>
+                <Plus className="w-3 h-3 stroke-[3] shrink-0" />
+                <span>Add to Order</span>
               </button>
             </div>
           ) : (
