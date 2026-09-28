@@ -218,6 +218,11 @@ export default function AdminPortal({
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [updatingPaymentId, setUpdatingPaymentId] = useState(null);
 
+  // Orders Manager Date Range State
+  const [ordersPreset, setOrdersPreset] = useState('all-time');
+  const [ordersStartDate, setOrdersStartDate] = useState('');
+  const [ordersEndDate, setOrdersEndDate] = useState('');
+
   // Order Summary (Date Range Analytics) State
   const initialPreset = 'all-time';
   const initialRange = getPresetDateRange(initialPreset);
@@ -371,7 +376,9 @@ export default function AdminPortal({
     try {
       let url = '/api/orders';
       const params = new URLSearchParams();
-      if (selectedDate) params.append('date', selectedDate);
+      if (ordersStartDate) params.append('startDate', ordersStartDate);
+      if (ordersEndDate) params.append('endDate', ordersEndDate);
+      if (selectedDate) params.append('summaryDate', selectedDate);
       if (statusFilter !== 'all') params.append('status', statusFilter);
       if (params.toString()) url += `?${params.toString()}`;
 
@@ -409,18 +416,22 @@ export default function AdminPortal({
       const appsUrl = (settings.appsScriptUrl || localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
       if (appsUrl) {
         try {
-          const qDate = selectedDate || '';
-          const res = await fetch(`${appsUrl}?action=getOrders&date=${encodeURIComponent(qDate)}`, { mode: 'cors' });
+          const res = await fetch(
+            `${appsUrl}?action=getOrders&startDate=${encodeURIComponent(ordersStartDate || '')}&endDate=${encodeURIComponent(ordersEndDate || '')}`,
+            { mode: 'cors' }
+          );
           if (res.ok) {
             const cloudData = await res.json();
             if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
               const normalizedCloud = normalizeOrdersWithUniqueIds(cloudData.orders);
               let filtered = normalizedCloud;
+              if (ordersStartDate) filtered = filtered.filter((o) => (o.orderDate || '') >= ordersStartDate);
+              if (ordersEndDate) filtered = filtered.filter((o) => (o.orderDate || '') <= ordersEndDate);
               if (statusFilter && statusFilter !== 'all') {
-                filtered = filtered.filter(o => o.status === statusFilter);
+                filtered = filtered.filter((o) => o.status === statusFilter);
               }
               setOrders(filtered);
-              if (!qDate || allOrders.length === 0) {
+              if ((!ordersStartDate && !ordersEndDate) || allOrders.length === 0) {
                 setAllOrders(normalizedCloud);
               }
               if (cloudData.dailySummary) {
@@ -439,16 +450,17 @@ export default function AdminPortal({
           try {
             const cbName = `mani_orders_${Date.now()}`;
             const script = document.createElement('script');
-            const qDate = selectedDate || '';
             window[cbName] = (cloudData) => {
               if (cloudData && cloudData.success && Array.isArray(cloudData.orders)) {
                 const normalizedCloud = normalizeOrdersWithUniqueIds(cloudData.orders);
                 let filtered = normalizedCloud;
+                if (ordersStartDate) filtered = filtered.filter((o) => (o.orderDate || '') >= ordersStartDate);
+                if (ordersEndDate) filtered = filtered.filter((o) => (o.orderDate || '') <= ordersEndDate);
                 if (statusFilter && statusFilter !== 'all') {
-                  filtered = filtered.filter(o => o.status === statusFilter);
+                  filtered = filtered.filter((o) => o.status === statusFilter);
                 }
                 setOrders(filtered);
-                if (!qDate || allOrders.length === 0) {
+                if ((!ordersStartDate && !ordersEndDate) || allOrders.length === 0) {
                   setAllOrders(normalizedCloud);
                 }
                 if (cloudData.dailySummary) {
@@ -461,7 +473,7 @@ export default function AdminPortal({
               delete window[cbName];
               script.remove();
             };
-            script.src = `${appsUrl}?action=getOrders&date=${encodeURIComponent(qDate)}&callback=${cbName}`;
+            script.src = `${appsUrl}?action=getOrders&startDate=${encodeURIComponent(ordersStartDate || '')}&endDate=${encodeURIComponent(ordersEndDate || '')}&callback=${cbName}`;
             script.onerror = () => {
               delete window[cbName];
               script.remove();
@@ -568,6 +580,16 @@ export default function AdminPortal({
     }
 
     return latestList || (allOrders.length > 0 ? allOrders : orders);
+  };
+
+  // Orders Manager Date Range Presets
+  const handleSelectOrdersPreset = (presetId) => {
+    setOrdersPreset(presetId);
+    if (presetId !== 'custom') {
+      const range = getPresetDateRange(presetId);
+      setOrdersStartDate(range.start);
+      setOrdersEndDate(range.end);
+    }
   };
 
   // Order Summary Presets & Calculations
@@ -906,6 +928,24 @@ export default function AdminPortal({
     }
   }, [summaryStartDate, summaryEndDate]);
 
+  const ordersRangeDaysCount = useMemo(() => {
+    if (!ordersStartDate || !ordersEndDate) return 0;
+    try {
+      const parts1 = ordersStartDate.split('-');
+      const parts2 = ordersEndDate.split('-');
+      if (parts1.length !== 3 || parts2.length !== 3) return 1;
+      const [y1, m1, d1] = parts1.map(Number);
+      const [y2, m2, d2] = parts2.map(Number);
+      if (isNaN(y1) || isNaN(m1) || isNaN(d1) || isNaN(y2) || isNaN(m2) || isNaN(d2)) return 1;
+      const t1 = Date.UTC(y1, m1 - 1, d1);
+      const t2 = Date.UTC(y2, m2 - 1, d2);
+      const diff = Math.round((t2 - t1) / 86400000) + 1;
+      return diff > 0 ? diff : 1;
+    } catch (e) {
+      return 1;
+    }
+  }, [ordersStartDate, ordersEndDate]);
+
   const fetchSettings = async () => {
     try {
       const res = await fetch('/api/settings', { headers: getAuthHeaders() });
@@ -936,10 +976,10 @@ export default function AdminPortal({
     fetchOrders();
     fetchAllOrders();
     fetchSettings();
-  }, [selectedDate, statusFilter]);
+  }, [selectedDate, ordersStartDate, ordersEndDate, statusFilter]);
 
   useEffect(() => {
-    if (activeTab === 'order-summary') {
+    if (activeTab === 'order-summary' || activeTab === 'orders') {
       fetchAllOrders();
     }
   }, [activeTab]);
@@ -1546,17 +1586,51 @@ export default function AdminPortal({
     setTimeout(() => setQrSaveMsg(''), 3000);
   };
 
-  // Filter orders by search
-  const displayOrders = orders.filter((o) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      (o.orderId || '').toLowerCase().includes(q) ||
-      (o.customerName || '').toLowerCase().includes(q) ||
-      (o.mobileNumber || '').toLowerCase().includes(q) ||
-      (o.deliveryAddress || '').toLowerCase().includes(q)
-    );
-  });
+  // Filter orders for Orders Manager by Date Range (Start/End), Status, and Search Query
+  const displayOrders = useMemo(() => {
+    const baseSource = allOrders.length >= orders.length && allOrders.length > 0 ? allOrders : orders;
+    const seenKeys = new Set();
+    return baseSource.filter((o, idx) => {
+      const uniqueKey = o.id || `${o.orderId || 'ord'}_${o.orderDate || ''}_${o.orderTime || ''}_${o.customerName || ''}_${idx}`;
+      if (seenKeys.has(uniqueKey)) return false;
+      seenKeys.add(uniqueKey);
+
+      const oDate = o.orderDate || '';
+      if (ordersStartDate && oDate < ordersStartDate) return false;
+      if (ordersEndDate && oDate > ordersEndDate) return false;
+
+      if (statusFilter && statusFilter !== 'all') {
+        if ((o.status || 'New').toLowerCase() !== statusFilter.toLowerCase()) return false;
+      }
+
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        (o.orderId || '').toLowerCase().includes(q) ||
+        (o.customerName || '').toLowerCase().includes(q) ||
+        (o.mobileNumber || '').toLowerCase().includes(q) ||
+        (o.deliveryAddress || '').toLowerCase().includes(q) ||
+        (o.paymentMethod || '').toLowerCase().includes(q)
+      );
+    });
+  }, [allOrders, orders, ordersStartDate, ordersEndDate, statusFilter, searchQuery]);
+
+  const ordersManagerMetrics = useMemo(() => {
+    const activeNonCancelled = displayOrders.filter((o) => (o.status || '').toLowerCase() !== 'cancelled');
+    const totalTubs = activeNonCancelled.reduce((sum, o) => {
+      const tubs = o.totalTubs !== undefined ? Number(o.totalTubs) : (Number(o.totalPacks) || 0);
+      return sum + (isNaN(tubs) ? 0 : tubs);
+    }, 0);
+    const totalSales = activeNonCancelled.reduce((sum, o) => {
+      const rev = Number(o.subtotal) || Number(o.totalAmount) || 0;
+      return sum + (isNaN(rev) ? 0 : rev);
+    }, 0);
+    return {
+      totalMatching: displayOrders.length,
+      totalTubs,
+      totalSales
+    };
+  }, [displayOrders]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -2150,49 +2224,166 @@ export default function AdminPortal({
       {/* ========================================================= */}
       {activeTab === 'orders' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-mani-200 shadow-warm">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-mani-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search by customer, phone, order ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl text-xs sm:text-sm border border-mani-200 bg-cream outline-none focus:border-amber-500"
-              />
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-mani-200 shadow-warm space-y-4">
+            {/* Date Range Presets + Custom Start / End Date Inputs */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              {/* 1-Click Date Range Preset Pills */}
+              <div className="flex items-center gap-1.5 flex-wrap" data-testid="orders-date-presets">
+                {PRESET_OPTIONS.map((opt) => {
+                  const isSelected = ordersPreset === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      data-testid={`orders-preset-${opt.id}`}
+                      onClick={() => handleSelectOrdersPreset(opt.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-amber-600 text-white shadow-xs scale-102'
+                          : 'bg-cream text-mani-700 hover:bg-mani-100 border border-mani-200/80 hover:text-mani-900'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Start Date & End Date Inputs */}
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <div className="flex items-center gap-1.5 bg-cream px-3 py-1.5 rounded-xl border border-mani-200">
+                  <span className="text-[11px] font-bold text-mani-500 uppercase tracking-wider">Start</span>
+                  <input
+                    type="date"
+                    data-testid="orders-start-date-input"
+                    value={ordersStartDate}
+                    onChange={(e) => {
+                      setOrdersStartDate(e.target.value);
+                      setOrdersPreset(e.target.value || ordersEndDate ? 'custom' : 'all-time');
+                    }}
+                    className="text-xs font-bold text-mani-900 bg-transparent outline-none cursor-pointer"
+                    title="Filter Orders From Start Date"
+                  />
+                </div>
+
+                <span className="text-mani-400 font-bold text-xs">to</span>
+
+                <div className="flex items-center gap-1.5 bg-cream px-3 py-1.5 rounded-xl border border-mani-200">
+                  <span className="text-[11px] font-bold text-mani-500 uppercase tracking-wider">End</span>
+                  <input
+                    type="date"
+                    data-testid="orders-end-date-input"
+                    value={ordersEndDate}
+                    onChange={(e) => {
+                      setOrdersEndDate(e.target.value);
+                      setOrdersPreset(ordersStartDate || e.target.value ? 'custom' : 'all-time');
+                    }}
+                    className="text-xs font-bold text-mani-900 bg-transparent outline-none cursor-pointer"
+                    title="Filter Orders Up To End Date"
+                  />
+                </div>
+
+                {(ordersStartDate || ordersEndDate) && (
+                  <button
+                    type="button"
+                    data-testid="orders-clear-date-range-btn"
+                    onClick={() => handleSelectOrdersPreset('all-time')}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-mani-100 hover:bg-mani-200 text-mani-700 transition-colors flex items-center gap-1 cursor-pointer"
+                    title="Reset to All Time"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>All Dates</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-3 py-2 rounded-xl text-xs border border-mani-200 bg-cream outline-none cursor-pointer"
-                title="Filter by Order Date"
-              />
+            {/* Active Date Range Display Banner */}
+            <div
+              data-testid="orders-active-date-range-banner"
+              className="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-amber-50 to-orange-50/60 p-3 sm:px-4 rounded-2xl border border-amber-200/80 text-xs"
+            >
+              <div className="flex items-center gap-2 text-mani-900 font-bold flex-wrap">
+                <CalendarRange className="w-4 h-4 text-amber-700 shrink-0" />
+                {ordersPreset === 'all-time' || (!ordersStartDate && !ordersEndDate) ? (
+                  <span>
+                    Selected Range: <span className="font-black text-amber-950">All Time (Full Master List)</span>
+                  </span>
+                ) : (
+                  <span>
+                    Selected Range:{' '}
+                    <span className="font-black text-amber-950">
+                      {ordersStartDate ? formatDateDisplay(ordersStartDate) : 'Beginning'}
+                    </span>{' '}
+                    to{' '}
+                    <span className="font-black text-amber-950">
+                      {ordersEndDate ? formatDateDisplay(ordersEndDate) : 'Present'}
+                    </span>
+                  </span>
+                )}
+                <span className="text-mani-300">•</span>
+                <span className="text-amber-800 font-black">
+                  {ordersPreset === 'all-time' || (!ordersStartDate && !ordersEndDate)
+                    ? 'All Dates'
+                    : ordersStartDate && ordersEndDate
+                    ? `${ordersRangeDaysCount} day${ordersRangeDaysCount > 1 ? 's' : ''}`
+                    : 'Custom Range'}
+                </span>
+              </div>
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl text-xs font-semibold border border-mani-200 bg-cream outline-none cursor-pointer"
-              >
-                <option value="all">All Statuses</option>
-                <option value="New">🟡 New</option>
-                <option value="Confirmed">🔵 Confirmed</option>
-                <option value="Preparing">🟠 Preparing</option>
-                <option value="Ready">🟣 Ready</option>
-                <option value="Completed">🟢 Completed</option>
-                <option value="Cancelled">🔴 Cancelled</option>
-              </select>
+              <div className="flex items-center gap-2 flex-wrap font-bold">
+                <span className="px-2.5 py-0.5 rounded-lg bg-amber-500 text-white font-black text-xs">
+                  {ordersManagerMetrics.totalMatching} {ordersManagerMetrics.totalMatching === 1 ? 'Order' : 'Orders'}
+                </span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-orange-100 text-orange-950 border border-orange-200 font-black text-xs">
+                  {ordersManagerMetrics.totalTubs} {ordersManagerMetrics.totalTubs === 1 ? 'Tub' : 'Tubs'}
+                </span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-emerald-100 text-emerald-950 border border-emerald-200 font-black text-xs">
+                  {formatPHP(ordersManagerMetrics.totalSales)}
+                </span>
+              </div>
+            </div>
 
-              <button
-                type="button"
-                onClick={fetchOrders}
-                className="p-2 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-700 transition-colors cursor-pointer"
-                title="Refresh orders"
-              >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
+            {/* Search Input, Status Filter & Refresh */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-mani-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search by customer, phone, order ID, address..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-xl text-xs sm:text-sm border border-mani-200 bg-cream outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold border border-mani-200 bg-cream outline-none cursor-pointer"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="New">🟡 New</option>
+                  <option value="Confirmed">🔵 Confirmed</option>
+                  <option value="Preparing">🟠 Preparing</option>
+                  <option value="Ready">🟣 Ready</option>
+                  <option value="Completed">🟢 Completed</option>
+                  <option value="Cancelled">🔴 Cancelled</option>
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    fetchOrders();
+                    fetchAllOrders();
+                  }}
+                  className="p-2 rounded-xl bg-mani-100 hover:bg-mani-200 text-mani-700 transition-colors cursor-pointer"
+                  title="Refresh orders"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
             </div>
           </div>
 

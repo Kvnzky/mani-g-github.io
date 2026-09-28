@@ -1216,18 +1216,19 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
 
 // API: Get Orders (Protected)
 app.get('/api/orders', requireAdminAuth, (req, res) => {
-  const { date, status, startDate, endDate } = req.query;
+  const { date, status, startDate, endDate, summaryDate } = req.query;
   let filtered = [...orders];
 
-  if (typeof date === 'string' && date.trim()) {
-    filtered = filtered.filter(o => o.orderDate === date.trim());
-  } else {
+  const hasDateRange = (typeof startDate === 'string' && startDate.trim()) || (typeof endDate === 'string' && endDate.trim());
+  if (hasDateRange) {
     if (typeof startDate === 'string' && startDate.trim()) {
       filtered = filtered.filter(o => o.orderDate >= startDate.trim());
     }
     if (typeof endDate === 'string' && endDate.trim()) {
       filtered = filtered.filter(o => o.orderDate <= endDate.trim());
     }
+  } else if (typeof date === 'string' && date.trim() && date.trim().toLowerCase() !== 'all') {
+    filtered = filtered.filter(o => o.orderDate === date.trim());
   }
 
   if (typeof status === 'string' && status.trim() && status.toLowerCase() !== 'all') {
@@ -1235,7 +1236,9 @@ app.get('/api/orders', requireAdminAuth, (req, res) => {
   }
 
   const todayDateStr = getPhilippineDateTime().dateStr;
-  const activeDate = date || todayDateStr;
+  const activeDate = (typeof summaryDate === 'string' && summaryDate.trim())
+    ? summaryDate.trim()
+    : ((typeof date === 'string' && date.trim() && date.trim().toLowerCase() !== 'all') ? date.trim() : todayDateStr);
   const dayOrders = orders.filter(o => o.orderDate === activeDate && o.status !== 'Cancelled');
 
   const dailySummary = {

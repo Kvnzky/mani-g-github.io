@@ -414,8 +414,35 @@ async function runVerification() {
     assert.strictEqual(allowedOrderRes.status, 201, 'Step 16: Customer order submission should succeed when Open');
 
     console.log('✓ Steps 13-17 passed: Manual Order Form Open/Close toggle works independently and blocks/allows orders!\n');
+
+    // ------------------------------------------------------------------
+    // STEP 18: Orders Manager Date Range Filtering (startDate & endDate)
+    // ------------------------------------------------------------------
+    console.log('--- [Step 18] Testing Orders Manager Date Range Filtering ---');
+    const todayPht = getManilaDateStr();
+    const rangeRes = await fetch(
+      `${BASE_URL}/api/orders?startDate=${encodeURIComponent(todayPht)}&endDate=${encodeURIComponent(todayPht)}&summaryDate=${encodeURIComponent(todayPht)}`,
+      { headers: { Authorization: `Bearer ${token2}` } }
+    );
+    assert.strictEqual(rangeRes.status, 200, 'Step 18: Querying orders by startDate & endDate should return 200');
+    const rangeData = await rangeRes.json();
+    assert(Array.isArray(rangeData.orders), 'Step 18: Response must include filtered orders array');
+    assert(rangeData.orders.length >= 4, 'Step 18: Today date range must include the newly created orders');
+    assert(
+      rangeData.orders.every((o) => o.orderDate >= todayPht && o.orderDate <= todayPht),
+      'Step 18: Every returned order must fall within [startDate, endDate]'
+    );
+
+    const futureRangeRes = await fetch(
+      `${BASE_URL}/api/orders?startDate=2099-01-01&endDate=2099-01-31&summaryDate=${encodeURIComponent(todayPht)}`,
+      { headers: { Authorization: `Bearer ${token2}` } }
+    );
+    const futureRangeData = await futureRangeRes.json();
+    assert.strictEqual(futureRangeData.orders.length, 0, 'Step 18: Out-of-range future dates should return 0 orders');
+    console.log('✓ Step 18 passed: Orders Manager Date Range filtering verified!\n');
+
     console.log('================================================================');
-    console.log('✅ ALL 17 VERIFICATION STEPS PASSED WITH ZERO ERRORS!');
+    console.log('✅ ALL VERIFICATION STEPS PASSED WITH ZERO ERRORS!');
     console.log('================================================================');
   } finally {
     // Restore original data files

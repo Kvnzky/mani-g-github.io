@@ -199,7 +199,7 @@ function doGet(e) {
     var result = { status: 'ok' };
 
     if (action === 'getOrders') {
-      result = handleGetOrders(ss, e.parameter.date);
+      result = handleGetOrders(ss, e.parameter.date, e.parameter.startDate, e.parameter.endDate);
     } else if (action === 'consolidate' || action === 'initMasterList') {
       result = handleConsolidateToMasterList(ss);
     } else if (action === 'cleanSheet' || action === 'cleanup' || action === 'cleanTestOrders') {
@@ -391,7 +391,7 @@ function handleSaveSettings(newSettings) {
 /**
  * Fetch all orders from Google Sheet for the Admin Portal across devices
  */
-function handleGetOrders(ss, dateFilter) {
+function handleGetOrders(ss, dateFilter, startDateFilter, endDateFilter) {
   var tz = getTimezone();
   var todayDateStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
   
@@ -423,6 +423,8 @@ function handleGetOrders(ss, dateFilter) {
   var col14Name = String(sheet.getRange(7, 14).getValue() || '');
   var hasCheese = (col14Name.indexOf('Cheese') !== -1 || sheet.getLastColumn() >= 18);
   var orders = [];
+  var cleanStart = startDateFilter ? String(startDateFilter).trim() : '';
+  var cleanEnd = endDateFilter ? String(endDateFilter).trim() : '';
 
   for (var i = values.length - 1; i >= 0; i--) {
     var r = values[i];
@@ -439,8 +441,15 @@ function handleGetOrders(ss, dateFilter) {
       if (/^\d{4}-\d{2}-\d{2}$/.test(sDate)) oDate = sDate;
     }
 
-    // Optional date filter: if user requested a specific date filter, only include matching dates
-    if (dateFilter && dateFilter !== 'all' && dateFilter !== '') {
+    // Optional date range or single date filter
+    if (cleanStart || cleanEnd) {
+      if (cleanStart && oDate < cleanStart) {
+        continue;
+      }
+      if (cleanEnd && oDate > cleanEnd) {
+        continue;
+      }
+    } else if (dateFilter && dateFilter !== 'all' && dateFilter !== '') {
       if (oDate !== dateFilter) {
         continue;
       }
