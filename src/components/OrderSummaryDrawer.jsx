@@ -57,21 +57,21 @@ export default function OrderSummaryDrawer({
         aria-modal="true"
         aria-label="Order Summary"
         aria-hidden={!isOpen}
-        className={`fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-cream border-l-2 border-mani-900 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
         }`}
       >
         {/* Drawer Header */}
-        <div className="p-4 sm:p-5 border-b border-mani-100 flex items-center justify-between bg-cream">
+        <div className="p-4 sm:p-5 border-b-2 border-mani-900/10 flex items-center justify-between bg-amber-100/70">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg shadow-xs">
-              🛒
+            <div className="w-10 h-10 rounded-2xl bg-amber-400 text-mani-950 border-2 border-mani-900 flex items-center justify-center font-bold text-lg shadow-snack-sm">
+              🥜
             </div>
             <div>
-              <h3 className="font-extrabold text-base sm:text-lg text-mani-900">
-                Order Summary
+              <h3 className="font-display font-bold text-lg sm:text-xl text-mani-950 leading-tight">
+                Your Mani Basket
               </h3>
-              <p className="text-xs text-mani-600 font-medium">
+              <p className="text-xs text-mani-700 font-bold">
                 {totalPacks} {totalPacks === 1 ? 'tub' : 'tubs'} selected
               </p>
             </div>
@@ -82,7 +82,7 @@ export default function OrderSummaryDrawer({
               <button
                 type="button"
                 onClick={onClearOrder}
-                className="text-xs text-mani-500 hover:text-red-600 px-2 py-1 rounded-lg hover:bg-red-50 font-medium transition-colors"
+                className="text-xs text-mani-600 hover:text-red-600 px-2.5 py-1 rounded-xl hover:bg-red-50 font-extrabold transition-colors cursor-pointer"
                 title="Clear all items"
               >
                 Clear
@@ -92,9 +92,9 @@ export default function OrderSummaryDrawer({
               type="button"
               onClick={onClose}
               aria-label="Close Order Summary"
-              className="w-8 h-8 rounded-xl bg-mani-100 text-mani-700 hover:bg-mani-200 flex items-center justify-center transition-colors"
+              className="w-9 h-9 rounded-xl bg-white text-mani-900 border-2 border-mani-900/20 hover:border-mani-900 flex items-center justify-center transition-colors cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 stroke-[2.5]" />
             </button>
           </div>
         </div>
@@ -103,39 +103,40 @@ export default function OrderSummaryDrawer({
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
           {/* Live Cutoff Notice */}
           {cutoffInfo && (
-            <div className={`p-3 rounded-2xl border text-xs flex items-center justify-between gap-2 shadow-2xs ${
+            <div className={`p-3 rounded-2xl border-2 text-xs flex items-center justify-between gap-2 ${
               isOrdersClosed
-                ? 'bg-red-50 text-red-900 border-red-200'
+                ? 'bg-red-50 text-red-900 border-red-300'
                 : cutoffInfo.enabled
-                ? 'bg-amber-50 text-amber-950 border-amber-300'
-                : 'bg-emerald-50 text-emerald-950 border-emerald-200'
+                ? 'bg-amber-100/80 text-mani-950 border-amber-400'
+                : 'bg-emerald-50 text-emerald-950 border-emerald-300'
             }`}>
               <div className="flex items-center gap-2">
                 {isOrdersClosed ? (
                   <Lock className="w-4 h-4 text-red-600 shrink-0" />
                 ) : cutoffInfo.enabled ? (
-                  <Clock className="w-4 h-4 text-amber-600 shrink-0 animate-pulse" />
+                  <Clock className="w-4 h-4 text-amber-700 shrink-0 animate-pulse" />
                 ) : (
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                 )}
                 <div>
                   <span className="font-extrabold block">
-                    {isOrdersClosed ? 'Orders Closed' : cutoffInfo.enabled ? '⏰ Order Cutoff' : 'Orders Open'}
+                    {isOrdersClosed ? 'Orders Closed' : cutoffInfo.enabled ? '⏰ Order Cutoff' : 'Kitchen Open'}
                   </span>
-                  <span className="text-[11px] opacity-85">
+                  <span className="text-[11px] font-medium opacity-90">
                     {isOrdersClosed
                       ? 'Submissions closed for this batch.'
                       : cutoffInfo.enabled
                       ? `Deadline: ${cutoffInfo.cutoffDate} at ${cutoffInfo.cutoffTime} PHT`
-                      : 'Fresh batch available today'}
+                      : 'Fresh small-batch mani available today!'}
                   </span>
                 </div>
               </div>
             </div>
           )}
+
           {/* Items List */}
           <div>
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-mani-500 mb-2.5">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-mani-600 mb-2.5">
               Selected Flavors
             </h4>
             {hasItems ? (
@@ -145,85 +146,104 @@ export default function OrderSummaryDrawer({
                   .map((item) => (
                     <div
                       key={item.id}
-                      className="p-3 rounded-2xl bg-cream border border-mani-200/80 flex items-center justify-between gap-3"
+                      className="p-3 rounded-2xl bg-white border-2 border-mani-900/15 shadow-2xs flex items-center justify-between gap-3"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-xl">{item.icon || '🥜'}</span>
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="w-11 h-11 rounded-xl object-cover border border-mani-200 shrink-0" />
+                        ) : (
+                          <span className="text-xl">{item.icon || '🥜'}</span>
+                        )}
                         <div className="min-w-0">
-                          <h5 className="font-bold text-sm text-mani-900 truncate">
+                          <h5 className="font-display font-bold text-sm text-mani-950 truncate">
                             {item.name}
                           </h5>
-                          <p className="text-xs text-mani-500">
-                            {formatPHP(item.price)} each
+                          <p className="text-xs text-mani-600 font-bold">
+                            {formatPHP(item.price)} / tub
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0 bg-cream-warm p-1 rounded-xl border border-mani-200">
                         <button
                           type="button"
                           onClick={() => onQuantityChange(item.id, item.quantity - 1)}
                           aria-label={`Decrease quantity of ${item.name}`}
-                          className="w-7 h-7 rounded-lg bg-white border border-mani-200 hover:bg-mani-100 flex items-center justify-center text-mani-700"
+                          className="w-7 h-7 rounded-lg bg-white border border-mani-200 hover:bg-red-50 hover:text-red-600 flex items-center justify-center text-mani-800 cursor-pointer"
                         >
-                          <Minus className="w-3.5 h-3.5" />
+                          <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
                         </button>
-                        <span className="w-6 text-center font-bold text-sm text-mani-900">
+                        <span className="w-6 text-center font-display font-bold text-sm text-mani-950">
                           {item.quantity}
                         </span>
                         <button
                           type="button"
                           onClick={() => onQuantityChange(item.id, item.quantity + 1)}
                           aria-label={`Increase quantity of ${item.name}`}
-                          className="w-7 h-7 rounded-lg bg-white border border-mani-200 hover:bg-mani-100 flex items-center justify-center text-mani-700"
+                          className="w-7 h-7 rounded-lg bg-mani-900 text-amber-300 hover:bg-mani-800 flex items-center justify-center cursor-pointer"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                         </button>
                       </div>
                     </div>
                   ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-mani-500 text-xs">
-                No items in cart yet.
+              <div className="text-center py-8 bg-white rounded-2xl border-2 border-dashed border-mani-200 text-mani-500 text-xs font-bold">
+                Wala pang laman ang basket mo! Pick your tubs first 🥜
               </div>
             )}
           </div>
 
           {/* Delivery & Customer Info Summary */}
-          <div className="p-3.5 rounded-2xl bg-mani-50/70 border border-mani-200/60 space-y-2 text-xs">
-            <h4 className="font-bold text-mani-800 uppercase tracking-wider text-[11px]">
-              Delivery Details
-            </h4>
+          <div className="p-4 rounded-2xl bg-white border-2 border-mani-900/15 space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <h4 className="font-extrabold text-mani-800 uppercase tracking-wider text-[11px]">
+                Delivery Details
+              </h4>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  setTimeout(() => {
+                    const el = document.getElementById('customer-info-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 150);
+                }}
+                className="text-[11px] font-extrabold text-amber-700 hover:text-amber-900 underline cursor-pointer"
+              >
+                Edit Details
+              </button>
+            </div>
 
             <div className="flex items-center gap-2 text-mani-700">
               <User className="w-3.5 h-3.5 text-amber-700 shrink-0" />
               <span className="font-semibold">Customer:</span>
-              <span className="text-mani-900 font-medium">
-                {customerData.customerName || <span className="italic text-red-500">Required</span>}
+              <span className="text-mani-950 font-bold">
+                {customerData.customerName || <span className="italic text-amber-700">Tap below to enter name</span>}
               </span>
             </div>
 
             <div className="flex items-center gap-2 text-mani-700">
               <Phone className="w-3.5 h-3.5 text-amber-700 shrink-0" />
               <span className="font-semibold">Mobile:</span>
-              <span className="text-mani-900 font-medium">
-                {customerData.mobileNumber || <span className="italic text-red-500">Required</span>}
+              <span className="text-mani-950 font-bold">
+                {customerData.mobileNumber || <span className="italic text-amber-700">Tap below to enter mobile</span>}
               </span>
             </div>
 
             <div className="flex items-start gap-2 text-mani-700">
               <MapPin className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
               <span className="font-semibold">Address:</span>
-              <span className="text-mani-900 font-medium">
-                {customerData.deliveryAddress || <span className="italic text-red-500">Required</span>}
+              <span className="text-mani-950 font-bold">
+                {customerData.deliveryAddress || <span className="italic text-amber-700">Tap below to enter address</span>}
               </span>
             </div>
 
             <div className="flex items-center gap-2 text-mani-700">
               <CreditCard className="w-3.5 h-3.5 text-amber-700 shrink-0" />
               <span className="font-semibold">Payment:</span>
-              <span className="text-mani-900 font-bold bg-amber-100/80 text-amber-900 px-2 py-0.5 rounded-md">
+              <span className="font-bold bg-amber-200/80 text-mani-950 px-2 py-0.5 rounded-md border border-mani-900/15">
                 {customerData.paymentMethod || 'Cash on Delivery'}
               </span>
             </div>
@@ -231,16 +251,16 @@ export default function OrderSummaryDrawer({
         </div>
 
         {/* Drawer Footer / Place Order */}
-        <div className="p-4 sm:p-5 border-t border-mani-100 bg-cream space-y-3">
+        <div className="p-4 sm:p-5 border-t-2 border-mani-900/10 bg-white space-y-3">
           {/* Totals */}
           <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between text-mani-600 text-xs">
+            <div className="flex justify-between text-mani-600 text-xs font-bold">
               <span>Total Tubs:</span>
-              <span className="font-bold text-mani-900">{totalPacks} tubs</span>
+              <span className="font-extrabold text-mani-950">{totalPacks} tubs</span>
             </div>
-            <div className="flex justify-between text-base font-extrabold text-mani-900 pt-1 border-t border-mani-200">
+            <div className="flex justify-between text-base font-extrabold text-mani-950 pt-1.5 border-t border-dashed border-mani-200">
               <span>Total Amount:</span>
-              <span className="text-amber-700 text-lg font-black">{formatPHP(subtotal)}</span>
+              <span className="font-display text-mani-950 text-xl font-bold">{formatPHP(subtotal)}</span>
             </div>
           </div>
 
@@ -251,30 +271,45 @@ export default function OrderSummaryDrawer({
               <span>Orders are currently closed. Please check back soon.</span>
             </div>
           ) : Object.keys(validationErrors || {}).length > 0 ? (
-            <div className="p-2 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
+            <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-bold">
               Please complete customer name, mobile number, delivery address, and payment method.
             </div>
           ) : null}
 
-          {/* Place Order Button */}
+          {/* Place Order or Scroll to Details Button */}
           {isOrdersClosed ? (
             <button
               type="button"
               disabled={true}
-              className="w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 bg-red-100 border border-red-300 text-red-700 cursor-not-allowed shadow-none"
+              className="w-full py-3.5 px-5 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2 bg-red-100 border-2 border-red-300 text-red-700 cursor-not-allowed shadow-none"
             >
               <Lock className="w-5 h-5 text-red-600" />
               <span>Orders Closed</span>
+            </button>
+          ) : hasItems && isFormIncomplete ? (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                setTimeout(() => {
+                  const el = document.getElementById('customer-info-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 150);
+              }}
+              className="w-full py-3.5 px-5 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack active:translate-y-0.5 transition-all cursor-pointer"
+            >
+              <span>Proceed to Delivery Details</span>
+              <ArrowRight className="w-5 h-5 stroke-[2.5]" />
             </button>
           ) : (
             <button
               type="button"
               disabled={isFormIncomplete || isSubmitting}
               onClick={onSubmitOrder}
-              className={`w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg transition-all duration-200 ${
+              className={`w-full py-3.5 px-5 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-200 ${
                 isFormIncomplete || isSubmitting
-                  ? 'bg-mani-200 text-mani-400 cursor-not-allowed shadow-none'
-                  : 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white shadow-amber-900/20 active:scale-98 cursor-pointer'
+                  ? 'bg-mani-100 text-mani-400 border-2 border-mani-200 cursor-not-allowed shadow-none'
+                  : 'bg-amber-400 hover:bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack active:translate-y-0.5 cursor-pointer'
               }`}
             >
               {isSubmitting ? (
@@ -284,8 +319,8 @@ export default function OrderSummaryDrawer({
                 </>
               ) : (
                 <>
-                  <span>Place Order</span>
-                  <ArrowRight className="w-5 h-5" />
+                  <span>Place Order Now 🥜</span>
+                  <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                 </>
               )}
             </button>

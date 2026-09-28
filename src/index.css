@@ -3,47 +3,82 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --bg-cream: #FFFDF7;
+    --text-roast: #38200D;
+    --accent-amber: #F59E0B;
+  }
+
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
-    background-color: #FDF9F0;
-    color: #372212;
+    background-color: var(--bg-cream);
+    color: var(--text-roast);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    accent-color: #D97706;
+    overflow-x: hidden;
   }
 
-  h1, h2, h3, .font-brand {
-    font-family: 'Bricolage Grotesque', 'Plus Jakarta Sans', system-ui, sans-serif;
+  h1, h2, h3, .font-display {
+    font-family: 'Fredoka', 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  /* Accessible focus ring using :focus-visible */
+  :focus-visible {
+    outline: 3px solid #F59E0B;
+    outline-offset: 2px;
   }
 }
 
-/* Subtle organic roasted-peanut dot texture */
-.bg-snack-pattern {
-  background-color: #FDF9F0;
-  background-image: radial-gradient(rgba(158, 114, 65, 0.13) 1.25px, transparent 1.25px),
-    radial-gradient(rgba(217, 119, 6, 0.08) 1.25px, #FDF9F0 1.25px);
-  background-size: 28px 28px;
-  background-position: 0 0, 14px 14px;
+/* Hide scrollbars on horizontal filter pill bars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Subtle peanut-speckle background pattern */
+.bg-peanut-pattern {
+  background-color: #FFFDF7;
+  background-image:
+    radial-gradient(#E4C796 1.25px, transparent 1.25px),
+    radial-gradient(#F2E2C4 1.25px, #FFFDF7 1.25px);
+  background-size: 36px 36px;
+  background-position: 0 0, 18px 18px;
+}
+
+/* Warm sunbeam hero gradient with subtle dot texture */
+.bg-hero-snack {
+  background:
+    radial-gradient(circle at 18% 22%, rgba(251, 191, 36, 0.24) 0%, transparent 48%),
+    radial-gradient(circle at 85% 28%, rgba(234, 88, 12, 0.15) 0%, transparent 45%),
+    radial-gradient(circle at 50% 90%, rgba(245, 158, 11, 0.18) 0%, transparent 55%),
+    linear-gradient(180deg, #FFF7E0 0%, #FFFDF7 100%);
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #F6EFE3;
+  background: #FBF3E4;
 }
 ::-webkit-scrollbar-thumb {
-  background: #D7BF9B;
+  background: #D1A362;
   border-radius: 9999px;
+  border: 2px solid #FBF3E4;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #BC966A;
+  background: #8F5D26;
 }
 
-/* Animations */
+/* Keyframe Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
@@ -51,24 +86,38 @@
 
 @keyframes floatSlow {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-7px) rotate(4deg); }
+  50% { transform: translateY(-7px) rotate(2deg); }
 }
 
 @keyframes floatReverse {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(6px) rotate(-5deg); }
-}
-
-@keyframes peanutBurst {
-  0% { opacity: 1; transform: translateY(0) scale(0.7); }
-  60% { opacity: 1; transform: translateY(-22px) scale(1.15); }
-  100% { opacity: 0; transform: translateY(-34px) scale(0.9); }
+  50% { transform: translateY(6px) rotate(-3deg); }
 }
 
 @keyframes popScale {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.14) rotate(-2deg); }
-  100% { transform: scale(1) rotate(0deg); }
+  0% { transform: scale(0.92); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes peanutParticleLeft {
+  0% { opacity: 1; transform: translate(0, 0) scale(0.6) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-22px, -34px) scale(1.15) rotate(-25deg); }
+}
+
+@keyframes peanutParticleCenter {
+  0% { opacity: 1; transform: translate(0, 0) scale(0.7) rotate(0deg); }
+  100% { opacity: 0; transform: translate(2px, -42px) scale(1.25) rotate(12deg); }
+}
+
+@keyframes peanutParticleRight {
+  0% { opacity: 1; transform: translate(0, 0) scale(0.6) rotate(0deg); }
+  100% { opacity: 0; transform: translate(24px, -32px) scale(1.15) rotate(28deg); }
+}
+
+@keyframes marqueeScroll {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
 }
 
 .animate-fade-in {
@@ -76,22 +125,40 @@
 }
 
 .animate-float-slow {
-  animation: floatSlow 4.2s ease-in-out infinite;
+  animation: floatSlow 4.5s ease-in-out infinite;
 }
 
 .animate-float-reverse {
-  animation: floatReverse 4.8s ease-in-out infinite;
-}
-
-.animate-peanut-burst {
-  animation: peanutBurst 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: floatReverse 5.2s ease-in-out infinite;
 }
 
 .animate-pop {
-  animation: popScale 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: popScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-/* Respect reduced motion accessibility preferences */
+.animate-particle-left {
+  animation: peanutParticleLeft 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-particle-center {
+  animation: peanutParticleCenter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-particle-right {
+  animation: peanutParticleRight 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 28s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Respect user reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -99,8 +166,11 @@
   .animate-fade-in,
   .animate-float-slow,
   .animate-float-reverse,
-  .animate-peanut-burst,
   .animate-pop,
+  .animate-particle-left,
+  .animate-particle-center,
+  .animate-particle-right,
+  .animate-marquee,
   .animate-pulse,
   .animate-ping,
   .animate-bounce {
