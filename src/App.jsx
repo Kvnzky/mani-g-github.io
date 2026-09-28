@@ -1151,7 +1151,6 @@ export default function App() {
                 <div className="lg:col-span-7 text-center lg:text-left space-y-4">
                   {/* Top Pill Badge */}
                   <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack-sm -rotate-1">
-                    <span>🇵🇭</span>
                     <span>Crispy na, Crunchy pa • Small-Batch Pinoy Mani</span>
                   </div>
 
@@ -1161,12 +1160,9 @@ export default function App() {
                       <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-mani-950 tracking-tight leading-[1.05]">
                         Mani Wandering
                       </h1>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-display font-bold bg-rose-600 text-white border-2 border-mani-900 shadow-snack-sm rotate-3">
-                        SARAP! 🔥
-                      </span>
                     </div>
                     <p className="font-display text-lg sm:text-2xl font-bold text-amber-800 leading-snug">
-                      “Your favorite mani, now wandering into your cravings.”
+                      Kagat. Crunch. Repeat.
                     </p>
                   </div>
 
