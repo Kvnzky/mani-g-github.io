@@ -23,7 +23,6 @@ export default function OrderSummaryDrawer({
   const isFormIncomplete = Boolean(
     !customerData.customerName?.trim() ||
     !customerData.mobileNumber?.trim() ||
-    !customerData.deliveryAddress?.trim() ||
     !customerData.paymentMethod?.trim() ||
     !hasItems ||
     !hasAnyPaymentMethod

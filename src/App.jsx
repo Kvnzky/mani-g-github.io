@@ -848,10 +848,6 @@ export default function App() {
       errors.mobileNumber = 'Please enter a valid mobile number (e.g. 09171234567 or +639171234567).';
     }
 
-    if (!customerData.deliveryAddress.trim()) {
-      errors.deliveryAddress = 'Delivery address is required.';
-    }
-
     const hasAnyPaymentMethod = Object.values(paymentMethods).some(Boolean);
     if (!hasAnyPaymentMethod) {
       errors.paymentMethod = 'All payment methods are temporarily disabled. Please contact us to order.';

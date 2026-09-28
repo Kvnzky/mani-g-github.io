@@ -1,7 +1,82 @@
-import React, { useState, useEffect } from 'react';
-import { User, Phone, MapPin, Copy, Check, AlertCircle, ScanLine, ArrowRight, Lock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Phone, MapPin, Copy, Check, AlertCircle, ScanLine, ArrowRight, Lock, Navigation, PenLine, Loader2, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from '../config/qrConfig';
 import { formatPHP } from '../config/products';
+
+// Convert GPS coordinates (latitude, longitude) into a readable delivery address
+async function reverseGeocodeCoordinates(latitude, longitude) {
+  // 1. Primary: OpenStreetMap Nominatim Reverse Geocoding API
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&addressdetails=1&accept-language=en`,
+      {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal
+      }
+    );
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data.display_name === 'string' && data.display_name.trim()) {
+        return data.display_name.trim();
+      }
+      if (data && data.address && typeof data.address === 'object') {
+        const addr = data.address;
+        const parts = [
+          addr.house_number,
+          addr.road || addr.pedestrian || addr.street,
+          addr.neighbourhood || addr.suburb || addr.village || addr.quarter || addr.hamlet,
+          addr.city || addr.town || addr.municipality,
+          addr.state || addr.province || addr.region,
+          addr.postcode
+        ].filter(Boolean);
+        if (parts.length > 0) {
+          return parts.join(', ');
+        }
+      }
+    }
+  } catch (err) {
+    // Proceed to fallback reverse geocoder
+  }
+
+  // 2. Fallback: BigDataCloud Client Reverse Geocoding API
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&localityLanguage=en`,
+      {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal
+      }
+    );
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data === 'object') {
+        const rawParts = [
+          data.locality,
+          data.city,
+          data.principalSubdivision,
+          data.postcode,
+          data.countryName
+        ].filter((part) => typeof part === 'string' && part.trim());
+        const uniqueParts = [...new Set(rawParts.map((p) => p.trim()))];
+        if (uniqueParts.length > 0) {
+          return uniqueParts.join(', ');
+        }
+      }
+    }
+  } catch (err) {
+    // Both reverse-geocoding providers failed
+  }
+
+  throw new Error('REVERSE_GEOCODE_FAILED');
+}
 
 export default function CustomerForm({ 
   formData, 
@@ -16,6 +91,12 @@ export default function CustomerForm({
   subtotal = 0
 }) {
   const [copiedGcash, setCopiedGcash] = useState(false);
+  const [addressMode, setAddressMode] = useState('manual'); // 'manual' | 'location'
+  const [locationState, setLocationState] = useState({
+    status: 'idle', // 'idle' | 'loading' | 'success' | 'error'
+    message: ''
+  });
+  const addressInputRef = useRef(null);
 
   const maribankQr = customQrs?.maribank || DEFAULT_MARIBANK_QR;
   const gcashQr = customQrs?.gcash || DEFAULT_GCASH_QR;
@@ -32,6 +113,91 @@ export default function CustomerForm({
     navigator.clipboard.writeText(gcashNumber);
     setCopiedGcash(true);
     setTimeout(() => setCopiedGcash(false), 2000);
+  };
+
+  const handleSelectManualMode = () => {
+    setAddressMode('manual');
+    setLocationState({ status: 'idle', message: '' });
+    setTimeout(() => {
+      if (addressInputRef.current) {
+        addressInputRef.current.focus();
+      }
+    }, 50);
+  };
+
+  const handleUseMyLocation = () => {
+    setAddressMode('location');
+
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setLocationState({
+        status: 'error',
+        message: 'Location services are not supported on this browser. Please enter your delivery address manually below.'
+      });
+      return;
+    }
+
+    setLocationState({
+      status: 'loading',
+      message: 'Detecting your location and converting to a delivery address...'
+    });
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords || {};
+        if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+          setLocationState({
+            status: 'error',
+            message: 'Unable to read your GPS coordinates. Please enter your delivery address manually below.'
+          });
+          return;
+        }
+
+        try {
+          const readableAddress = await reverseGeocodeCoordinates(latitude, longitude);
+          handleInputChange('deliveryAddress', readableAddress);
+          setLocationState({
+            status: 'success',
+            message: 'Location detected! Feel free to review or edit your address and add landmarks below.'
+          });
+        } catch (geocodeErr) {
+          setLocationState({
+            status: 'error',
+            message: 'We detected your location, but could not convert it into a street address right now. Please enter your delivery address manually below.'
+          });
+          setTimeout(() => {
+            if (addressInputRef.current) {
+              addressInputRef.current.focus();
+            }
+          }, 50);
+        }
+      },
+      (geoError) => {
+        let friendlyError = 'Could not detect your location. Please enter your delivery address manually below.';
+        if (geoError) {
+          if (geoError.code === 1) {
+            friendlyError = 'Location permission was denied. No worries — you can enter your delivery address manually below, or enable location permission in your browser and try again.';
+          } else if (geoError.code === 2) {
+            friendlyError = 'Your current location is unavailable right now. Please check your device GPS/location settings or enter your address manually below.';
+          } else if (geoError.code === 3) {
+            friendlyError = 'Location detection timed out. Please try again or enter your delivery address manually below.';
+          }
+        }
+        setLocationState({
+          status: 'error',
+          message: friendlyError
+        });
+        setTimeout(() => {
+          if (addressInputRef.current) {
+            addressInputRef.current.focus();
+          }
+        }, 50);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 0
+      }
+    );
   };
 
   const isCodEnabled = paymentMethods?.cod !== false;
@@ -131,29 +297,138 @@ export default function CustomerForm({
             )}
           </div>
 
-          {/* Address / To Be Delivered To */}
-          <div id="shipping-info-section" className="sm:col-span-2">
-            <label htmlFor="customer-address" className="block text-xs font-extrabold text-mani-900 mb-1.5 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-amber-600" />
-              Delivery Address & Landmark <span className="text-red-500">*</span>
-            </label>
+          {/* Delivery Address with Two Options: Use My Location | Enter Manually */}
+          <div id="shipping-info-section" className="sm:col-span-2 space-y-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label htmlFor="customer-address" className="text-xs font-extrabold text-mani-900 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                <span>Delivery Address</span>
+              </label>
+
+              {/* Segmented Option Selector: 📍 Use My Location | ✍️ Enter Manually */}
+              <div
+                role="group"
+                aria-label="Delivery address entry options"
+                className="grid grid-cols-2 gap-1.5 bg-cream-warm p-1 rounded-2xl border-2 border-mani-900/15"
+              >
+                <button
+                  type="button"
+                  data-testid="use-my-location-btn"
+                  aria-pressed={addressMode === 'location'}
+                  disabled={locationState.status === 'loading'}
+                  onClick={handleUseMyLocation}
+                  className={`px-3 py-2 rounded-xl font-display font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    addressMode === 'location'
+                      ? 'bg-amber-400 text-mani-950 border-2 border-mani-900 shadow-snack-sm'
+                      : 'bg-white/80 text-mani-800 border-2 border-transparent hover:bg-white hover:text-mani-950'
+                  } ${locationState.status === 'loading' ? 'opacity-80 cursor-wait' : ''}`}
+                >
+                  {locationState.status === 'loading' ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-mani-950 shrink-0" />
+                  ) : (
+                    <span aria-hidden="true">📍</span>
+                  )}
+                  <span>{locationState.status === 'loading' ? 'Locating...' : 'Use My Location'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-testid="enter-address-manually-btn"
+                  aria-pressed={addressMode === 'manual'}
+                  onClick={handleSelectManualMode}
+                  className={`px-3 py-2 rounded-xl font-display font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    addressMode === 'manual'
+                      ? 'bg-amber-400 text-mani-950 border-2 border-mani-900 shadow-snack-sm'
+                      : 'bg-white/80 text-mani-800 border-2 border-transparent hover:bg-white hover:text-mani-950'
+                  }`}
+                >
+                  <span aria-hidden="true">✍️</span>
+                  <span>Enter Manually</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Location Status Banner (Loading / Success / Error) */}
+            {locationState.status === 'loading' && (
+              <div
+                role="status"
+                data-testid="location-status-loading"
+                className="p-3 rounded-2xl bg-amber-50 border-2 border-amber-300 text-mani-900 text-xs font-bold flex items-center gap-2.5 animate-fade-in"
+              >
+                <Loader2 className="w-4 h-4 text-amber-700 animate-spin shrink-0" />
+                <span>{locationState.message}</span>
+              </div>
+            )}
+
+            {locationState.status === 'success' && (
+              <div
+                role="status"
+                data-testid="location-status-success"
+                className="p-3 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-emerald-950 text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-2 animate-fade-in"
+              >
+                <div className="flex items-start sm:items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5 sm:mt-0" />
+                  <span>{locationState.message}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleUseMyLocation}
+                  className="self-start sm:self-auto px-2.5 py-1 rounded-xl bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-extrabold flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Ping Location Again</span>
+                </button>
+              </div>
+            )}
+
+            {locationState.status === 'error' && (
+              <div
+                role="alert"
+                data-testid="location-status-error"
+                className="p-3.5 rounded-2xl bg-amber-50/95 border-2 border-amber-400 text-mani-950 text-xs space-y-2 animate-fade-in"
+              >
+                <div className="flex items-start gap-2 font-bold text-amber-950">
+                  <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  <span>{locationState.message}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 pl-6">
+                  <button
+                    type="button"
+                    onClick={handleUseMyLocation}
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-mani-900 border border-mani-300 font-extrabold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Try Location Again</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSelectManualMode}
+                    className="px-3 py-1.5 rounded-xl bg-mani-900 hover:bg-mani-800 text-amber-300 font-extrabold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <PenLine className="w-3 h-3" />
+                    <span>Type Address Manually</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Editable Delivery Address Input (Always available for manual typing or editing detected address) */}
             <textarea
+              ref={addressInputRef}
               id="customer-address"
               name="deliveryAddress"
-              rows="2"
+              rows="3"
               autoComplete="street-address"
               value={formData.deliveryAddress || ''}
               onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
-              placeholder="House/Unit No., Street Name, Barangay, City, Landmark (e.g. Near St. Jude Church)"
-              className={`w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 ${
-                errors.deliveryAddress ? 'border-red-400 bg-red-50/50' : 'border-mani-200 bg-cream/60 focus:bg-white focus:border-mani-900'
-              } outline-none transition-all resize-none`}
+              placeholder="House/Unit No., Street, Barangay, City/Municipality, Province"
+              className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-mani-200 bg-cream/60 focus:bg-white focus:border-mani-900 outline-none transition-all resize-y"
             />
-            {errors.deliveryAddress && (
-              <p className="text-xs text-red-600 font-bold mt-1 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" /> {errors.deliveryAddress}
-              </p>
-            )}
+            <p className="text-[11px] text-mani-500 font-medium">
+              {addressMode === 'location'
+                ? 'You can review and edit the detected address above, or add landmarks & delivery notes.'
+                : 'Enter your address or delivery instructions above, or tap "📍 Use My Location" to auto-fill.'}
+            </p>
           </div>
         </div>
       </div>

@@ -1062,9 +1062,7 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
       });
     }
 
-    if (!deliveryAddress || typeof deliveryAddress !== 'string' || !deliveryAddress.trim()) {
-      return res.status(400).json({ error: 'Address / To Be Delivered To is required.' });
-    }
+    const safeDeliveryAddress = typeof deliveryAddress === 'string' ? deliveryAddress.trim() : String(deliveryAddress || '').trim();
 
     const validPaymentMethods = ['Cash on Delivery', 'Maribank', 'GCash'];
     if (!validPaymentMethods.includes(paymentMethod)) {
@@ -1138,7 +1136,7 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
       orderTime: timeStr,
       customerName: customerName.trim().slice(0, 100),
       mobileNumber: formatPhilippineMobile(mobileNumber),
-      deliveryAddress: deliveryAddress.trim().slice(0, 300),
+      deliveryAddress: safeDeliveryAddress,
       paymentMethod: chosenPayment,
       paymentStatus: req.body.paymentStatus || defaultPaymentStatus,
       items,
