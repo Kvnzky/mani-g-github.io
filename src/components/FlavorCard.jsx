@@ -1,3 +1,262 @@
-export default 'import React, { useState } from \'react\';\r\nimport { Plus, Minus, Check } from \'lucide-react\';\r\nimport { formatPHP, getFlavorPersonality } from \'../config/products\';\r\n\r\nexport default function FlavorCard({ \r\n  product, \r\n  quantity, \r\n  onQuantityChange,\r\n  onAddToCart \r\n}) {\r\n  const [stagedQty, setStagedQty] = useState(1);\r\n  const [burstKey, setBurstKey] = useState(0);\r\n  const isAvailable = product.available !== false;\r\n  const isSelected = quantity > 0;\r\n  const personality = getFlavorPersonality(product);\r\n\r\n  const triggerParticleBurst = () => {\r\n    setBurstKey((prev) => prev + 1);\r\n  };\r\n\r\n  const handleMinusStaged = (e) => {\r\n    e.stopPropagation();\r\n    setStagedQty((prev) => Math.max(1, prev - 1));\r\n  };\r\n\r\n  const handlePlusStaged = (e) => {\r\n    e.stopPropagation();\r\n    setStagedQty((prev) => Math.min(999, prev + 1));\r\n  };\r\n\r\n  const handleAddClick = () => {\r\n    const qtyToAdd = stagedQty > 0 ? stagedQty : 1;\r\n    const newTotal = (quantity || 0) + qtyToAdd;\r\n    onQuantityChange(product.id, newTotal);\r\n    triggerParticleBurst();\r\n    if (onAddToCart) {\r\n      onAddToCart(product, qtyToAdd);\r\n    }\r\n    setStagedQty(1);\r\n  };\r\n\r\n  const handleMinusInCart = (e) => {\r\n    e.stopPropagation();\r\n    if (quantity > 0) {\r\n      onQuantityChange(product.id, quantity - 1);\r\n    }\r\n  };\r\n\r\n  const handlePlusInCart = (e) => {\r\n    e.stopPropagation();\r\n    onQuantityChange(product.id, quantity + 1);\r\n    triggerParticleBurst();\r\n    if (onAddToCart) {\r\n      onAddToCart(product, 1);\r\n    }\r\n  };\r\n\r\n  const handleDirectInput = (e) => {\r\n    const val = parseInt(e.target.value, 10);\r\n    if (isNaN(val) || val < 0) {\r\n      onQuantityChange(product.id, 0);\r\n    } else {\r\n      onQuantityChange(product.id, Math.min(val, 999));\r\n    }\r\n  };\r\n\r\n  return (\r\n    <article\r\n      className={`relative rounded-3xl p-4 sm:p-4.5 transition-all duration-200 flex flex-col justify-between overflow-hidden group bg-gradient-to-b ${personality.cardBg} ${\r\n        isSelected\r\n          ? \'border-2 border-mani-900 shadow-snack ring-4 ring-amber-300/60 -translate-y-0.5\'\r\n          : `border-2 border-mani-900/15 shadow-snack-card hover:border-mani-900/80 hover:shadow-snack-card-hover hover:-translate-y-1 ${personality.tiltClass}`\r\n      } ${!isAvailable ? \'opacity-65 grayscale-[35%] hover:translate-y-0 hover:rotate-0\' : \'\'}`}\r\n    >\r\n      {/* Product Tub Image Showcase */}\r\n      {product.image && (\r\n        <div className={`relative w-full aspect-[4/3] mb-3.5 rounded-2xl overflow-hidden border-2 ${personality.frameBg} shadow-inner`}>\r\n          <img\r\n            src={product.image}\r\n            alt={`${product.name} Mani Tub`}\r\n            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"\r\n            loading="lazy"\r\n          />\r\n          {/* Subtle warm vignette at bottom of photo for badge legibility */}\r\n          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 via-black/15 to-transparent pointer-events-none" />\r\n\r\n          {/* Top-Left Sticker Badge */}\r\n          {!isAvailable ? (\r\n            <span className="absolute top-2.5 left-2.5 text-[10px] uppercase font-black tracking-wider px-2.5 py-1 rounded-full shadow-md bg-red-600 text-white border border-white/40 flex items-center gap-1 z-10">\r\n              🔴 Sold Out\r\n            </span>\r\n          ) : (\r\n            <span className={`absolute top-2.5 left-2.5 text-[10px] uppercase font-black tracking-wider px-2.5 py-1 rounded-full border shadow-sm -rotate-2 z-10 ${personality.badgeClass}`}>\r\n              {personality.sticker}\r\n            </span>\r\n          )}\r\n\r\n          {/* Top-Right In-Cart Counter Pill */}\r\n          {isSelected && (\r\n            <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 text-[11px] font-black bg-emerald-500 text-white px-2.5 py-1 rounded-full border-2 border-mani-950 shadow-snack-sm z-10 animate-pop">\r\n              <Check className="w-3 h-3 stroke-[3]" />\r\n              <span>{quantity} in cart</span>\r\n            </span>\r\n          )}\r\n\r\n          {/* Bottom-Right Obvious Price Tag */}\r\n          <div className={`absolute bottom-2.5 right-2.5 px-3 py-1 rounded-xl font-display font-bold text-sm sm:text-base border border-white/25 shadow-md flex items-baseline gap-1 z-10 ${personality.priceBg}`}>\r\n            <span>{formatPHP(product.price || 50)}</span>\r\n            <span className="text-[10px] font-sans font-bold opacity-85">/ tub</span>\r\n          </div>\r\n        </div>\r\n      )}\r\n\r\n      {/* Flavor Title, Vibe Tag & Description */}\r\n      <div className="flex-1 flex flex-col justify-between">\r\n        <div>\r\n          <div className="flex items-start justify-between gap-2">\r\n            <div className="min-w-0 flex-1">\r\n              <div className="flex items-center gap-1.5 flex-wrap">\r\n                <span className="text-xl sm:text-2xl select-none shrink-0 group-hover:scale-110 transition-transform duration-200" aria-hidden="true">\r\n                  {personality.displayIcon}\r\n                </span>\r\n                <h3 className="font-display font-bold text-lg sm:text-xl text-mani-950 leading-tight tracking-tight">\r\n                  {product.name}\r\n                </h3>\r\n              </div>\r\n\r\n              {/* Flavor Personality Vibe Pill */}\r\n              <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">\r\n                <span className={`inline-flex items-center text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${personality.vibeClass}`}>\r\n                  {personality.vibe}\r\n                </span>\r\n                {!product.image && (\r\n                  <span className="font-display font-bold text-sm text-amber-900">\r\n                    {formatPHP(product.price || 50)}/tub\r\n                  </span>\r\n                )}\r\n              </div>\r\n            </div>\r\n          </div>\r\n\r\n          {/* Appetizing Description */}\r\n          <p className="text-xs sm:text-[13px] text-mani-700 font-medium leading-relaxed mt-2.5 mb-4">\r\n            {product.description}\r\n          </p>\r\n        </div>\r\n\r\n        {/* Bottom Ordering Action Bar */}\r\n        <div className="relative pt-3 border-t border-mani-200/70 mt-auto w-full">\r\n          {/* Playful Peanut Particle Burst on Add */}\r\n          {burstKey > 0 && (\r\n            <div\r\n              key={burstKey}\r\n              aria-hidden="true"\r\n              className="pointer-events-none absolute -top-2 right-8 z-20 flex items-center justify-center select-none"\r\n            >\r\n              <span className="animate-particle-left text-base">🥜</span>\r\n              <span className="animate-particle-center text-sm font-display font-bold text-amber-950 bg-amber-300 px-1.5 py-0.5 rounded-full border border-mani-900 shadow-2xs">\r\n                +1 {personality.displayIcon}\r\n              </span>\r\n              <span className="animate-particle-right text-base">✨</span>\r\n            </div>\r\n          )}\r\n\r\n          {!isAvailable ? (\r\n            <div className="w-full py-2.5 rounded-2xl bg-mani-100/80 text-mani-400 font-extrabold text-xs text-center border border-mani-200">\r\n              Temporarily Out of Stock\r\n            </div>\r\n          ) : !isSelected ? (\r\n            /* Unselected State: Tactile Stepper + Prominent Add Button */\r\n            <div className="flex items-center gap-2 w-full">\r\n              {/* Staged Quantity Stepper */}\r\n              <div className="flex items-center bg-mani-100/90 rounded-2xl border-2 border-mani-900/15 p-1 shrink-0">\r\n                <button\r\n                  type="button"\r\n                  onClick={handleMinusStaged}\r\n                  disabled={stagedQty <= 1}\r\n                  aria-label={`Decrease ${product.name} quantity to add`}\r\n                  className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold transition-all ${\r\n                    stagedQty <= 1 \r\n                      ? \'text-mani-300 cursor-not-allowed\' \r\n                      : \'bg-white text-mani-900 hover:bg-amber-100 shadow-2xs active:scale-90 cursor-pointer\'\r\n                  }`}\r\n                >\r\n                  <Minus className="w-3.5 h-3.5 stroke-[2.5]" />\r\n                </button>\r\n\r\n                <span \r\n                  aria-label={`Quantity to add: ${stagedQty}`}\r\n                  className="w-7 text-center font-display text-sm font-bold text-mani-950 select-none"\r\n                >\r\n                  {stagedQty}\r\n                </span>\r\n\r\n                <button\r\n                  type="button"\r\n                  onClick={handlePlusStaged}\r\n                  aria-label={`Increase ${product.name} quantity to add`}\r\n                  className="w-8 h-8 rounded-xl bg-white text-mani-900 hover:bg-amber-100 active:scale-90 flex items-center justify-center shadow-2xs font-bold transition-all cursor-pointer"\r\n                >\r\n                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />\r\n                </button>\r\n              </div>\r\n\r\n              {/* Primary Add to Order Button */}\r\n              <button\r\n                type="button"\r\n                onClick={handleAddClick}\r\n                className="flex-1 min-h-[42px] py-2.5 px-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-xs sm:text-sm border-2 border-mani-900 shadow-snack-sm active:translate-y-0.5 flex items-center justify-center gap-1.5 whitespace-nowrap transition-all cursor-pointer"\r\n              >\r\n                <Plus className="w-4 h-4 stroke-[3] shrink-0" />\r\n                <span>Add to Order</span>\r\n              </button>\r\n            </div>\r\n          ) : (\r\n            /* Selected / In-Cart Live Controller */\r\n            <div className="flex items-center justify-between gap-2 bg-amber-100/90 p-1.5 rounded-2xl border-2 border-mani-900 shadow-snack-sm w-full">\r\n              <div className="flex items-center gap-1 shrink-0">\r\n                <button\r\n                  type="button"\r\n                  onClick={handleMinusInCart}\r\n                  aria-label={`Decrease ${product.name} quantity`}\r\n                  className="w-8 h-8 rounded-xl bg-white text-mani-950 hover:bg-red-50 hover:text-red-600 active:scale-90 flex items-center justify-center border border-mani-900/20 shadow-2xs font-bold transition-all cursor-pointer"\r\n                >\r\n                  <Minus className="w-3.5 h-3.5 stroke-[2.5]" />\r\n                </button>\r\n\r\n                <input\r\n                  type="number"\r\n                  min="0"\r\n                  max="999"\r\n                  value={quantity}\r\n                  onChange={handleDirectInput}\r\n                  aria-label={`${product.name} quantity in order`}\r\n                  className="w-8 sm:w-9 text-center font-display text-sm sm:text-base font-bold bg-transparent text-mani-950 focus:outline-none rounded p-0"\r\n                />\r\n\r\n                <button\r\n                  type="button"\r\n                  onClick={handlePlusInCart}\r\n                  aria-label={`Increase ${product.name} quantity`}\r\n                  className="w-8 h-8 rounded-xl bg-mani-900 text-amber-300 hover:bg-mani-800 active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer"\r\n                >\r\n                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />\r\n                </button>\r\n              </div>\r\n\r\n              <div className="pr-2 text-right min-w-0">\r\n                <div className="font-display text-sm sm:text-base font-bold text-mani-950 truncate leading-tight">\r\n                  {formatPHP(quantity * (product.price || 50))}\r\n                </div>\r\n                <div className="text-[10px] font-extrabold text-mani-700 uppercase tracking-wider">\r\n                  {quantity} tub{quantity > 1 ? \'s\' : \'\'} added\r\n                </div>\r\n              </div>\r\n            </div>\r\n          )}\r\n        </div>\r\n      </div>\r\n    </article>\r\n  );\r\n}\r\n';
+import React, { useState } from 'react';
+import { Plus, Minus, Check } from 'lucide-react';
+import { formatPHP, getFlavorPersonality } from '../config/products';
 
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJtYXBwaW5ncyI6IkFBQUEsZUFBZSIsIm5hbWVzIjpbXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsiRmxhdm9yQ2FyZC5qc3giXSwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGRlZmF1bHQgXCJpbXBvcnQgUmVhY3QsIHsgdXNlU3RhdGUgfSBmcm9tICdyZWFjdCc7XFxyXFxuaW1wb3J0IHsgUGx1cywgTWludXMsIENoZWNrIH0gZnJvbSAnbHVjaWRlLXJlYWN0JztcXHJcXG5pbXBvcnQgeyBmb3JtYXRQSFAsIGdldEZsYXZvclBlcnNvbmFsaXR5IH0gZnJvbSAnLi4vY29uZmlnL3Byb2R1Y3RzJztcXHJcXG5cXHJcXG5leHBvcnQgZGVmYXVsdCBmdW5jdGlvbiBGbGF2b3JDYXJkKHsgXFxyXFxuICBwcm9kdWN0LCBcXHJcXG4gIHF1YW50aXR5LCBcXHJcXG4gIG9uUXVhbnRpdHlDaGFuZ2UsXFxyXFxuICBvbkFkZFRvQ2FydCBcXHJcXG59KSB7XFxyXFxuICBjb25zdCBbc3RhZ2VkUXR5LCBzZXRTdGFnZWRRdHldID0gdXNlU3RhdGUoMSk7XFxyXFxuICBjb25zdCBbYnVyc3RLZXksIHNldEJ1cnN0S2V5XSA9IHVzZVN0YXRlKDApO1xcclxcbiAgY29uc3QgaXNBdmFpbGFibGUgPSBwcm9kdWN0LmF2YWlsYWJsZSAhPT0gZmFsc2U7XFxyXFxuICBjb25zdCBpc1NlbGVjdGVkID0gcXVhbnRpdHkgPiAwO1xcclxcbiAgY29uc3QgcGVyc29uYWxpdHkgPSBnZXRGbGF2b3JQZXJzb25hbGl0eShwcm9kdWN0KTtcXHJcXG5cXHJcXG4gIGNvbnN0IHRyaWdnZXJQYXJ0aWNsZUJ1cnN0ID0gKCkgPT4ge1xcclxcbiAgICBzZXRCdXJzdEtleSgocHJldikgPT4gcHJldiArIDEpO1xcclxcbiAgfTtcXHJcXG5cXHJcXG4gIGNvbnN0IGhhbmRsZU1pbnVzU3RhZ2VkID0gKGUpID0+IHtcXHJcXG4gICAgZS5zdG9wUHJvcGFnYXRpb24oKTtcXHJcXG4gICAgc2V0U3RhZ2VkUXR5KChwcmV2KSA9PiBNYXRoLm1heCgxLCBwcmV2IC0gMSkpO1xcclxcbiAgfTtcXHJcXG5cXHJcXG4gIGNvbnN0IGhhbmRsZVBsdXNTdGFnZWQgPSAoZSkgPT4ge1xcclxcbiAgICBlLnN0b3BQcm9wYWdhdGlvbigpO1xcclxcbiAgICBzZXRTdGFnZWRRdHkoKHByZXYpID0+IE1hdGgubWluKDk5OSwgcHJldiArIDEpKTtcXHJcXG4gIH07XFxyXFxuXFxyXFxuICBjb25zdCBoYW5kbGVBZGRDbGljayA9ICgpID0+IHtcXHJcXG4gICAgY29uc3QgcXR5VG9BZGQgPSBzdGFnZWRRdHkgPiAwID8gc3RhZ2VkUXR5IDogMTtcXHJcXG4gICAgY29uc3QgbmV3VG90YWwgPSAocXVhbnRpdHkgfHwgMCkgKyBxdHlUb0FkZDtcXHJcXG4gICAgb25RdWFudGl0eUNoYW5nZShwcm9kdWN0LmlkLCBuZXdUb3RhbCk7XFxyXFxuICAgIHRyaWdnZXJQYXJ0aWNsZUJ1cnN0KCk7XFxyXFxuICAgIGlmIChvbkFkZFRvQ2FydCkge1xcclxcbiAgICAgIG9uQWRkVG9DYXJ0KHByb2R1Y3QsIHF0eVRvQWRkKTtcXHJcXG4gICAgfVxcclxcbiAgICBzZXRTdGFnZWRRdHkoMSk7XFxyXFxuICB9O1xcclxcblxcclxcbiAgY29uc3QgaGFuZGxlTWludXNJbkNhcnQgPSAoZSkgPT4ge1xcclxcbiAgICBlLnN0b3BQcm9wYWdhdGlvbigpO1xcclxcbiAgICBpZiAocXVhbnRpdHkgPiAwKSB7XFxyXFxuICAgICAgb25RdWFudGl0eUNoYW5nZShwcm9kdWN0LmlkLCBxdWFudGl0eSAtIDEpO1xcclxcbiAgICB9XFxyXFxuICB9O1xcclxcblxcclxcbiAgY29uc3QgaGFuZGxlUGx1c0luQ2FydCA9IChlKSA9PiB7XFxyXFxuICAgIGUuc3RvcFByb3BhZ2F0aW9uKCk7XFxyXFxuICAgIG9uUXVhbnRpdHlDaGFuZ2UocHJvZHVjdC5pZCwgcXVhbnRpdHkgKyAxKTtcXHJcXG4gICAgdHJpZ2dlclBhcnRpY2xlQnVyc3QoKTtcXHJcXG4gICAgaWYgKG9uQWRkVG9DYXJ0KSB7XFxyXFxuICAgICAgb25BZGRUb0NhcnQocHJvZHVjdCwgMSk7XFxyXFxuICAgIH1cXHJcXG4gIH07XFxyXFxuXFxyXFxuICBjb25zdCBoYW5kbGVEaXJlY3RJbnB1dCA9IChlKSA9PiB7XFxyXFxuICAgIGNvbnN0IHZhbCA9IHBhcnNlSW50KGUudGFyZ2V0LnZhbHVlLCAxMCk7XFxyXFxuICAgIGlmIChpc05hTih2YWwpIHx8IHZhbCA8IDApIHtcXHJcXG4gICAgICBvblF1YW50aXR5Q2hhbmdlKHByb2R1Y3QuaWQsIDApO1xcclxcbiAgICB9IGVsc2Uge1xcclxcbiAgICAgIG9uUXVhbnRpdHlDaGFuZ2UocHJvZHVjdC5pZCwgTWF0aC5taW4odmFsLCA5OTkpKTtcXHJcXG4gICAgfVxcclxcbiAgfTtcXHJcXG5cXHJcXG4gIHJldHVybiAoXFxyXFxuICAgIDxhcnRpY2xlXFxyXFxuICAgICAgY2xhc3NOYW1lPXtgcmVsYXRpdmUgcm91bmRlZC0zeGwgcC00IHNtOnAtNC41IHRyYW5zaXRpb24tYWxsIGR1cmF0aW9uLTIwMCBmbGV4IGZsZXgtY29sIGp1c3RpZnktYmV0d2VlbiBvdmVyZmxvdy1oaWRkZW4gZ3JvdXAgYmctZ3JhZGllbnQtdG8tYiAke3BlcnNvbmFsaXR5LmNhcmRCZ30gJHtcXHJcXG4gICAgICAgIGlzU2VsZWN0ZWRcXHJcXG4gICAgICAgICAgPyAnYm9yZGVyLTIgYm9yZGVyLW1hbmktOTAwIHNoYWRvdy1zbmFjayByaW5nLTQgcmluZy1hbWJlci0zMDAvNjAgLXRyYW5zbGF0ZS15LTAuNSdcXHJcXG4gICAgICAgICAgOiBgYm9yZGVyLTIgYm9yZGVyLW1hbmktOTAwLzE1IHNoYWRvdy1zbmFjay1jYXJkIGhvdmVyOmJvcmRlci1tYW5pLTkwMC84MCBob3ZlcjpzaGFkb3ctc25hY2stY2FyZC1ob3ZlciBob3ZlcjotdHJhbnNsYXRlLXktMSAke3BlcnNvbmFsaXR5LnRpbHRDbGFzc31gXFxyXFxuICAgICAgfSAkeyFpc0F2YWlsYWJsZSA/ICdvcGFjaXR5LTY1IGdyYXlzY2FsZS1bMzUlXSBob3Zlcjp0cmFuc2xhdGUteS0wIGhvdmVyOnJvdGF0ZS0wJyA6ICcnfWB9XFxyXFxuICAgID5cXHJcXG4gICAgICB7LyogUHJvZHVjdCBUdWIgSW1hZ2UgU2hvd2Nhc2UgKi99XFxyXFxuICAgICAge3Byb2R1Y3QuaW1hZ2UgJiYgKFxcclxcbiAgICAgICAgPGRpdiBjbGFzc05hbWU9e2ByZWxhdGl2ZSB3LWZ1bGwgYXNwZWN0LVs0LzNdIG1iLTMuNSByb3VuZGVkLTJ4bCBvdmVyZmxvdy1oaWRkZW4gYm9yZGVyLTIgJHtwZXJzb25hbGl0eS5mcmFtZUJnfSBzaGFkb3ctaW5uZXJgfT5cXHJcXG4gICAgICAgICAgPGltZ1xcclxcbiAgICAgICAgICAgIHNyYz17cHJvZHVjdC5pbWFnZX1cXHJcXG4gICAgICAgICAgICBhbHQ9e2Ake3Byb2R1Y3QubmFtZX0gTWFuaSBUdWJgfVxcclxcbiAgICAgICAgICAgIGNsYXNzTmFtZT1cXFwidy1mdWxsIGgtZnVsbCBvYmplY3QtY292ZXIgZ3JvdXAtaG92ZXI6c2NhbGUtMTA4IHRyYW5zaXRpb24tdHJhbnNmb3JtIGR1cmF0aW9uLTUwMCBlYXNlLW91dFxcXCJcXHJcXG4gICAgICAgICAgICBsb2FkaW5nPVxcXCJsYXp5XFxcIlxcclxcbiAgICAgICAgICAvPlxcclxcbiAgICAgICAgICB7LyogU3VidGxlIHdhcm0gdmlnbmV0dGUgYXQgYm90dG9tIG9mIHBob3RvIGZvciBiYWRnZSBsZWdpYmlsaXR5ICovfVxcclxcbiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cXFwiYWJzb2x1dGUgaW5zZXQteC0wIGJvdHRvbS0wIGgtMTYgYmctZ3JhZGllbnQtdG8tdCBmcm9tLWJsYWNrLzUwIHZpYS1ibGFjay8xNSB0by10cmFuc3BhcmVudCBwb2ludGVyLWV2ZW50cy1ub25lXFxcIiAvPlxcclxcblxcclxcbiAgICAgICAgICB7LyogVG9wLUxlZnQgU3RpY2tlciBCYWRnZSAqL31cXHJcXG4gICAgICAgICAgeyFpc0F2YWlsYWJsZSA/IChcXHJcXG4gICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XFxcImFic29sdXRlIHRvcC0yLjUgbGVmdC0yLjUgdGV4dC1bMTBweF0gdXBwZXJjYXNlIGZvbnQtYmxhY2sgdHJhY2tpbmctd2lkZXIgcHgtMi41IHB5LTEgcm91bmRlZC1mdWxsIHNoYWRvdy1tZCBiZy1yZWQtNjAwIHRleHQtd2hpdGUgYm9yZGVyIGJvcmRlci13aGl0ZS80MCBmbGV4IGl0ZW1zLWNlbnRlciBnYXAtMSB6LTEwXFxcIj5cXHJcXG4gICAgICAgICAgICAgIPCflLQgU29sZCBPdXRcXHJcXG4gICAgICAgICAgICA8L3NwYW4+XFxyXFxuICAgICAgICAgICkgOiAoXFxyXFxuICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPXtgYWJzb2x1dGUgdG9wLTIuNSBsZWZ0LTIuNSB0ZXh0LVsxMHB4XSB1cHBlcmNhc2UgZm9udC1ibGFjayB0cmFja2luZy13aWRlciBweC0yLjUgcHktMSByb3VuZGVkLWZ1bGwgYm9yZGVyIHNoYWRvdy1zbSAtcm90YXRlLTIgei0xMCAke3BlcnNvbmFsaXR5LmJhZGdlQ2xhc3N9YH0+XFxyXFxuICAgICAgICAgICAgICB7cGVyc29uYWxpdHkuc3RpY2tlcn1cXHJcXG4gICAgICAgICAgICA8L3NwYW4+XFxyXFxuICAgICAgICAgICl9XFxyXFxuXFxyXFxuICAgICAgICAgIHsvKiBUb3AtUmlnaHQgSW4tQ2FydCBDb3VudGVyIFBpbGwgKi99XFxyXFxuICAgICAgICAgIHtpc1NlbGVjdGVkICYmIChcXHJcXG4gICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XFxcImFic29sdXRlIHRvcC0yLjUgcmlnaHQtMi41IGlubGluZS1mbGV4IGl0ZW1zLWNlbnRlciBnYXAtMSB0ZXh0LVsxMXB4XSBmb250LWJsYWNrIGJnLWVtZXJhbGQtNTAwIHRleHQtd2hpdGUgcHgtMi41IHB5LTEgcm91bmRlZC1mdWxsIGJvcmRlci0yIGJvcmRlci1tYW5pLTk1MCBzaGFkb3ctc25hY2stc20gei0xMCBhbmltYXRlLXBvcFxcXCI+XFxyXFxuICAgICAgICAgICAgICA8Q2hlY2sgY2xhc3NOYW1lPVxcXCJ3LTMgaC0zIHN0cm9rZS1bM11cXFwiIC8+XFxyXFxuICAgICAgICAgICAgICA8c3Bhbj57cXVhbnRpdHl9IGluIGNhcnQ8L3NwYW4+XFxyXFxuICAgICAgICAgICAgPC9zcGFuPlxcclxcbiAgICAgICAgICApfVxcclxcblxcclxcbiAgICAgICAgICB7LyogQm90dG9tLVJpZ2h0IE9idmlvdXMgUHJpY2UgVGFnICovfVxcclxcbiAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT17YGFic29sdXRlIGJvdHRvbS0yLjUgcmlnaHQtMi41IHB4LTMgcHktMSByb3VuZGVkLXhsIGZvbnQtZGlzcGxheSBmb250LWJvbGQgdGV4dC1zbSBzbTp0ZXh0LWJhc2UgYm9yZGVyIGJvcmRlci13aGl0ZS8yNSBzaGFkb3ctbWQgZmxleCBpdGVtcy1iYXNlbGluZSBnYXAtMSB6LTEwICR7cGVyc29uYWxpdHkucHJpY2VCZ31gfT5cXHJcXG4gICAgICAgICAgICA8c3Bhbj57Zm9ybWF0UEhQKHByb2R1Y3QucHJpY2UgfHwgNTApfTwvc3Bhbj5cXHJcXG4gICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XFxcInRleHQtWzEwcHhdIGZvbnQtc2FucyBmb250LWJvbGQgb3BhY2l0eS04NVxcXCI+LyB0dWI8L3NwYW4+XFxyXFxuICAgICAgICAgIDwvZGl2PlxcclxcbiAgICAgICAgPC9kaXY+XFxyXFxuICAgICAgKX1cXHJcXG5cXHJcXG4gICAgICB7LyogRmxhdm9yIFRpdGxlLCBWaWJlIFRhZyAmIERlc2NyaXB0aW9uICovfVxcclxcbiAgICAgIDxkaXYgY2xhc3NOYW1lPVxcXCJmbGV4LTEgZmxleCBmbGV4LWNvbCBqdXN0aWZ5LWJldHdlZW5cXFwiPlxcclxcbiAgICAgICAgPGRpdj5cXHJcXG4gICAgICAgICAgPGRpdiBjbGFzc05hbWU9XFxcImZsZXggaXRlbXMtc3RhcnQganVzdGlmeS1iZXR3ZWVuIGdhcC0yXFxcIj5cXHJcXG4gICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cXFwibWluLXctMCBmbGV4LTFcXFwiPlxcclxcbiAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9XFxcImZsZXggaXRlbXMtY2VudGVyIGdhcC0xLjUgZmxleC13cmFwXFxcIj5cXHJcXG4gICAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPVxcXCJ0ZXh0LXhsIHNtOnRleHQtMnhsIHNlbGVjdC1ub25lIHNocmluay0wIGdyb3VwLWhvdmVyOnNjYWxlLTExMCB0cmFuc2l0aW9uLXRyYW5zZm9ybSBkdXJhdGlvbi0yMDBcXFwiIGFyaWEtaGlkZGVuPVxcXCJ0cnVlXFxcIj5cXHJcXG4gICAgICAgICAgICAgICAgICB7cGVyc29uYWxpdHkuZGlzcGxheUljb259XFxyXFxuICAgICAgICAgICAgICAgIDwvc3Bhbj5cXHJcXG4gICAgICAgICAgICAgICAgPGgzIGNsYXNzTmFtZT1cXFwiZm9udC1kaXNwbGF5IGZvbnQtYm9sZCB0ZXh0LWxnIHNtOnRleHQteGwgdGV4dC1tYW5pLTk1MCBsZWFkaW5nLXRpZ2h0IHRyYWNraW5nLXRpZ2h0XFxcIj5cXHJcXG4gICAgICAgICAgICAgICAgICB7cHJvZHVjdC5uYW1lfVxcclxcbiAgICAgICAgICAgICAgICA8L2gzPlxcclxcbiAgICAgICAgICAgICAgPC9kaXY+XFxyXFxuXFxyXFxuICAgICAgICAgICAgICB7LyogRmxhdm9yIFBlcnNvbmFsaXR5IFZpYmUgUGlsbCAqL31cXHJcXG4gICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVxcXCJtdC0xLjUgZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTEuNSBmbGV4LXdyYXBcXFwiPlxcclxcbiAgICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9e2BpbmxpbmUtZmxleCBpdGVtcy1jZW50ZXIgdGV4dC1bMTFweF0gZm9udC1leHRyYWJvbGQgcHgtMi41IHB5LTAuNSByb3VuZGVkLWZ1bGwgYm9yZGVyICR7cGVyc29uYWxpdHkudmliZUNsYXNzfWB9PlxcclxcbiAgICAgICAgICAgICAgICAgIHtwZXJzb25hbGl0eS52aWJlfVxcclxcbiAgICAgICAgICAgICAgICA8L3NwYW4+XFxyXFxuICAgICAgICAgICAgICAgIHshcHJvZHVjdC5pbWFnZSAmJiAoXFxyXFxuICAgICAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPVxcXCJmb250LWRpc3BsYXkgZm9udC1ib2xkIHRleHQtc20gdGV4dC1hbWJlci05MDBcXFwiPlxcclxcbiAgICAgICAgICAgICAgICAgICAge2Zvcm1hdFBIUChwcm9kdWN0LnByaWNlIHx8IDUwKX0vdHViXFxyXFxuICAgICAgICAgICAgICAgICAgPC9zcGFuPlxcclxcbiAgICAgICAgICAgICAgICApfVxcclxcbiAgICAgICAgICAgICAgPC9kaXY+XFxyXFxuICAgICAgICAgICAgPC9kaXY+XFxyXFxuICAgICAgICAgIDwvZGl2PlxcclxcblxcclxcbiAgICAgICAgICB7LyogQXBwZXRpemluZyBEZXNjcmlwdGlvbiAqL31cXHJcXG4gICAgICAgICAgPHAgY2xhc3NOYW1lPVxcXCJ0ZXh0LXhzIHNtOnRleHQtWzEzcHhdIHRleHQtbWFuaS03MDAgZm9udC1tZWRpdW0gbGVhZGluZy1yZWxheGVkIG10LTIuNSBtYi00XFxcIj5cXHJcXG4gICAgICAgICAgICB7cHJvZHVjdC5kZXNjcmlwdGlvbn1cXHJcXG4gICAgICAgICAgPC9wPlxcclxcbiAgICAgICAgPC9kaXY+XFxyXFxuXFxyXFxuICAgICAgICB7LyogQm90dG9tIE9yZGVyaW5nIEFjdGlvbiBCYXIgKi99XFxyXFxuICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cXFwicmVsYXRpdmUgcHQtMyBib3JkZXItdCBib3JkZXItbWFuaS0yMDAvNzAgbXQtYXV0byB3LWZ1bGxcXFwiPlxcclxcbiAgICAgICAgICB7LyogUGxheWZ1bCBQZWFudXQgUGFydGljbGUgQnVyc3Qgb24gQWRkICovfVxcclxcbiAgICAgICAgICB7YnVyc3RLZXkgPiAwICYmIChcXHJcXG4gICAgICAgICAgICA8ZGl2XFxyXFxuICAgICAgICAgICAgICBrZXk9e2J1cnN0S2V5fVxcclxcbiAgICAgICAgICAgICAgYXJpYS1oaWRkZW49XFxcInRydWVcXFwiXFxyXFxuICAgICAgICAgICAgICBjbGFzc05hbWU9XFxcInBvaW50ZXItZXZlbnRzLW5vbmUgYWJzb2x1dGUgLXRvcC0yIHJpZ2h0LTggei0yMCBmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciBzZWxlY3Qtbm9uZVxcXCJcXHJcXG4gICAgICAgICAgICA+XFxyXFxuICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XFxcImFuaW1hdGUtcGFydGljbGUtbGVmdCB0ZXh0LWJhc2VcXFwiPvCfpZw8L3NwYW4+XFxyXFxuICAgICAgICAgICAgICA8c3BhbiBjbGFzc05hbWU9XFxcImFuaW1hdGUtcGFydGljbGUtY2VudGVyIHRleHQtc20gZm9udC1kaXNwbGF5IGZvbnQtYm9sZCB0ZXh0LWFtYmVyLTk1MCBiZy1hbWJlci0zMDAgcHgtMS41IHB5LTAuNSByb3VuZGVkLWZ1bGwgYm9yZGVyIGJvcmRlci1tYW5pLTkwMCBzaGFkb3ctMnhzXFxcIj5cXHJcXG4gICAgICAgICAgICAgICAgKzEge3BlcnNvbmFsaXR5LmRpc3BsYXlJY29ufVxcclxcbiAgICAgICAgICAgICAgPC9zcGFuPlxcclxcbiAgICAgICAgICAgICAgPHNwYW4gY2xhc3NOYW1lPVxcXCJhbmltYXRlLXBhcnRpY2xlLXJpZ2h0IHRleHQtYmFzZVxcXCI+4pyoPC9zcGFuPlxcclxcbiAgICAgICAgICAgIDwvZGl2PlxcclxcbiAgICAgICAgICApfVxcclxcblxcclxcbiAgICAgICAgICB7IWlzQXZhaWxhYmxlID8gKFxcclxcbiAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVxcXCJ3LWZ1bGwgcHktMi41IHJvdW5kZWQtMnhsIGJnLW1hbmktMTAwLzgwIHRleHQtbWFuaS00MDAgZm9udC1leHRyYWJvbGQgdGV4dC14cyB0ZXh0LWNlbnRlciBib3JkZXIgYm9yZGVyLW1hbmktMjAwXFxcIj5cXHJcXG4gICAgICAgICAgICAgIFRlbXBvcmFyaWx5IE91dCBvZiBTdG9ja1xcclxcbiAgICAgICAgICAgIDwvZGl2PlxcclxcbiAgICAgICAgICApIDogIWlzU2VsZWN0ZWQgPyAoXFxyXFxuICAgICAgICAgICAgLyogVW5zZWxlY3RlZCBTdGF0ZTogVGFjdGlsZSBTdGVwcGVyICsgUHJvbWluZW50IEFkZCBCdXR0b24gKi9cXHJcXG4gICAgICAgICAgICA8ZGl2IGNsYXNzTmFtZT1cXFwiZmxleCBpdGVtcy1jZW50ZXIgZ2FwLTIgdy1mdWxsXFxcIj5cXHJcXG4gICAgICAgICAgICAgIHsvKiBTdGFnZWQgUXVhbnRpdHkgU3RlcHBlciAqL31cXHJcXG4gICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVxcXCJmbGV4IGl0ZW1zLWNlbnRlciBiZy1tYW5pLTEwMC85MCByb3VuZGVkLTJ4bCBib3JkZXItMiBib3JkZXItbWFuaS05MDAvMTUgcC0xIHNocmluay0wXFxcIj5cXHJcXG4gICAgICAgICAgICAgICAgPGJ1dHRvblxcclxcbiAgICAgICAgICAgICAgICAgIHR5cGU9XFxcImJ1dHRvblxcXCJcXHJcXG4gICAgICAgICAgICAgICAgICBvbkNsaWNrPXtoYW5kbGVNaW51c1N0YWdlZH1cXHJcXG4gICAgICAgICAgICAgICAgICBkaXNhYmxlZD17c3RhZ2VkUXR5IDw9IDF9XFxyXFxuICAgICAgICAgICAgICAgICAgYXJpYS1sYWJlbD17YERlY3JlYXNlICR7cHJvZHVjdC5uYW1lfSBxdWFudGl0eSB0byBhZGRgfVxcclxcbiAgICAgICAgICAgICAgICAgIGNsYXNzTmFtZT17YHctOCBoLTggcm91bmRlZC14bCBmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciBmb250LWJvbGQgdHJhbnNpdGlvbi1hbGwgJHtcXHJcXG4gICAgICAgICAgICAgICAgICAgIHN0YWdlZFF0eSA8PSAxIFxcclxcbiAgICAgICAgICAgICAgICAgICAgICA/ICd0ZXh0LW1hbmktMzAwIGN1cnNvci1ub3QtYWxsb3dlZCcgXFxyXFxuICAgICAgICAgICAgICAgICAgICAgIDogJ2JnLXdoaXRlIHRleHQtbWFuaS05MDAgaG92ZXI6YmctYW1iZXItMTAwIHNoYWRvdy0yeHMgYWN0aXZlOnNjYWxlLTkwIGN1cnNvci1wb2ludGVyJ1xcclxcbiAgICAgICAgICAgICAgICAgIH1gfVxcclxcbiAgICAgICAgICAgICAgICA+XFxyXFxuICAgICAgICAgICAgICAgICAgPE1pbnVzIGNsYXNzTmFtZT1cXFwidy0zLjUgaC0zLjUgc3Ryb2tlLVsyLjVdXFxcIiAvPlxcclxcbiAgICAgICAgICAgICAgICA8L2J1dHRvbj5cXHJcXG5cXHJcXG4gICAgICAgICAgICAgICAgPHNwYW4gXFxyXFxuICAgICAgICAgICAgICAgICAgYXJpYS1sYWJlbD17YFF1YW50aXR5IHRvIGFkZDogJHtzdGFnZWRRdHl9YH1cXHJcXG4gICAgICAgICAgICAgICAgICBjbGFzc05hbWU9XFxcInctNyB0ZXh0LWNlbnRlciBmb250LWRpc3BsYXkgdGV4dC1zbSBmb250LWJvbGQgdGV4dC1tYW5pLTk1MCBzZWxlY3Qtbm9uZVxcXCJcXHJcXG4gICAgICAgICAgICAgICAgPlxcclxcbiAgICAgICAgICAgICAgICAgIHtzdGFnZWRRdHl9XFxyXFxuICAgICAgICAgICAgICAgIDwvc3Bhbj5cXHJcXG5cXHJcXG4gICAgICAgICAgICAgICAgPGJ1dHRvblxcclxcbiAgICAgICAgICAgICAgICAgIHR5cGU9XFxcImJ1dHRvblxcXCJcXHJcXG4gICAgICAgICAgICAgICAgICBvbkNsaWNrPXtoYW5kbGVQbHVzU3RhZ2VkfVxcclxcbiAgICAgICAgICAgICAgICAgIGFyaWEtbGFiZWw9e2BJbmNyZWFzZSAke3Byb2R1Y3QubmFtZX0gcXVhbnRpdHkgdG8gYWRkYH1cXHJcXG4gICAgICAgICAgICAgICAgICBjbGFzc05hbWU9XFxcInctOCBoLTggcm91bmRlZC14bCBiZy13aGl0ZSB0ZXh0LW1hbmktOTAwIGhvdmVyOmJnLWFtYmVyLTEwMCBhY3RpdmU6c2NhbGUtOTAgZmxleCBpdGVtcy1jZW50ZXIganVzdGlmeS1jZW50ZXIgc2hhZG93LTJ4cyBmb250LWJvbGQgdHJhbnNpdGlvbi1hbGwgY3Vyc29yLXBvaW50ZXJcXFwiXFxyXFxuICAgICAgICAgICAgICAgID5cXHJcXG4gICAgICAgICAgICAgICAgICA8UGx1cyBjbGFzc05hbWU9XFxcInctMy41IGgtMy41IHN0cm9rZS1bMi41XVxcXCIgLz5cXHJcXG4gICAgICAgICAgICAgICAgPC9idXR0b24+XFxyXFxuICAgICAgICAgICAgICA8L2Rpdj5cXHJcXG5cXHJcXG4gICAgICAgICAgICAgIHsvKiBQcmltYXJ5IEFkZCB0byBPcmRlciBCdXR0b24gKi99XFxyXFxuICAgICAgICAgICAgICA8YnV0dG9uXFxyXFxuICAgICAgICAgICAgICAgIHR5cGU9XFxcImJ1dHRvblxcXCJcXHJcXG4gICAgICAgICAgICAgICAgb25DbGljaz17aGFuZGxlQWRkQ2xpY2t9XFxyXFxuICAgICAgICAgICAgICAgIGNsYXNzTmFtZT1cXFwiZmxleC0xIG1pbi1oLVs0MnB4XSBweS0yLjUgcHgtMyByb3VuZGVkLTJ4bCBiZy1hbWJlci00MDAgaG92ZXI6YmctYW1iZXItMzAwIHRleHQtbWFuaS05NTAgZm9udC1kaXNwbGF5IGZvbnQtYm9sZCB0ZXh0LXhzIHNtOnRleHQtc20gYm9yZGVyLTIgYm9yZGVyLW1hbmktOTAwIHNoYWRvdy1zbmFjay1zbSBhY3RpdmU6dHJhbnNsYXRlLXktMC41IGZsZXggaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIGdhcC0xLjUgd2hpdGVzcGFjZS1ub3dyYXAgdHJhbnNpdGlvbi1hbGwgY3Vyc29yLXBvaW50ZXJcXFwiXFxyXFxuICAgICAgICAgICAgICA+XFxyXFxuICAgICAgICAgICAgICAgIDxQbHVzIGNsYXNzTmFtZT1cXFwidy00IGgtNCBzdHJva2UtWzNdIHNocmluay0wXFxcIiAvPlxcclxcbiAgICAgICAgICAgICAgICA8c3Bhbj5BZGQgdG8gT3JkZXI8L3NwYW4+XFxyXFxuICAgICAgICAgICAgICA8L2J1dHRvbj5cXHJcXG4gICAgICAgICAgICA8L2Rpdj5cXHJcXG4gICAgICAgICAgKSA6IChcXHJcXG4gICAgICAgICAgICAvKiBTZWxlY3RlZCAvIEluLUNhcnQgTGl2ZSBDb250cm9sbGVyICovXFxyXFxuICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9XFxcImZsZXggaXRlbXMtY2VudGVyIGp1c3RpZnktYmV0d2VlbiBnYXAtMiBiZy1hbWJlci0xMDAvOTAgcC0xLjUgcm91bmRlZC0yeGwgYm9yZGVyLTIgYm9yZGVyLW1hbmktOTAwIHNoYWRvdy1zbmFjay1zbSB3LWZ1bGxcXFwiPlxcclxcbiAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9XFxcImZsZXggaXRlbXMtY2VudGVyIGdhcC0xIHNocmluay0wXFxcIj5cXHJcXG4gICAgICAgICAgICAgICAgPGJ1dHRvblxcclxcbiAgICAgICAgICAgICAgICAgIHR5cGU9XFxcImJ1dHRvblxcXCJcXHJcXG4gICAgICAgICAgICAgICAgICBvbkNsaWNrPXtoYW5kbGVNaW51c0luQ2FydH1cXHJcXG4gICAgICAgICAgICAgICAgICBhcmlhLWxhYmVsPXtgRGVjcmVhc2UgJHtwcm9kdWN0Lm5hbWV9IHF1YW50aXR5YH1cXHJcXG4gICAgICAgICAgICAgICAgICBjbGFzc05hbWU9XFxcInctOCBoLTggcm91bmRlZC14bCBiZy13aGl0ZSB0ZXh0LW1hbmktOTUwIGhvdmVyOmJnLXJlZC01MCBob3Zlcjp0ZXh0LXJlZC02MDAgYWN0aXZlOnNjYWxlLTkwIGZsZXggaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIGJvcmRlciBib3JkZXItbWFuaS05MDAvMjAgc2hhZG93LTJ4cyBmb250LWJvbGQgdHJhbnNpdGlvbi1hbGwgY3Vyc29yLXBvaW50ZXJcXFwiXFxyXFxuICAgICAgICAgICAgICAgID5cXHJcXG4gICAgICAgICAgICAgICAgICA8TWludXMgY2xhc3NOYW1lPVxcXCJ3LTMuNSBoLTMuNSBzdHJva2UtWzIuNV1cXFwiIC8+XFxyXFxuICAgICAgICAgICAgICAgIDwvYnV0dG9uPlxcclxcblxcclxcbiAgICAgICAgICAgICAgICA8aW5wdXRcXHJcXG4gICAgICAgICAgICAgICAgICB0eXBlPVxcXCJudW1iZXJcXFwiXFxyXFxuICAgICAgICAgICAgICAgICAgbWluPVxcXCIwXFxcIlxcclxcbiAgICAgICAgICAgICAgICAgIG1heD1cXFwiOTk5XFxcIlxcclxcbiAgICAgICAgICAgICAgICAgIHZhbHVlPXtxdWFudGl0eX1cXHJcXG4gICAgICAgICAgICAgICAgICBvbkNoYW5nZT17aGFuZGxlRGlyZWN0SW5wdXR9XFxyXFxuICAgICAgICAgICAgICAgICAgYXJpYS1sYWJlbD17YCR7cHJvZHVjdC5uYW1lfSBxdWFudGl0eSBpbiBvcmRlcmB9XFxyXFxuICAgICAgICAgICAgICAgICAgY2xhc3NOYW1lPVxcXCJ3LTggc206dy05IHRleHQtY2VudGVyIGZvbnQtZGlzcGxheSB0ZXh0LXNtIHNtOnRleHQtYmFzZSBmb250LWJvbGQgYmctdHJhbnNwYXJlbnQgdGV4dC1tYW5pLTk1MCBmb2N1czpvdXRsaW5lLW5vbmUgcm91bmRlZCBwLTBcXFwiXFxyXFxuICAgICAgICAgICAgICAgIC8+XFxyXFxuXFxyXFxuICAgICAgICAgICAgICAgIDxidXR0b25cXHJcXG4gICAgICAgICAgICAgICAgICB0eXBlPVxcXCJidXR0b25cXFwiXFxyXFxuICAgICAgICAgICAgICAgICAgb25DbGljaz17aGFuZGxlUGx1c0luQ2FydH1cXHJcXG4gICAgICAgICAgICAgICAgICBhcmlhLWxhYmVsPXtgSW5jcmVhc2UgJHtwcm9kdWN0Lm5hbWV9IHF1YW50aXR5YH1cXHJcXG4gICAgICAgICAgICAgICAgICBjbGFzc05hbWU9XFxcInctOCBoLTggcm91bmRlZC14bCBiZy1tYW5pLTkwMCB0ZXh0LWFtYmVyLTMwMCBob3ZlcjpiZy1tYW5pLTgwMCBhY3RpdmU6c2NhbGUtOTAgZmxleCBpdGVtcy1jZW50ZXIganVzdGlmeS1jZW50ZXIgc2hhZG93LXhzIGZvbnQtYm9sZCB0cmFuc2l0aW9uLWFsbCBjdXJzb3ItcG9pbnRlclxcXCJcXHJcXG4gICAgICAgICAgICAgICAgPlxcclxcbiAgICAgICAgICAgICAgICAgIDxQbHVzIGNsYXNzTmFtZT1cXFwidy0zLjUgaC0zLjUgc3Ryb2tlLVsyLjVdXFxcIiAvPlxcclxcbiAgICAgICAgICAgICAgICA8L2J1dHRvbj5cXHJcXG4gICAgICAgICAgICAgIDwvZGl2PlxcclxcblxcclxcbiAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9XFxcInByLTIgdGV4dC1yaWdodCBtaW4tdy0wXFxcIj5cXHJcXG4gICAgICAgICAgICAgICAgPGRpdiBjbGFzc05hbWU9XFxcImZvbnQtZGlzcGxheSB0ZXh0LXNtIHNtOnRleHQtYmFzZSBmb250LWJvbGQgdGV4dC1tYW5pLTk1MCB0cnVuY2F0ZSBsZWFkaW5nLXRpZ2h0XFxcIj5cXHJcXG4gICAgICAgICAgICAgICAgICB7Zm9ybWF0UEhQKHF1YW50aXR5ICogKHByb2R1Y3QucHJpY2UgfHwgNTApKX1cXHJcXG4gICAgICAgICAgICAgICAgPC9kaXY+XFxyXFxuICAgICAgICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVxcXCJ0ZXh0LVsxMHB4XSBmb250LWV4dHJhYm9sZCB0ZXh0LW1hbmktNzAwIHVwcGVyY2FzZSB0cmFja2luZy13aWRlclxcXCI+XFxyXFxuICAgICAgICAgICAgICAgICAge3F1YW50aXR5fSB0dWJ7cXVhbnRpdHkgPiAxID8gJ3MnIDogJyd9IGFkZGVkXFxyXFxuICAgICAgICAgICAgICAgIDwvZGl2PlxcclxcbiAgICAgICAgICAgICAgPC9kaXY+XFxyXFxuICAgICAgICAgICAgPC9kaXY+XFxyXFxuICAgICAgICAgICl9XFxyXFxuICAgICAgICA8L2Rpdj5cXHJcXG4gICAgICA8L2Rpdj5cXHJcXG4gICAgPC9hcnRpY2xlPlxcclxcbiAgKTtcXHJcXG59XFxyXFxuXCIiXSwiZmlsZSI6IkM6L1VzZXJzL0tFVklOL0Rlc2t0b3AvUHJvamVjdC9NYW5pIHYyL3NyYy9jb21wb25lbnRzL0ZsYXZvckNhcmQuanN4In0=
+export default function FlavorCard({ 
+  product, 
+  quantity, 
+  onQuantityChange,
+  onAddToCart 
+}) {
+  const [stagedQty, setStagedQty] = useState(1);
+  const [burstKey, setBurstKey] = useState(0);
+  const isAvailable = product.available !== false;
+  const isSelected = quantity > 0;
+  const personality = getFlavorPersonality(product);
+
+  const triggerParticleBurst = () => {
+    setBurstKey((prev) => prev + 1);
+  };
+
+  const handleMinusStaged = (e) => {
+    e.stopPropagation();
+    setStagedQty((prev) => Math.max(1, prev - 1));
+  };
+
+  const handlePlusStaged = (e) => {
+    e.stopPropagation();
+    setStagedQty((prev) => Math.min(999, prev + 1));
+  };
+
+  const handleAddClick = () => {
+    const qtyToAdd = stagedQty > 0 ? stagedQty : 1;
+    const newTotal = (quantity || 0) + qtyToAdd;
+    onQuantityChange(product.id, newTotal);
+    triggerParticleBurst();
+    if (onAddToCart) {
+      onAddToCart(product, qtyToAdd);
+    }
+    setStagedQty(1);
+  };
+
+  const handleMinusInCart = (e) => {
+    e.stopPropagation();
+    if (quantity > 0) {
+      onQuantityChange(product.id, quantity - 1);
+    }
+  };
+
+  const handlePlusInCart = (e) => {
+    e.stopPropagation();
+    onQuantityChange(product.id, quantity + 1);
+    triggerParticleBurst();
+    if (onAddToCart) {
+      onAddToCart(product, 1);
+    }
+  };
+
+  const handleDirectInput = (e) => {
+    const val = parseInt(e.target.value, 10);
+    if (isNaN(val) || val < 0) {
+      onQuantityChange(product.id, 0);
+    } else {
+      onQuantityChange(product.id, Math.min(val, 999));
+    }
+  };
+
+  return (
+    <article
+      className={`relative rounded-3xl p-4 sm:p-4.5 transition-all duration-200 flex flex-col justify-between overflow-hidden group bg-gradient-to-b ${personality.cardBg} ${
+        isSelected
+          ? 'border-2 border-mani-900 shadow-snack ring-4 ring-amber-300/60 -translate-y-0.5'
+          : `border-2 border-mani-900/15 shadow-snack-card hover:border-mani-900/80 hover:shadow-snack-card-hover hover:-translate-y-1 ${personality.tiltClass}`
+      } ${!isAvailable ? 'opacity-65 grayscale-[35%] hover:translate-y-0 hover:rotate-0' : ''}`}
+    >
+      {/* Product Tub Image Showcase */}
+      {product.image && (
+        <div className={`relative w-full aspect-[4/3] mb-3.5 rounded-2xl overflow-hidden border-2 ${personality.frameBg} shadow-inner`}>
+          <img
+            src={product.image}
+            alt={`${product.name} Mani Tub`}
+            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
+            loading="lazy"
+          />
+          {/* Subtle warm vignette at bottom of photo for badge legibility */}
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 via-black/15 to-transparent pointer-events-none" />
+
+          {/* Top-Left Sticker Badge */}
+          {!isAvailable ? (
+            <span className="absolute top-2.5 left-2.5 text-[10px] uppercase font-black tracking-wider px-2.5 py-1 rounded-full shadow-md bg-red-600 text-white border border-white/40 flex items-center gap-1 z-10">
+              🔴 Sold Out
+            </span>
+          ) : (
+            <span className={`absolute top-2.5 left-2.5 text-[10px] uppercase font-black tracking-wider px-2.5 py-1 rounded-full border shadow-sm -rotate-2 z-10 ${personality.badgeClass}`}>
+              {personality.sticker}
+            </span>
+          )}
+
+          {/* Top-Right In-Cart Counter Pill */}
+          {isSelected && (
+            <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 text-[11px] font-black bg-emerald-500 text-white px-2.5 py-1 rounded-full border-2 border-mani-950 shadow-snack-sm z-10 animate-pop">
+              <Check className="w-3 h-3 stroke-[3]" />
+              <span>{quantity} in cart</span>
+            </span>
+          )}
+
+          {/* Bottom-Right Obvious Price Tag */}
+          <div className={`absolute bottom-2.5 right-2.5 px-3 py-1 rounded-xl font-display font-bold text-sm sm:text-base border border-white/25 shadow-md flex items-baseline gap-1 z-10 ${personality.priceBg}`}>
+            <span>{formatPHP(product.price || 50)}</span>
+            <span className="text-[10px] font-sans font-bold opacity-85">/ tub</span>
+          </div>
+        </div>
+      )}
+
+      {/* Flavor Title, Vibe Tag & Description */}
+      <div className="flex-1 flex flex-col justify-between">
+        <div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xl sm:text-2xl select-none shrink-0 group-hover:scale-110 transition-transform duration-200" aria-hidden="true">
+                  {personality.displayIcon}
+                </span>
+                <h3 className="font-display font-bold text-lg sm:text-xl text-mani-950 leading-tight tracking-tight">
+                  {product.name}
+                </h3>
+              </div>
+
+              {/* Flavor Personality Vibe Pill */}
+              <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                <span className={`inline-flex items-center text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${personality.vibeClass}`}>
+                  {personality.vibe}
+                </span>
+                {!product.image && (
+                  <span className="font-display font-bold text-sm text-amber-900">
+                    {formatPHP(product.price || 50)}/tub
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Appetizing Description */}
+          <p className="text-xs sm:text-[13px] text-mani-700 font-medium leading-relaxed mt-2.5 mb-4">
+            {product.description}
+          </p>
+        </div>
+
+        {/* Bottom Ordering Action Bar */}
+        <div className="relative pt-3 border-t border-mani-200/70 mt-auto w-full">
+          {/* Playful Peanut Particle Burst on Add */}
+          {burstKey > 0 && (
+            <div
+              key={burstKey}
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-2 right-8 z-20 flex items-center justify-center select-none"
+            >
+              <span className="animate-particle-left text-base">🥜</span>
+              <span className="animate-particle-center text-sm font-display font-bold text-amber-950 bg-amber-300 px-1.5 py-0.5 rounded-full border border-mani-900 shadow-2xs">
+                +1 {personality.displayIcon}
+              </span>
+              <span className="animate-particle-right text-base">✨</span>
+            </div>
+          )}
+
+          {!isAvailable ? (
+            <div className="w-full py-2.5 rounded-2xl bg-mani-100/80 text-mani-400 font-extrabold text-xs text-center border border-mani-200">
+              Temporarily Out of Stock
+            </div>
+          ) : !isSelected ? (
+            /* Unselected State: Tactile Stepper + Prominent Add Button */
+            <div className="flex items-center gap-2 w-full">
+              {/* Staged Quantity Stepper */}
+              <div className="flex items-center bg-mani-100/90 rounded-2xl border-2 border-mani-900/15 p-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleMinusStaged}
+                  disabled={stagedQty <= 1}
+                  aria-label={`Decrease ${product.name} quantity to add`}
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold transition-all ${
+                    stagedQty <= 1 
+                      ? 'text-mani-300 cursor-not-allowed' 
+                      : 'bg-white text-mani-900 hover:bg-amber-100 shadow-2xs active:scale-90 cursor-pointer'
+                  }`}
+                >
+                  <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
+                </button>
+
+                <span 
+                  aria-label={`Quantity to add: ${stagedQty}`}
+                  className="w-7 text-center font-display text-sm font-bold text-mani-950 select-none"
+                >
+                  {stagedQty}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handlePlusStaged}
+                  aria-label={`Increase ${product.name} quantity to add`}
+                  className="w-8 h-8 rounded-xl bg-white text-mani-900 hover:bg-amber-100 active:scale-90 flex items-center justify-center shadow-2xs font-bold transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                </button>
+              </div>
+
+              {/* Primary Add to Order Button */}
+              <button
+                type="button"
+                onClick={handleAddClick}
+                className="flex-1 min-h-[42px] py-2.5 px-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-xs sm:text-sm border-2 border-mani-900 shadow-snack-sm active:translate-y-0.5 flex items-center justify-center gap-1.5 whitespace-nowrap transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[3] shrink-0" />
+                <span>Add to Order</span>
+              </button>
+            </div>
+          ) : (
+            /* Selected / In-Cart Live Controller */
+            <div className="flex items-center justify-between gap-2 bg-amber-100/90 p-1.5 rounded-2xl border-2 border-mani-900 shadow-snack-sm w-full">
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleMinusInCart}
+                  aria-label={`Decrease ${product.name} quantity`}
+                  className="w-8 h-8 rounded-xl bg-white text-mani-950 hover:bg-red-50 hover:text-red-600 active:scale-90 flex items-center justify-center border border-mani-900/20 shadow-2xs font-bold transition-all cursor-pointer"
+                >
+                  <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
+                </button>
+
+                <input
+                  type="number"
+                  min="0"
+                  max="999"
+                  value={quantity}
+                  onChange={handleDirectInput}
+                  aria-label={`${product.name} quantity in order`}
+                  className="w-8 sm:w-9 text-center font-display text-sm sm:text-base font-bold bg-transparent text-mani-950 focus:outline-none rounded p-0"
+                />
+
+                <button
+                  type="button"
+                  onClick={handlePlusInCart}
+                  aria-label={`Increase ${product.name} quantity`}
+                  className="w-8 h-8 rounded-xl bg-mani-900 text-amber-300 hover:bg-mani-800 active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                </button>
+              </div>
+
+              <div className="pr-2 text-right min-w-0">
+                <div className="font-display text-sm sm:text-base font-bold text-mani-950 truncate leading-tight">
+                  {formatPHP(quantity * (product.price || 50))}
+                </div>
+                <div className="text-[10px] font-extrabold text-mani-700 uppercase tracking-wider">
+                  {quantity} tub{quantity > 1 ? 's' : ''} added
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
