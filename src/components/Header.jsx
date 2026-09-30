@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingBag, ShieldCheck, Sparkles, Lock, LogOut, Clock } from 'lucide-react';
 import { getManilaCutoffTimestampMs } from '../utils/phtTime';
 import { formatPHP } from '../config/products';
-import HalloweenMascotVideo from './HalloweenMascotVideo';
 
 export default function Header({ 
   currentView, 
@@ -83,10 +82,10 @@ export default function Header({
             }}
             className="cursor-pointer flex items-center gap-2.5 sm:gap-3 group rounded-2xl shrink-0"
           >
-            <HalloweenMascotVideo
-              variant="header"
-              ariaLabel="Mani Wandering Logo"
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#1F1025] border-2 border-[#FF6B00] shadow-pumpkin-tub group-hover:-rotate-6 group-hover:scale-105 transition-transform duration-200 shrink-0"
+            <img
+              src="./images/mani-halloween-logo.png"
+              alt="Mani Wandering Logo"
+              className="w-11 h-11 sm:w-13 sm:h-13 object-contain drop-shadow-[0_2px_8px_rgba(255,107,0,0.45)] group-hover:-rotate-6 group-hover:scale-105 transition-transform duration-200 shrink-0 select-none"
             />
             <div>
               <div className="flex items-center gap-2">
