@@ -243,7 +243,14 @@ export default function HalloweenMascotVideo({
       animationFrameId = requestAnimationFrame(processFrame);
     };
 
+    const silenceAudio = () => {
+      video.defaultMuted = true;
+      video.muted = true;
+      video.volume = 0;
+    };
+
     const startPlayback = () => {
+      silenceAudio();
       enforceCleanEnding();
       video.play().catch(() => {});
       if (!animationFrameId) {
@@ -251,10 +258,12 @@ export default function HalloweenMascotVideo({
       }
     };
 
+    silenceAudio();
     video.addEventListener('loadedmetadata', startPlayback);
     video.addEventListener('loadeddata', startPlayback);
     video.addEventListener('canplay', startPlayback);
     video.addEventListener('play', startPlayback);
+    video.addEventListener('volumechange', silenceAudio);
     video.addEventListener('timeupdate', enforceCleanEnding);
     startPlayback();
 
@@ -264,6 +273,7 @@ export default function HalloweenMascotVideo({
       video.removeEventListener('loadeddata', startPlayback);
       video.removeEventListener('canplay', startPlayback);
       video.removeEventListener('play', startPlayback);
+      video.removeEventListener('volumechange', silenceAudio);
       video.removeEventListener('timeupdate', enforceCleanEnding);
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
@@ -276,7 +286,7 @@ export default function HalloweenMascotVideo({
       className={`relative select-none pointer-events-none flex items-center justify-center ${className}`}
       aria-label={ariaLabel}
     >
-      {/* Hidden source video — never shown directly so the raw white background can never appear */}
+      {/* Hidden source video — strictly muted with zero volume and never shown directly */}
       <video
         ref={videoRef}
         src={src}
@@ -285,6 +295,11 @@ export default function HalloweenMascotVideo({
         muted
         playsInline
         preload="auto"
+        onLoadedMetadata={(e) => {
+          e.currentTarget.defaultMuted = true;
+          e.currentTarget.muted = true;
+          e.currentTarget.volume = 0;
+        }}
         className="opacity-0 pointer-events-none absolute inset-0 w-full h-full object-contain"
       />
 
