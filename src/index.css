@@ -4,9 +4,11 @@
 
 @layer base {
   :root {
-    --bg-cream: #FFFDF7;
+    --bg-cream: #1F1025;
+    --bg-indigo: #2B1B30;
     --text-roast: #38200D;
-    --accent-amber: #F59E0B;
+    --accent-amber: #FF6B00;
+    --accent-gold: #FBBF24;
   }
 
   html {
@@ -15,10 +17,11 @@
   }
 
   body {
-    background-color: var(--bg-cream);
+    background: linear-gradient(180deg, #1F1025 0%, #2B1B30 55%, #1F1025 100%);
+    background-color: #1F1025;
     color: var(--text-roast);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    accent-color: #D97706;
+    accent-color: #FF6B00;
     overflow-x: hidden;
   }
 
@@ -28,7 +31,7 @@
 
   /* Accessible focus ring using :focus-visible */
   :focus-visible {
-    outline: 3px solid #F59E0B;
+    outline: 3px solid #FF6B00;
     outline-offset: 2px;
   }
 }
@@ -42,23 +45,46 @@
   scrollbar-width: none;
 }
 
-/* Subtle peanut-speckle background pattern */
+/* Deep midnight purple & dark indigo gradient (#1F1025 to #2B1B30) with subtle ember/gold speckles */
 .bg-peanut-pattern {
-  background-color: #FFFDF7;
+  background-color: #1F1025;
   background-image:
-    radial-gradient(#E4C796 1.25px, transparent 1.25px),
-    radial-gradient(#F2E2C4 1.25px, #FFFDF7 1.25px);
-  background-size: 36px 36px;
-  background-position: 0 0, 18px 18px;
+    radial-gradient(rgba(255, 107, 0, 0.16) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(251, 191, 36, 0.12) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #1F1025 0%, #2B1B30 50%, #1F1025 100%);
+  background-size: 40px 40px, 40px 40px, 100% 100%;
+  background-position: 0 0, 20px 20px, 0 0;
 }
 
-/* Warm sunbeam hero gradient with subtle dot texture */
+/* Spooky Halloween hero gradient with warm jack-o-lantern orange (#FF6B00) & golden moonlight glow */
 .bg-hero-snack {
   background:
-    radial-gradient(circle at 18% 22%, rgba(251, 191, 36, 0.24) 0%, transparent 48%),
-    radial-gradient(circle at 85% 28%, rgba(234, 88, 12, 0.15) 0%, transparent 45%),
-    radial-gradient(circle at 50% 90%, rgba(245, 158, 11, 0.18) 0%, transparent 55%),
-    linear-gradient(180deg, #FFF7E0 0%, #FFFDF7 100%);
+    radial-gradient(circle at 18% 22%, rgba(255, 107, 0, 0.28) 0%, transparent 48%),
+    radial-gradient(circle at 84% 25%, rgba(251, 191, 36, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 50% 92%, rgba(255, 107, 0, 0.22) 0%, transparent 55%),
+    linear-gradient(160deg, #2B1B30 0%, #1F1025 55%, #2D1836 100%);
+}
+
+/* Warm pumpkin-illuminated box-shadow effect for product tubs & cards */
+.shadow-pumpkin-tub {
+  box-shadow:
+    0 0 22px rgba(255, 107, 0, 0.45),
+    0 0 42px rgba(251, 191, 36, 0.22),
+    inset 0 0 14px rgba(255, 107, 0, 0.25);
+}
+
+.shadow-pumpkin-card {
+  box-shadow:
+    0 8px 28px -4px rgba(255, 107, 0, 0.28),
+    0 0 18px rgba(251, 191, 36, 0.16),
+    0 4px 0 0 #FF6B00;
+}
+
+.shadow-pumpkin-card-hover {
+  box-shadow:
+    0 14px 36px -4px rgba(255, 107, 0, 0.48),
+    0 0 26px rgba(251, 191, 36, 0.32),
+    0 6px 0 0 #FBBF24;
 }
 
 /* Custom scrollbar */
@@ -67,15 +93,15 @@
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #FBF3E4;
+  background: #1F1025;
 }
 ::-webkit-scrollbar-thumb {
-  background: #D1A362;
+  background: #FF6B00;
   border-radius: 9999px;
-  border: 2px solid #FBF3E4;
+  border: 2px solid #1F1025;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #8F5D26;
+  background: #FBBF24;
 }
 
 /* Keyframe Animations */
@@ -120,6 +146,135 @@
   100% { transform: translateX(-50%); }
 }
 
+/* Halloween Roaming Ghost Fluid Multi-Section Path */
+@keyframes ghostRoam {
+  0% {
+    transform: translate3d(4vw, 12vh, 0) rotate(-4deg) scale(1);
+  }
+  20% {
+    transform: translate3d(74vw, 24vh, 0) rotate(5deg) scale(1.04);
+  }
+  40% {
+    transform: translate3d(62vw, 58vh, 0) rotate(-6deg) scale(0.97);
+  }
+  60% {
+    transform: translate3d(10vw, 72vh, 0) rotate(4deg) scale(1.03);
+  }
+  80% {
+    transform: translate3d(46vw, 36vh, 0) rotate(-3deg) scale(1);
+  }
+  100% {
+    transform: translate3d(4vw, 12vh, 0) rotate(-4deg) scale(1);
+  }
+}
+
+@keyframes ghostRoamSecondary {
+  0% {
+    transform: translate3d(82vw, 68vh, 0) rotate(5deg);
+  }
+  33% {
+    transform: translate3d(14vw, 38vh, 0) rotate(-5deg);
+  }
+  66% {
+    transform: translate3d(68vw, 16vh, 0) rotate(4deg);
+  }
+  100% {
+    transform: translate3d(82vw, 68vh, 0) rotate(5deg);
+  }
+}
+
+/* Sharp Webbed Bat Flight & Wing Flap */
+@keyframes batFlyLtr {
+  0% {
+    transform: translate3d(-12vw, 2vh, 0) rotate(4deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(48vw, -3vh, 0) rotate(-4deg);
+    opacity: 0.95;
+  }
+  92% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(112vw, 3vh, 0) rotate(5deg);
+    opacity: 0;
+  }
+}
+
+@keyframes batFlyRtl {
+  0% {
+    transform: translate3d(112vw, 1vh, 0) scaleX(-1) rotate(4deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.88;
+  }
+  50% {
+    transform: translate3d(45vw, 4vh, 0) scaleX(-1) rotate(-5deg);
+    opacity: 0.95;
+  }
+  92% {
+    opacity: 0.88;
+  }
+  100% {
+    transform: translate3d(-12vw, -2vh, 0) scaleX(-1) rotate(3deg);
+    opacity: 0;
+  }
+}
+
+@keyframes batFlap {
+  0%, 100% {
+    transform: scaleY(1) translateY(0px);
+  }
+  50% {
+    transform: scaleY(0.76) translateY(-4px);
+  }
+}
+
+/* Falling Autumn Leaves */
+@keyframes leafFall {
+  0% {
+    transform: translate3d(0, -10vh, 0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+  }
+  90% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(0, 108vh, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes leafSway {
+  0%, 100% {
+    transform: translateX(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateX(22px) rotate(35deg);
+  }
+  66% {
+    transform: translateX(-18px) rotate(-28deg);
+  }
+}
+
+/* Corner Spider Bobbing */
+@keyframes spiderBob {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(14px);
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.25s ease-out forwards;
 }
@@ -158,6 +313,43 @@
   animation-play-state: paused;
 }
 
+.animate-ghost-roam {
+  animation: ghostRoam 26s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-ghost-roam-secondary {
+  animation: ghostRoamSecondary 34s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-bat-fly-ltr {
+  animation: batFlyLtr 16s linear infinite;
+  will-change: transform, opacity;
+}
+
+.animate-bat-fly-rtl {
+  animation: batFlyRtl 19s linear infinite;
+  will-change: transform, opacity;
+}
+
+.animate-bat-flap {
+  animation: batFlap 0.42s ease-in-out infinite;
+}
+
+.animate-leaf-fall {
+  animation: leafFall 15s linear infinite;
+  will-change: transform, opacity;
+}
+
+.animate-leaf-sway {
+  animation: leafSway 4.2s ease-in-out infinite;
+}
+
+.animate-spider-bob {
+  animation: spiderBob 4.5s ease-in-out infinite;
+}
+
 /* Respect user reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -171,6 +363,14 @@
   .animate-particle-center,
   .animate-particle-right,
   .animate-marquee,
+  .animate-ghost-roam,
+  .animate-ghost-roam-secondary,
+  .animate-bat-fly-ltr,
+  .animate-bat-fly-rtl,
+  .animate-bat-flap,
+  .animate-leaf-fall,
+  .animate-leaf-sway,
+  .animate-spider-bob,
   .animate-pulse,
   .animate-ping,
   .animate-bounce {

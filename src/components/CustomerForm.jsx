@@ -226,11 +226,11 @@ export default function CustomerForm({
       {/* 3. Customer & Shipping Information */}
       <div 
         id="customer-info-section"
-        className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-mani-900/20 shadow-snack-card space-y-4 transition-all"
+        className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-[#FF6B00] shadow-pumpkin-card space-y-4 transition-all"
       >
-        <div className="border-b-2 border-dashed border-mani-100 pb-3.5">
+        <div className="border-b-2 border-dashed border-amber-300/70 pb-3.5">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-300 text-mani-950 border border-mani-900/20">
+            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#FF6B00] text-white border border-amber-300">
               Step 3
             </span>
             <h3 className="font-display text-lg sm:text-xl font-bold text-mani-950 flex items-center gap-1.5">
@@ -436,15 +436,15 @@ export default function CustomerForm({
       {/* 5. Payment / Checkout */}
       <div 
         id="payment-checkout-section"
-        className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-mani-900/20 shadow-snack-card space-y-5 transition-all"
+        className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-[#FF6B00] shadow-pumpkin-card space-y-5 transition-all"
       >
-        <div className="border-b-2 border-dashed border-mani-100 pb-3.5">
+        <div className="border-b-2 border-dashed border-amber-300/70 pb-3.5">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-400 text-mani-950 border border-mani-900/20">
+            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#1F1025] text-amber-300 border border-[#FF6B00]">
               Step 4
             </span>
             <h3 className="font-display text-lg sm:text-xl font-bold text-mani-950 flex items-center gap-1.5">
-              <span>💳</span> Payment & Checkout
+              <span>💳</span> Payment &amp; Checkout
             </h3>
           </div>
           <p className="text-xs text-mani-600 font-medium mt-1">
@@ -704,18 +704,18 @@ export default function CustomerForm({
                 className={`w-full py-4 px-5 rounded-2xl font-display font-bold text-base sm:text-lg flex items-center justify-center gap-2 transition-all ${
                   totalPacks === 0 || isSubmitting
                     ? 'bg-mani-100 text-mani-400 border-2 border-mani-200 cursor-not-allowed shadow-none'
-                    : 'bg-amber-400 hover:bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack active:translate-y-0.5 cursor-pointer'
+                    : 'bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] border-2 border-amber-300 shadow-pumpkin-tub active:translate-y-0.5 cursor-pointer'
                 }`}
               >
                 {isSubmitting ? (
                   <span>Submitting Order...</span>
                 ) : totalPacks === 0 ? (
-                  <span>Select Tubs Above to Order 🥜</span>
+                  <span>Select Tubs Above to Order 🎃🥜</span>
                 ) : (
                   <>
-                    <span>Place Order Now 🥜</span>
+                    <span>Place Order Now 🎃🥜</span>
                     {totalPacks > 0 && subtotal > 0 && (
-                      <span className="bg-mani-950 text-amber-300 px-3 py-0.5 rounded-xl text-sm font-bold ml-1">
+                      <span className="bg-[#1F1025] text-amber-300 border border-amber-300/60 px-3 py-0.5 rounded-xl text-sm font-bold ml-1">
                         {formatPHP(subtotal)}
                       </span>
                     )}

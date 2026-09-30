@@ -495,6 +495,38 @@ async function runVerification() {
     );
     console.log('✓ Step 19 passed: Delivery Address (Use My Location + Enter Manually + No Address Validation) verified!\n');
 
+    // ------------------------------------------------------------------
+    // STEP 20: Spooky Halloween Theme ("Trick or Treat Crunch!") Verification
+    // ------------------------------------------------------------------
+    console.log('--- [Step 20] Testing Halloween Theme, Roaming Ghost, Sharp Bats, Leaves & Seasonal Sub-Labels ---');
+    const appSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'App.jsx'), 'utf8');
+    const cssSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'index.css'), 'utf8');
+    const productsSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'config', 'products.js'), 'utf8');
+    const flavorCardSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'FlavorCard.jsx'), 'utf8');
+    const atmosphereSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'HalloweenAtmosphere.jsx'), 'utf8');
+
+    assert(cssSrc.includes('#1F1025') && cssSrc.includes('#2B1B30') && cssSrc.includes('#FF6B00'), 'Step 20: CSS must include #1F1025, #2B1B30, and #FF6B00');
+    assert(appSrc.includes('ANONG FEAR MO TODAY?'), 'Step 20: Hero headline must be ANONG FEAR MO TODAY?');
+    assert(
+      appSrc.includes("Mani so good, it&apos;s scary. No tricks, just pure crunch!") ||
+      appSrc.includes("Mani so good, it's scary. No tricks, just pure crunch!"),
+      'Step 20: Hero sub-headline must be Mani so good, it\'s scary. No tricks, just pure crunch!'
+    );
+    assert(appSrc.includes('Trick or Treat Crunch!'), 'Step 20: Must include Trick or Treat Crunch! theme badge');
+    assert(atmosphereSrc.includes('roaming-ghost') && atmosphereSrc.includes('pointer-events-none'), 'Step 20: Roaming ghost must be present and pointer-events-none');
+    assert(
+      productsSrc.includes("Vampire's Bane") &&
+      productsSrc.includes('Midnight BBQ') &&
+      productsSrc.includes('Monster Bawang') &&
+      productsSrc.includes('Ghostly Pure') &&
+      productsSrc.includes('Hellfire Crunch') &&
+      productsSrc.includes('Phantom Cream') &&
+      productsSrc.includes('Full Moon Cheddar'),
+      'Step 20: All 7 seasonal Halloween sub-labels must be defined'
+    );
+    assert(flavorCardSrc.includes('shadow-pumpkin-tub'), 'Step 20: Product tubs must have warm pumpkin-illuminated box-shadow');
+    console.log('✓ Step 20 passed: Spooky Halloween Special ("Trick or Treat Crunch!") verified!\n');
+
     console.log('================================================================');
     console.log('✅ ALL VERIFICATION STEPS PASSED WITH ZERO ERRORS!');
     console.log('================================================================');

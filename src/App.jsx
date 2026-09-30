@@ -9,6 +9,7 @@ import AdminPortal from './components/AdminPortal';
 import AdminLoginModal from './components/AdminLoginModal';
 import OrderCutoffBanner from './components/OrderCutoffBanner';
 import BrandStoryAndSuki from './components/BrandStoryAndSuki';
+import HalloweenAtmosphere, { PlayfulSkeletonSvg, PlayfulMummySvg, SharpBatSvg } from './components/HalloweenAtmosphere';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
@@ -1042,18 +1043,21 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-peanut-pattern text-mani-900 selection:bg-amber-300 selection:text-mani-950">
+    <div className="relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 selection:bg-[#FF6B00] selection:text-white">
+      {/* 👻 Spooky Halloween Atmosphere: Roaming Ghost, Sharp Webbed Bats, Autumn Leaves, Cobwebs, Spiders, Skeletons & Mummies */}
+      {currentView === 'order' && <HalloweenAtmosphere />}
+
       {/* Sleek Floating Toast Notification */}
       {toast.show && (
         <div
           role="status"
           aria-live="polite"
-          className="fixed top-20 right-4 sm:right-6 z-50 flex items-center gap-3 bg-mani-950 text-white px-4 py-3 rounded-2xl shadow-snack border-2 border-amber-400 animate-fade-in transition-all max-w-sm"
+          className="fixed top-20 right-4 sm:right-6 z-50 flex items-center gap-3 bg-[#1F1025] text-white px-4 py-3 rounded-2xl shadow-pumpkin-card border-2 border-[#FF6B00] animate-fade-in transition-all max-w-sm"
         >
-          <div className="w-9 h-9 rounded-xl bg-amber-400 text-mani-950 flex items-center justify-center text-lg font-bold shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-[#FF6B00] text-white flex items-center justify-center text-lg font-bold shrink-0 border border-amber-300">
             {toast.icon}
           </div>
-          <div className="font-display text-xs sm:text-sm font-bold pr-1">
+          <div className="font-display text-xs sm:text-sm font-bold pr-1 text-amber-100">
             {toast.message}
           </div>
           <button
@@ -1083,7 +1087,7 @@ export default function App() {
       />
 
       {/* Main Content */}
-      <main className={`flex-1 ${totalPacks > 0 ? 'pb-32 sm:pb-16' : 'pb-24 sm:pb-12'}`}>
+      <main className={`relative z-10 flex-1 ${totalPacks > 0 ? 'pb-32 sm:pb-16' : 'pb-24 sm:pb-12'}`}>
         {currentView === 'admin' && adminToken ? (
           <AdminPortal
             products={products}
@@ -1104,25 +1108,25 @@ export default function App() {
         ) : currentView === 'admin' && !adminToken ? (
           /* Dedicated unauthenticated /admin screen holding the AdminLoginModal */
           <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4 animate-fade-in">
-            <div className="w-16 h-16 rounded-3xl bg-amber-100 text-amber-900 mx-auto flex items-center justify-center border-2 border-mani-900 shadow-snack-sm">
-              <Lock className="w-8 h-8 text-amber-700" />
+            <div className="w-16 h-16 rounded-3xl bg-[#2B1B30] text-amber-300 mx-auto flex items-center justify-center border-2 border-[#FF6B00] shadow-pumpkin-tub">
+              <Lock className="w-8 h-8 text-[#FF6B00]" />
             </div>
-            <h2 className="font-display text-2xl font-bold text-mani-950">Admin Access Required</h2>
-            <p className="text-xs sm:text-sm text-mani-600 font-medium">
+            <h2 className="font-display text-2xl font-bold text-white">Admin Access Required</h2>
+            <p className="text-xs sm:text-sm text-amber-200/85 font-medium">
               Please sign in with authorized administrator credentials to manage orders, products, and store settings.
             </p>
             <div className="pt-2 flex items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={() => setIsLoginModalOpen(true)}
-                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-xs sm:text-sm border-2 border-mani-900 shadow-snack-sm transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-display font-bold text-xs sm:text-sm border-2 border-amber-300 shadow-snack-sm transition-all cursor-pointer"
               >
                 Open Admin Login
               </button>
               <button
                 type="button"
                 onClick={() => navigateTo('order')}
-                className="px-4 py-2.5 rounded-xl bg-white hover:bg-mani-100 text-mani-800 font-bold text-xs sm:text-sm border-2 border-mani-200 transition-all cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-[#2B1B30] hover:bg-[#382240] text-amber-200 font-bold text-xs sm:text-sm border-2 border-[#FF6B00]/50 transition-all cursor-pointer"
               >
                 Return to Store
               </button>
@@ -1130,129 +1134,149 @@ export default function App() {
           </div>
         ) : (
           <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6 sm:space-y-8">
-            {/* 🥜 HERO SECTION: Street Snack Culture Meets Modern DTC Snack Brand */}
-            <section className="relative rounded-[2rem] bg-hero-snack border-2 border-mani-900/20 shadow-snack-card overflow-hidden p-5 sm:p-8 lg:p-10">
-              {/* Decorative Peanut & Sparkle Vector Doodles */}
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 120 120"
-                className="hidden sm:block absolute -top-6 -left-6 w-28 h-28 text-amber-300/45 rotate-12 pointer-events-none"
-                fill="currentColor"
-              >
-                <path d="M45 20C32 20 24 31 27 44C29 52 28 58 23 65C15 76 20 94 34 99C48 104 63 96 68 83C71 75 76 70 84 66C96 60 101 44 94 32C87 20 71 17 59 23C54 25 49 20 45 20Z" />
-              </svg>
+            {/* 🎃 HERO SECTION: Spooky Halloween Special ("Trick or Treat Crunch!") */}
+            <section className="relative rounded-[2rem] bg-hero-snack border-2 border-[#FF6B00] shadow-pumpkin-card overflow-hidden p-5 sm:p-8 lg:p-10">
+              {/* Decorative Sharp Angular Bats inside Hero Upper Background */}
+              <div className="pointer-events-none select-none absolute top-3 right-8 sm:right-24 opacity-80 animate-float-slow">
+                <SharpBatSvg className="w-14 sm:w-20 h-auto drop-shadow-[0_2px_8px_rgba(255,107,0,0.45)] -rotate-12" />
+              </div>
+              <div className="pointer-events-none select-none hidden sm:block absolute top-6 left-[44%] opacity-70 animate-float-reverse">
+                <SharpBatSvg className="w-12 h-auto drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)] rotate-6" />
+              </div>
 
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
-                {/* Left Column: Brand Headline, Value Prop & Appetizing CTAs */}
+                {/* Left Column: Halloween Headline, Sub-headline & Appetizing CTAs */}
                 <div className="lg:col-span-7 text-center lg:text-left space-y-4">
-                  {/* Top Pill Badge */}
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack-sm -rotate-1">
-                    <span>Crispy na, Crunchy pa • Small-Batch Pinoy Mani</span>
+                  {/* Top Halloween Special Pill Badge */}
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-[#FF6B00] text-white border-2 border-amber-300 shadow-snack-sm -rotate-1">
+                    <span>🎃 Trick or Treat Crunch! • Spooky Halloween Special</span>
                   </div>
 
-                  {/* Brand Name & Signature Tagline */}
-                  <div className="space-y-2">
+                  {/* Main Headline & Sub-Headline */}
+                  <div className="space-y-2.5">
                     <div className="flex items-center justify-center lg:justify-start gap-2.5 flex-wrap">
-                      <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-mani-950 tracking-tight leading-[1.05]">
-                        Mani Wandering
+                      <h1
+                        data-testid="hero-headline"
+                        className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.05] drop-shadow-[0_4px_16px_rgba(255,107,0,0.45)]"
+                      >
+                        ANONG FEAR MO TODAY?
                       </h1>
                     </div>
-                    <p className="font-display text-lg sm:text-2xl font-bold text-amber-800 leading-snug">
-                      Kagat. Crunch. Repeat.
+                    <p
+                      data-testid="hero-subheadline"
+                      className="font-display text-lg sm:text-2xl font-bold text-amber-300 leading-snug drop-shadow-xs"
+                    >
+                      Mani so good, it&apos;s scary. No tricks, just pure crunch!
                     </p>
                   </div>
 
-                  {/* Clear Answer to WHAT IS THIS / WHY CARE */}
-                  <p className="text-xs sm:text-base text-mani-700 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
-                    Freshly roasted, ultra-crunchy Filipino peanuts & golden crispy <strong className="text-mani-950 font-extrabold">bawang chips</strong> packed in resealable tubs. Made for merienda, movie nights, office desk fuel, and barkada hangouts — only <strong className="text-mani-950 font-extrabold bg-amber-200/80 px-1.5 py-0.5 rounded">₱50–₱60 per tub</strong>!
+                  {/* Clear Value Proposition */}
+                  <p className="text-xs sm:text-base text-amber-100/90 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
+                    Freshly roasted, ultra-crunchy Filipino peanuts &amp; golden crispy <strong className="text-amber-300 font-extrabold">bawang chips</strong> packed in resealable tubs. Made for spooky movie nights, merienda, office desk fuel, and barkada hangouts — only <strong className="text-white font-extrabold bg-[#FF6B00] px-1.5 py-0.5 rounded border border-amber-300">₱50–₱60 per tub</strong>!
                   </p>
 
                   {/* Primary & Secondary Hero CTAs */}
                   <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3">
                     <a
                       href="#flavors-menu"
-                      className="px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-base sm:text-lg border-2 border-mani-900 shadow-snack active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="px-6 py-3.5 rounded-2xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-display font-bold text-base sm:text-lg border-2 border-amber-300 shadow-pumpkin-tub active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <span>Order Now 🥜</span>
+                      <span>Order Now 🎃🥜</span>
                       <ArrowDown className="w-4 h-4 stroke-[2.5]" />
                     </a>
 
                     <a
                       href="#suki-favorites"
-                      className="px-5 py-3.5 rounded-2xl bg-white hover:bg-amber-50 text-mani-900 font-display font-bold text-sm sm:text-base border-2 border-mani-900/25 hover:border-mani-900 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="px-5 py-3.5 rounded-2xl bg-[#1F1025]/90 hover:bg-[#2B1B30] text-amber-300 font-display font-bold text-sm sm:text-base border-2 border-[#FF6B00] hover:border-amber-300 transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <Flame className="w-4 h-4 text-rose-600 fill-rose-600" />
+                      <Flame className="w-4 h-4 text-[#FF6B00] fill-[#FF6B00]" />
                       <span>Try Suki Combos</span>
                     </a>
                   </div>
 
-                  {/* Quick 3-Step Ordering Guide Pills (Answers HOW DO I ORDER?) */}
-                  <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-2 text-[11px] sm:text-xs font-extrabold text-mani-800">
-                    <span className="inline-flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-xl border border-mani-300 shadow-2xs">
-                      <span className="w-4 h-4 rounded-full bg-mani-900 text-amber-300 text-[10px] flex items-center justify-center font-black">1</span>
+                  {/* Quick 3-Step Ordering Guide Pills */}
+                  <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-2 text-[11px] sm:text-xs font-extrabold text-amber-100">
+                    <span className="inline-flex items-center gap-1.5 bg-[#1F1025]/85 px-3 py-1.5 rounded-xl border border-[#FF6B00]/60 shadow-2xs">
+                      <span className="w-4 h-4 rounded-full bg-[#FF6B00] text-white text-[10px] flex items-center justify-center font-black">1</span>
                       Pick Your Tubs
                     </span>
-                    <span className="text-mani-400 font-black">→</span>
-                    <span className="inline-flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-xl border border-mani-300 shadow-2xs">
-                      <span className="w-4 h-4 rounded-full bg-mani-900 text-amber-300 text-[10px] flex items-center justify-center font-black">2</span>
+                    <span className="text-amber-400 font-black">→</span>
+                    <span className="inline-flex items-center gap-1.5 bg-[#1F1025]/85 px-3 py-1.5 rounded-xl border border-[#FF6B00]/60 shadow-2xs">
+                      <span className="w-4 h-4 rounded-full bg-[#FF6B00] text-white text-[10px] flex items-center justify-center font-black">2</span>
                       Enter Delivery Address
                     </span>
-                    <span className="text-mani-400 font-black">→</span>
-                    <span className="inline-flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-xl border border-mani-300 shadow-2xs">
-                      <span className="w-4 h-4 rounded-full bg-mani-900 text-amber-300 text-[10px] flex items-center justify-center font-black">3</span>
+                    <span className="text-amber-400 font-black">→</span>
+                    <span className="inline-flex items-center gap-1.5 bg-[#1F1025]/85 px-3 py-1.5 rounded-xl border border-[#FF6B00]/60 shadow-2xs">
+                      <span className="w-4 h-4 rounded-full bg-[#FF6B00] text-white text-[10px] flex items-center justify-center font-black">3</span>
                       COD, GCash or Maribank
                     </span>
                   </div>
                 </div>
 
-                {/* Right Column: Mascot & Floating Product Tub Showcase */}
+                {/* Right Column: Mascot, Pumpkin Glow Backdrop & Playful Skeleton + Mummy Illustrations */}
                 <div className="lg:col-span-5 relative flex items-center justify-center py-2">
                   <div className="relative w-full max-w-[340px] sm:max-w-[380px] mx-auto flex items-center justify-center">
-                    {/* Warm circular backdrop behind mascot */}
-                    <div className="w-56 h-56 sm:w-68 sm:h-68 rounded-full bg-gradient-to-tr from-amber-300/70 via-amber-200/50 to-orange-200/40 border-2 border-dashed border-amber-500/50 flex items-center justify-center">
+                    {/* Playful Skeleton Illustration Peeking Left */}
+                    <div
+                      className="pointer-events-none select-none absolute -left-3 sm:-left-6 bottom-2 z-20 animate-float-slow"
+                      aria-hidden="true"
+                    >
+                      <PlayfulSkeletonSvg className="w-14 h-18 sm:w-16 sm:h-20 drop-shadow-[0_4px_10px_rgba(255,107,0,0.4)] -rotate-6" />
+                    </div>
+
+                    {/* Playful Mummy Illustration Peeking Right */}
+                    <div
+                      className="pointer-events-none select-none absolute -right-3 sm:-right-6 bottom-3 z-20 animate-float-reverse"
+                      aria-hidden="true"
+                    >
+                      <PlayfulMummySvg className="w-14 h-18 sm:w-16 sm:h-20 drop-shadow-[0_4px_10px_rgba(251,191,36,0.4)] rotate-6" />
+                    </div>
+
+                    {/* Warm Jack-O-Lantern circular backdrop behind mascot */}
+                    <div className="w-56 h-56 sm:w-68 sm:h-68 rounded-full bg-gradient-to-tr from-[#FF6B00]/45 via-amber-400/30 to-purple-900/50 border-2 border-dashed border-[#FF6B00] shadow-pumpkin-tub flex items-center justify-center">
                       <img
                         src="./images/logo.png"
                         alt="Mani Wandering Peanut Mascot"
-                        className="w-48 sm:w-60 h-auto object-contain drop-shadow-xl animate-float-slow select-none"
+                        className="w-48 sm:w-60 h-auto object-contain drop-shadow-[0_10px_24px_rgba(255,107,0,0.45)] animate-float-slow select-none"
                       />
                     </div>
 
                     {/* Playful Price Sticker Badge (Top Right) */}
-                    <div className="absolute top-1 right-1 sm:right-0 bg-amber-400 text-mani-950 px-3 py-1.5 rounded-2xl border-2 border-mani-900 shadow-snack-sm rotate-6 select-none text-center">
-                      <span className="block text-[9px] font-black uppercase tracking-wider leading-none">Starts At</span>
+                    <div className="absolute top-1 right-1 sm:right-0 bg-[#FF6B00] text-white px-3 py-1.5 rounded-2xl border-2 border-amber-300 shadow-snack-sm rotate-6 select-none text-center z-20">
+                      <span className="block text-[9px] font-black uppercase tracking-wider leading-none text-amber-200">Starts At</span>
                       <span className="font-display text-base sm:text-lg font-bold leading-tight">₱50/tub</span>
                     </div>
 
-                    {/* Playful Crunch Sticker (Bottom Left) */}
-                    <div className="hidden xs:flex absolute bottom-2 left-1 bg-emerald-400 text-mani-950 px-2.5 py-1 rounded-xl border-2 border-mani-900 shadow-snack-sm -rotate-6 text-[11px] font-display font-bold items-center gap-1 select-none">
-                      <span>✨ 7 Flavors!</span>
+                    {/* Playful Crunch Sticker (Top Left) */}
+                    <div className="hidden xs:flex absolute top-2 left-1 bg-amber-400 text-[#1F1025] px-2.5 py-1 rounded-xl border-2 border-[#FF6B00] shadow-snack-sm -rotate-6 text-[11px] font-display font-bold items-center gap-1 select-none z-20">
+                      <span>👻 7 Spooky Flavors!</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* High-Energy Snack Ticker Strip Inside Bottom of Hero */}
-              <div className="mt-6 -mx-5 sm:-mx-8 lg:-mx-10 -mb-5 sm:-mb-8 lg:-mb-10 bg-mani-950 text-amber-300 py-2.5 border-t-2 border-mani-900 overflow-hidden select-none">
+              {/* High-Energy Halloween Snack Ticker Strip Inside Bottom of Hero */}
+              <div className="mt-6 -mx-5 sm:-mx-8 lg:-mx-10 -mb-5 sm:-mb-8 lg:-mb-10 bg-[#1F1025] text-amber-300 py-2.5 border-t-2 border-[#FF6B00] overflow-hidden select-none">
                 <div className="animate-marquee flex items-center gap-6 text-xs font-display font-bold tracking-wide uppercase whitespace-nowrap">
-                  <span>🥜 CRISPY NA, CRUNCHY PA!</span>
+                  <span>🎃 TRICK OR TREAT CRUNCH!</span>
                   <span>•</span>
-                  <span>🧄 LOADED WITH REAL GOLDEN BAWANG CHIPS</span>
+                  <span>👻 ANONG FEAR MO TODAY? MANI SO GOOD, IT&apos;S SCARY!</span>
                   <span>•</span>
-                  <span>🧂 SALTED • 🌱 UNSALTED • 🌶️ SPICY • 🍖 BBQ • 🥛 SOUR CREAM • 🧀 CHEESE • 🧄 BAWANG ONLY</span>
-                  <span>•</span>
-                  <span>🫙 SEALED IN REUSABLE CRUNCH-LOCK TUBS</span>
-                  <span>•</span>
-                  <span>💵 COD, GCASH & MARIBANK ACCEPTED</span>
-                  <span>•</span>
-                  <span>🥜 CRISPY NA, CRUNCHY PA!</span>
-                  <span>•</span>
-                  <span>🧄 LOADED WITH REAL GOLDEN BAWANG CHIPS</span>
-                  <span>•</span>
-                  <span>🧂 SALTED • 🌱 UNSALTED • 🌶️ SPICY • 🍖 BBQ • 🥛 SOUR CREAM • 🧀 CHEESE • 🧄 BAWANG ONLY</span>
+                  <span>🧛 VAMPIRE&apos;S BANE (SALTED) • 👻 GHOSTLY PURE (UNSALTED) • 🎃 HELLFIRE CRUNCH (SPICY) • 🦇 MIDNIGHT BBQ • 🕸️ PHANTOM CREAM • 🌕 FULL MOON CHEDDAR • 🧟 MONSTER BAWANG</span>
                   <span>•</span>
                   <span>🫙 SEALED IN REUSABLE CRUNCH-LOCK TUBS</span>
                   <span>•</span>
-                  <span>💵 COD, GCASH & MARIBANK ACCEPTED</span>
+                  <span>💵 COD, GCASH &amp; MARIBANK ACCEPTED</span>
+                  <span>•</span>
+                  <span>🎃 TRICK OR TREAT CRUNCH!</span>
+                  <span>•</span>
+                  <span>👻 ANONG FEAR MO TODAY? MANI SO GOOD, IT&apos;S SCARY!</span>
+                  <span>•</span>
+                  <span>🧛 VAMPIRE&apos;S BANE (SALTED) • 👻 GHOSTLY PURE (UNSALTED) • 🎃 HELLFIRE CRUNCH (SPICY) • 🦇 MIDNIGHT BBQ • 🕸️ PHANTOM CREAM • 🌕 FULL MOON CHEDDAR • 🧟 MONSTER BAWANG</span>
+                  <span>•</span>
+                  <span>🫙 SEALED IN REUSABLE CRUNCH-LOCK TUBS</span>
+                  <span>•</span>
+                  <span>💵 COD, GCASH &amp; MARIBANK ACCEPTED</span>
                 </div>
               </div>
             </section>
@@ -1277,21 +1301,21 @@ export default function App() {
               <div id="flavors-menu" className="lg:col-span-7 space-y-5 scroll-mt-24">
                 <section className="space-y-4">
                   {/* Section Title & Barkada Sampler Quick Action */}
-                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 bg-white p-4 sm:p-5 rounded-3xl border-2 border-mani-900/15 shadow-warm">
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 bg-[#2B1B30]/95 p-4 sm:p-5 rounded-3xl border-2 border-[#FF6B00] shadow-pumpkin-card">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-400 text-mani-950 border border-mani-900/20">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FF6B00] text-white border border-amber-300">
                           Step 1
                         </span>
-                        <span className="text-xs font-extrabold text-amber-800">
-                          Choose Your Tubs
+                        <span className="text-xs font-extrabold text-amber-300">
+                          Choose Your Spooky Tubs 🎃
                         </span>
                       </div>
-                      <h2 className="font-display text-2xl sm:text-3xl font-bold text-mani-950 flex items-center gap-2 tracking-tight">
+                      <h2 className="font-display text-2xl sm:text-3xl font-bold text-white flex items-center gap-2 tracking-tight">
                         <span>🥜</span> Meet the 7 Flavors
                       </h2>
-                      <p className="text-xs sm:text-sm text-mani-600 font-medium mt-0.5">
-                        Freshly cooked in small batches. Mix & match your favorite tubs below!
+                      <p className="text-xs sm:text-sm text-amber-100/85 font-medium mt-0.5">
+                        Freshly cooked in small batches. Mix &amp; match your Trick or Treat tubs below!
                       </p>
                     </div>
 
@@ -1300,15 +1324,15 @@ export default function App() {
                         <button
                           type="button"
                           onClick={handleAddAllSampler}
-                          className="px-3.5 py-2 rounded-2xl bg-amber-100 hover:bg-amber-200 text-mani-950 font-display font-bold text-xs border-2 border-mani-900/25 hover:border-mani-900 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                          className="px-3.5 py-2 rounded-2xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-display font-bold text-xs border-2 border-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
                           title="Add 1 tub of every available flavor"
                         >
-                          <Sparkles className="w-3.5 h-3.5 text-amber-700" />
+                          <Sparkles className="w-3.5 h-3.5 text-amber-200" />
                           <span>+1 of Each Flavor</span>
                         </button>
                       )}
                       {totalPacks > 0 && (
-                        <span className="font-display text-xs font-bold text-mani-950 bg-amber-300 px-3 py-1.5 rounded-2xl border-2 border-mani-900 shadow-snack-sm">
+                        <span className="font-display text-xs font-bold text-[#1F1025] bg-amber-400 px-3 py-1.5 rounded-2xl border-2 border-[#FF6B00] shadow-snack-sm">
                           {totalPacks} tub{totalPacks > 1 ? 's' : ''} in basket
                         </span>
                       )}
@@ -1318,7 +1342,7 @@ export default function App() {
                   {/* Interactive Flavor Filter Pills */}
                   <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
                     {[
-                      { id: 'all', label: '🥜 All Flavors', count: products.length },
+                      { id: 'all', label: '🎃 All Flavors', count: products.length },
                       { id: 'bestsellers', label: '🔥 Crowd Favorites' },
                       { id: 'savory', label: '🌶️ Bold & Savory' },
                       { id: 'classic', label: '🧄 Classic & Garlic' }
@@ -1331,14 +1355,14 @@ export default function App() {
                           onClick={() => setActiveFlavorFilter(tab.id)}
                           className={`px-3.5 py-2 rounded-2xl font-display font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                             isActive
-                              ? 'bg-mani-900 text-amber-300 border-2 border-mani-950 shadow-snack-sm'
-                              : 'bg-white text-mani-800 border-2 border-mani-900/15 hover:border-mani-900/50 hover:bg-amber-50'
+                              ? 'bg-[#FF6B00] text-white border-2 border-amber-300 shadow-pumpkin-tub'
+                              : 'bg-[#2B1B30] text-amber-200 border-2 border-[#FF6B00]/45 hover:border-amber-300 hover:bg-[#382240]'
                           }`}
                         >
                           <span>{tab.label}</span>
                           {tab.count !== undefined && (
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                              isActive ? 'bg-amber-400 text-mani-950' : 'bg-mani-100 text-mani-700'
+                              isActive ? 'bg-[#1F1025] text-amber-300' : 'bg-[#1F1025]/80 text-amber-300'
                             }`}>
                               {tab.count}
                             </span>
@@ -1411,30 +1435,30 @@ export default function App() {
 
       {/* Mobile Sticky Quick-Action Bar */}
       {currentView === 'order' && totalPacks > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-cream/95 backdrop-blur-md border-t-2 border-mani-900 px-4 py-3 shadow-2xl lg:hidden animate-fade-in flex items-center justify-between gap-3">
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#1F1025]/95 backdrop-blur-md border-t-2 border-[#FF6B00] px-4 py-3 shadow-2xl lg:hidden animate-fade-in flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setIsDrawerOpen(true)}
             className="text-left cursor-pointer active:opacity-80 transition-opacity min-w-0"
             title="View Order Summary"
           >
-            <div className="text-[11px] font-extrabold text-mani-700 flex items-center gap-1.5 flex-wrap">
-              <span className="bg-amber-200 text-mani-950 px-2 py-0.5 rounded-full border border-mani-900/20">
-                🥜 {totalPacks} tub{totalPacks > 1 ? 's' : ''}
+            <div className="text-[11px] font-extrabold text-amber-200 flex items-center gap-1.5 flex-wrap">
+              <span className="bg-[#FF6B00] text-white px-2 py-0.5 rounded-full border border-amber-300">
+                🎃 {totalPacks} tub{totalPacks > 1 ? 's' : ''}
               </span>
               {cutoffInfo?.isOpen && cutoffInfo?.enabled && (
-                <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+                <span className="text-[10px] font-bold text-amber-300 bg-[#2B1B30] px-1.5 py-0.5 rounded border border-[#FF6B00]/60">
                   ⏰ {cutoffInfo.cutoffTime || '23:59'}
                 </span>
               )}
             </div>
-            <div className="font-display text-lg font-bold text-mani-950 flex items-center gap-1.5 mt-0.5">
+            <div className="font-display text-lg font-bold text-white flex items-center gap-1.5 mt-0.5">
               <span>{formatPHP(subtotal)}</span>
-              <span className="font-sans text-[11px] text-amber-800 font-extrabold underline">View Basket</span>
+              <span className="font-sans text-[11px] text-amber-300 font-extrabold underline">View Basket</span>
             </div>
           </button>
           {isOrdersClosed ? (
-            <span className="px-3.5 py-2.5 rounded-xl bg-red-100 text-red-800 font-display font-bold text-xs border-2 border-red-300 flex items-center gap-1 shrink-0">
+            <span className="px-3.5 py-2.5 rounded-xl bg-red-950 text-red-200 font-display font-bold text-xs border-2 border-red-500/60 flex items-center gap-1 shrink-0">
               <Lock className="w-3.5 h-3.5" /> Orders Closed
             </span>
           ) : (
@@ -1444,9 +1468,9 @@ export default function App() {
                 const el = document.getElementById('customer-info-section');
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
-              className="px-4 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-xs sm:text-sm border-2 border-mani-900 shadow-snack-sm active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="px-4 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-display font-bold text-xs sm:text-sm border-2 border-amber-300 shadow-snack-sm active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer shrink-0"
             >
-              <span>Checkout Now 🥜</span>
+              <span>Checkout Now 🎃</span>
               <ChevronRight className="w-4 h-4 stroke-[2.5]" />
             </button>
           )}

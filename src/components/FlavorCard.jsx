@@ -68,21 +68,21 @@ export default function FlavorCard({
     <article
       className={`relative rounded-3xl p-3.5 sm:p-4 transition-all duration-200 flex flex-col justify-between overflow-hidden group bg-gradient-to-b ${personality.cardBg} ${
         isSelected
-          ? 'border-2 border-mani-900 shadow-snack ring-4 ring-amber-300/60 -translate-y-0.5'
-          : `border-2 border-mani-900/15 shadow-snack-card hover:border-mani-900/80 hover:shadow-snack-card-hover hover:-translate-y-1 ${personality.tiltClass}`
+          ? 'border-2 border-[#FF6B00] shadow-pumpkin-card-hover ring-4 ring-amber-400/60 -translate-y-0.5'
+          : `border-2 border-[#FF6B00]/45 shadow-pumpkin-card hover:border-amber-400 hover:shadow-pumpkin-card-hover hover:-translate-y-1 ${personality.tiltClass}`
       } ${!isAvailable ? 'opacity-65 grayscale-[35%] hover:translate-y-0 hover:rotate-0' : ''}`}
     >
-      {/* Product Tub Image Showcase */}
+      {/* Product Tub Image Showcase with Warm Pumpkin-Illuminated Box-Shadow */}
       {product.image && (
-        <div className={`relative w-full aspect-[4/3] mb-3 rounded-2xl overflow-hidden border-2 ${personality.frameBg} shadow-inner`}>
+        <div className={`relative w-full aspect-[4/3] mb-3 rounded-2xl overflow-hidden border-2 ${personality.frameBg} shadow-pumpkin-tub transition-shadow duration-300`}>
           <img
             src={product.image}
             alt={`${product.name} Mani Tub`}
             className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
             loading="lazy"
           />
-          {/* Subtle warm vignette at bottom of photo for badge legibility */}
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 via-black/15 to-transparent pointer-events-none" />
+          {/* Warm jack-o-lantern ambient glow at bottom of tub photo */}
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#1F1025]/70 via-[#FF6B00]/15 to-transparent pointer-events-none" />
 
           {/* Top-Left Sticker Badge */}
           {!isAvailable ? (
@@ -104,14 +104,14 @@ export default function FlavorCard({
           )}
 
           {/* Bottom-Right Obvious Price Tag */}
-          <div className={`absolute bottom-2.5 right-2.5 px-3 py-1 rounded-xl font-display font-bold text-sm sm:text-base border border-white/25 shadow-md flex items-baseline gap-1 z-10 ${personality.priceBg}`}>
+          <div className={`absolute bottom-2.5 right-2.5 px-3 py-1 rounded-xl font-display font-bold text-sm sm:text-base border border-amber-300/60 shadow-md flex items-baseline gap-1 z-10 ${personality.priceBg}`}>
             <span>{formatPHP(product.price || 50)}</span>
             <span className="text-[10px] font-sans font-bold opacity-85">/ tub</span>
           </div>
         </div>
       )}
 
-      {/* Flavor Title, Vibe Tag & Description */}
+      {/* Flavor Title, Seasonal Halloween Sub-Label, Vibe Tag & Description */}
       <div className="flex-1 flex flex-col justify-between">
         <div>
           <div className="flex items-start justify-between gap-2">
@@ -125,8 +125,15 @@ export default function FlavorCard({
                 </h3>
               </div>
 
-              {/* Flavor Personality Vibe Pill */}
+              {/* Seasonal Halloween Sub-Label + Flavor Personality Vibe Pill */}
               <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                <span
+                  data-testid={`halloween-sublabel-${product.id}`}
+                  className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#1F1025] text-amber-300 border border-[#FF6B00] shadow-2xs"
+                >
+                  <span aria-hidden="true">{personality.halloweenIcon}</span>
+                  <span>{personality.halloweenSubLabel}</span>
+                </span>
                 <span className={`inline-flex items-center text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${personality.vibeClass}`}>
                   {personality.vibe}
                 </span>
@@ -146,7 +153,7 @@ export default function FlavorCard({
         </div>
 
         {/* Bottom Ordering Action Bar */}
-        <div className="relative pt-3 border-t border-mani-200/70 mt-auto w-full">
+        <div className="relative pt-3 border-t border-amber-300/60 mt-auto w-full">
           {/* Playful Peanut Particle Burst on Add */}
           {burstKey > 0 && (
             <div
@@ -154,8 +161,8 @@ export default function FlavorCard({
               aria-hidden="true"
               className="pointer-events-none absolute -top-2 right-8 z-20 flex items-center justify-center select-none"
             >
-              <span className="animate-particle-left text-base">🥜</span>
-              <span className="animate-particle-center text-sm font-display font-bold text-amber-950 bg-amber-300 px-1.5 py-0.5 rounded-full border border-mani-900 shadow-2xs">
+              <span className="animate-particle-left text-base">🎃</span>
+              <span className="animate-particle-center text-sm font-display font-bold text-white bg-[#FF6B00] px-1.5 py-0.5 rounded-full border border-amber-300 shadow-2xs">
                 +1 {personality.displayIcon}
               </span>
               <span className="animate-particle-right text-base">✨</span>
@@ -170,7 +177,7 @@ export default function FlavorCard({
             /* Unselected State: Tactile Stepper + Prominent Add Button */
             <div className="flex items-center gap-1.5 w-full">
               {/* Staged Quantity Stepper */}
-              <div className="flex items-center bg-mani-100/90 rounded-xl border border-mani-900/15 p-0.5 shrink-0">
+              <div className="flex items-center bg-amber-100/80 rounded-xl border border-[#FF6B00]/35 p-0.5 shrink-0">
                 <button
                   type="button"
                   onClick={handleMinusStaged}
@@ -202,11 +209,11 @@ export default function FlavorCard({
                 </button>
               </div>
 
-              {/* Primary Add to Order Button */}
+              {/* Primary Add to Order Button with Jack-O-Lantern Orange (#FF6B00) & Warm Gold Accent */}
               <button
                 type="button"
                 onClick={handleAddClick}
-                className="flex-1 min-h-[36px] py-2 px-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-[11px] sm:text-xs border-2 border-mani-900 shadow-snack-sm active:translate-y-0.5 flex items-center justify-center gap-1 whitespace-nowrap transition-all cursor-pointer"
+                className="flex-1 min-h-[36px] py-2 px-2 rounded-xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-display font-bold text-[11px] sm:text-xs border-2 border-amber-300 shadow-snack-sm active:translate-y-0.5 flex items-center justify-center gap-1 whitespace-nowrap transition-all cursor-pointer"
               >
                 <Plus className="w-3 h-3 stroke-[3] shrink-0" />
                 <span>Add to Order</span>
@@ -214,7 +221,7 @@ export default function FlavorCard({
             </div>
           ) : (
             /* Selected / In-Cart Live Controller */
-            <div className="flex items-center justify-between gap-1.5 bg-amber-100/90 p-1.5 rounded-xl border-2 border-mani-900 shadow-snack-sm w-full">
+            <div className="flex items-center justify-between gap-1.5 bg-amber-100/95 p-1.5 rounded-xl border-2 border-[#FF6B00] shadow-snack-sm w-full">
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
@@ -239,7 +246,7 @@ export default function FlavorCard({
                   type="button"
                   onClick={handlePlusInCart}
                   aria-label={`Increase ${product.name} quantity`}
-                  className="w-7 h-7 rounded-lg bg-mani-900 text-amber-300 hover:bg-mani-800 active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-[#FF6B00] text-white hover:bg-amber-500 active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer"
                 >
                   <Plus className="w-3 h-3 stroke-[2.5]" />
                 </button>
@@ -249,7 +256,7 @@ export default function FlavorCard({
                 <div className="font-display text-xs sm:text-sm font-bold text-mani-950 truncate leading-tight">
                   {formatPHP(quantity * (product.price || 50))}
                 </div>
-                <div className="text-[9px] font-extrabold text-mani-700 uppercase tracking-wider truncate">
+                <div className="text-[9px] font-extrabold text-[#FF6B00] uppercase tracking-wider truncate">
                   {quantity} tub{quantity > 1 ? 's' : ''} added
                 </div>
               </div>

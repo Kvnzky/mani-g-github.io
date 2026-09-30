@@ -60,7 +60,7 @@ export default function Header({
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-cream/95 backdrop-blur-md border-b-2 border-mani-900/10 shadow-warm">
+    <header className="sticky top-0 z-30 bg-[#1F1025]/95 backdrop-blur-md border-b-2 border-[#FF6B00]/50 shadow-warm">
       <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2.5 sm:py-3">
         <div className="flex items-center justify-between gap-2">
           {/* Logo & Branding */}
@@ -82,17 +82,17 @@ export default function Header({
             }}
             className="cursor-pointer flex items-center gap-2.5 sm:gap-3 group rounded-2xl shrink-0"
           >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-100 flex items-center justify-center p-0.5 border-2 border-mani-900 shadow-snack-sm group-hover:-rotate-6 group-hover:scale-105 transition-transform duration-200 overflow-hidden shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-100 flex items-center justify-center p-0.5 border-2 border-[#FF6B00] shadow-pumpkin-tub group-hover:-rotate-6 group-hover:scale-105 transition-transform duration-200 overflow-hidden shrink-0">
               <img src="./images/logo.png" alt="Mani Wandering Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-display text-lg sm:text-2xl font-bold tracking-tight text-mani-950 leading-none">
+                <span className="font-display text-lg sm:text-2xl font-bold tracking-tight text-white leading-none drop-shadow-xs">
                   Mani Wandering
                 </span>
-                <span className="hidden xl:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-300 text-mani-950 border border-mani-900/20 -rotate-2 shadow-2xs">
-                  <Sparkles className="w-3 h-3 text-mani-900" />
-                  Bagong Luto!
+                <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#FF6B00] text-white border border-amber-300 -rotate-2 shadow-2xs">
+                  <Sparkles className="w-3 h-3 text-amber-200" />
+                  🎃 Trick or Treat Crunch!
                 </span>
               </div>
             </div>
@@ -100,27 +100,27 @@ export default function Header({
 
           {/* Quick Section Navigation (Desktop) */}
           {currentView === 'order' && (
-            <nav aria-label="Store sections" className="hidden lg:flex items-center gap-1 bg-mani-100/80 p-1 rounded-2xl border border-mani-200">
+            <nav aria-label="Store sections" className="hidden lg:flex items-center gap-1 bg-[#2B1B30]/90 p-1 rounded-2xl border border-[#FF6B00]/40">
               <button
                 type="button"
                 onClick={() => scrollToSection('flavors-menu')}
-                className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-mani-800 hover:bg-white hover:text-mani-950 hover:shadow-2xs transition-all cursor-pointer"
+                className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-amber-200 hover:bg-[#FF6B00] hover:text-white hover:shadow-2xs transition-all cursor-pointer"
               >
-                🥜 Flavors
+                🎃 Flavors
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSection('suki-favorites')}
-                className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-mani-800 hover:bg-white hover:text-mani-950 hover:shadow-2xs transition-all cursor-pointer"
+                className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-amber-200 hover:bg-[#FF6B00] hover:text-white hover:shadow-2xs transition-all cursor-pointer"
               >
                 🔥 Mga Suki Combos
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSection('brand-story')}
-                className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-mani-800 hover:bg-white hover:text-mani-950 hover:shadow-2xs transition-all cursor-pointer"
+                className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-amber-200 hover:bg-[#FF6B00] hover:text-white hover:shadow-2xs transition-all cursor-pointer"
               >
-                ✨ Our Kwento
+                👻 Our Kwento
               </button>
             </nav>
           )}
@@ -134,10 +134,10 @@ export default function Header({
                 onClick={() => scrollToSection('order-cutoff-section')}
                 className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 border cursor-pointer ${
                   cutoffInfo.manualFormOpen === false || !cutoffInfo.isOpen || (cutoffInfo.enabled && remainingSec <= 0)
-                    ? 'bg-red-50 text-red-700 border-red-300 hover:bg-red-100'
+                    ? 'bg-red-950/90 text-red-200 border-red-500/60 hover:bg-red-900'
                     : cutoffInfo.enabled
-                    ? 'bg-amber-100 text-mani-950 border-amber-400 hover:bg-amber-200'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                    ? 'bg-[#2B1B30] text-amber-300 border-[#FF6B00] hover:bg-[#382240]'
+                    : 'bg-emerald-950/90 text-emerald-300 border-emerald-500/60 hover:bg-emerald-900'
                 }`}
                 title={
                   cutoffInfo.manualFormOpen === false
@@ -149,18 +149,18 @@ export default function Header({
               >
                 {cutoffInfo.manualFormOpen === false || !cutoffInfo.isOpen || (cutoffInfo.enabled && remainingSec <= 0) ? (
                   <>
-                    <Lock className="w-3.5 h-3.5 text-red-600" />
+                    <Lock className="w-3.5 h-3.5 text-red-400" />
                     <span>Closed</span>
                   </>
                 ) : cutoffInfo.enabled ? (
                   <>
-                    <Clock className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
-                    <span className="hidden md:inline font-bold text-mani-800">Cutoff:</span>
-                    <span className="font-mono font-black text-mani-950">{formatCountdown(remainingSec)}</span>
+                    <Clock className="w-3.5 h-3.5 text-[#FF6B00] animate-pulse" />
+                    <span className="hidden md:inline font-bold text-amber-200">Cutoff:</span>
+                    <span className="font-mono font-black text-white">{formatCountdown(remainingSec)}</span>
                   </>
                 ) : (
                   <>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                     <span className="font-bold">Open</span>
                   </>
                 )}
@@ -175,19 +175,19 @@ export default function Header({
                   onClick={() => onNavigate ? onNavigate(currentView === 'admin' ? 'order' : 'admin') : setCurrentView(currentView === 'admin' ? 'order' : 'admin')}
                   className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
                     currentView === 'admin'
-                      ? 'bg-mani-900 text-amber-200 border-mani-900 shadow-inner'
-                      : 'bg-cream-warm text-mani-800 border-mani-300 hover:bg-amber-100'
+                      ? 'bg-[#FF6B00] text-white border-amber-300 shadow-inner'
+                      : 'bg-[#2B1B30] text-amber-200 border-[#FF6B00]/50 hover:bg-[#382240]'
                   }`}
                   title="Toggle Admin Dashboard"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
                   <span className="hidden sm:inline">{currentView === 'admin' ? 'Back to Shop' : 'Admin'}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-red-200 bg-red-950/80 hover:bg-red-900 border border-red-500/40 transition-all flex items-center gap-1 cursor-pointer"
                   title="Log out of Admin"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -202,18 +202,18 @@ export default function Header({
                 type="button"
                 onClick={onOpenCart}
                 aria-label={`Open Order Summary${totalItems > 0 ? ` (${totalItems} tubs, ${formatPHP(subtotal)})` : ''}`}
-                className={`relative px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-extrabold text-xs sm:text-sm border-2 border-mani-900 shadow-snack-sm active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer ${
-                  cartBounce ? 'scale-105 bg-amber-300' : ''
+                className={`relative px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-extrabold text-xs sm:text-sm border-2 border-amber-300 shadow-snack-sm active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  cartBounce ? 'scale-105 bg-amber-400 text-[#1F1025]' : ''
                 }`}
               >
-                <ShoppingBag className="w-4 h-4 stroke-[2.5] text-mani-950 shrink-0" />
+                <ShoppingBag className="w-4 h-4 stroke-[2.5] shrink-0" />
                 <span className="hidden sm:inline font-display tracking-wide">
                   {totalItems > 0 ? formatPHP(subtotal) : 'My Tubs'}
                 </span>
                 <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-black leading-none transition-transform ${
                   totalItems > 0
-                    ? 'bg-mani-950 text-amber-300'
-                    : 'bg-mani-900/15 text-mani-900'
+                    ? 'bg-[#1F1025] text-amber-300 border border-amber-300/50'
+                    : 'bg-[#1F1025]/40 text-white'
                 }`}>
                   {totalItems}
                 </span>

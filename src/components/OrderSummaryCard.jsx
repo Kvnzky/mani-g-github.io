@@ -18,23 +18,23 @@ export default function OrderSummaryCard({
   return (
     <div 
       id="order-summary-section"
-      className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-mani-900 shadow-snack space-y-4 transition-all"
+      className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-[#FF6B00] shadow-pumpkin-card space-y-4 transition-all"
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b-2 border-dashed border-mani-200 pb-3.5 flex-wrap gap-2">
+      <div className="flex items-center justify-between border-b-2 border-dashed border-amber-300/70 pb-3.5 flex-wrap gap-2">
         <div className="flex items-center gap-2.5">
-          <div className={`w-10 h-10 rounded-2xl bg-amber-400 text-mani-950 border-2 border-mani-900 flex items-center justify-center font-bold text-lg shadow-snack-sm transition-transform duration-200 ${
+          <div className={`w-10 h-10 rounded-2xl bg-[#FF6B00] text-white border-2 border-amber-300 flex items-center justify-center font-bold text-lg shadow-snack-sm transition-transform duration-200 ${
             cartBounce ? 'scale-125 rotate-6' : ''
           }`}>
             <ShoppingBag className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-mani-900 text-amber-300">
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#1F1025] text-amber-300 border border-[#FF6B00]">
                 Step 2
               </span>
               <h3 className="font-display text-lg sm:text-xl font-bold text-mani-950 tracking-tight">
-                Your Tub Basket
+                Your Tub Basket 🎃
               </h3>
             </div>
             <p className="text-xs text-mani-600 font-medium mt-0.5">
