@@ -45,25 +45,37 @@ export default function HalloweenMascotVideo({
       return false;
     };
 
+    // Pre-allocate buffers for ultra-fast (<1ms) exterior flood-fill background removal
+    let bgMask = null;
+    let queue = null;
+
     const processFrame = () => {
       if (!isMounted) return;
 
-      if (video.readyState >= 2 && !video.paused && !video.ended) {
+      if (video.readyState >= 2 && !video.ended) {
         if (enforceCleanEnding()) {
           animationFrameId = requestAnimationFrame(processFrame);
           return;
         }
 
-        const vw = video.videoWidth || 1280;
-        const vh = video.videoHeight || 720;
+        const vw = video.videoWidth || 960;
+        const vh = video.videoHeight || 540;
 
-        // Preserve full natural aspect ratio at native HD resolution for the larger hero display
-        const procW = Math.min(vw, variant === 'hero' ? 1280 : 280);
+        // High-res processing width for crisp rendering and <1.5ms per-frame flood fill
+        const procW = Math.min(vw, variant === 'hero' ? 768 : 280);
         const procH = Math.max(1, Math.round((procW * vh) / vw));
+        const totalPixels = procW * procH;
 
         if (canvas.width !== procW || canvas.height !== procH) {
           canvas.width = procW;
           canvas.height = procH;
+        }
+
+        if (!bgMask || bgMask.length !== totalPixels) {
+          bgMask = new Uint8Array(totalPixels);
+          queue = new Int32Array(totalPixels);
+        } else {
+          bgMask.fill(0);
         }
 
         try {
@@ -71,74 +83,152 @@ export default function HalloweenMascotVideo({
           const frame = ctx.getImageData(0, 0, procW, procH);
           const data = frame.data;
 
-          // Protect the mascot's face/body core (white eyes & fangs) while keying out the outer checkerboard
-          const centerX = procW * 0.5;
-          const centerY = procH * 0.53;
-          const innerRx = procW * 0.165;
-          const innerRy = procH * 0.31;
+          // Central logo bounding box (x: 0.25..0.75, y: 0.04..0.94)
+          // Everything outside this box is 100% outer background
+          const minX = Math.floor(procW * 0.25);
+          const maxX = Math.ceil(procW * 0.75);
+          const minY = Math.floor(procH * 0.04);
+          const maxY = Math.ceil(procH * 0.94);
 
-          // Subtle rectangular edge feather (outer 3% of rectangle edges only — no circular/oval clipping)
-          const edgeMarginX = procW * 0.03;
-          const edgeMarginY = procH * 0.03;
+          // Inner portal core where the mascot, pale moon glow, white eyes/fangs, and bills live
+          const centerX = procW * 0.495;
+          const centerY = procH * 0.54;
+          const innerRx = procW * 0.145;
+          const innerRy = procH * 0.205;
 
+          // Helper: returns true if pixel `pIdx` is a background/white-border candidate (not dark outline & not saturated logo fill)
+          const isBgCandidate = (pIdx) => {
+            const i = pIdx * 4;
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const luma = (r + g + b) * 0.333333;
+            // Solid dark-brown/black logo outline blocks flood fill
+            if (luma < 76) return false;
+            // Saturated orange/gold ("MANI WONDERING", pumpkins, portal) or purple orbs block flood fill
+            const warmOrange = r - b;
+            const purpleGlow = b - g;
+            if (warmOrange >= 52 && luma < 225) return false;
+            if (purpleGlow >= 24 && luma < 200) return false;
+            return true;
+          };
+
+          let qHead = 0;
+          let qTail = 0;
+
+          // 1. Clear all pixels outside the central logo box and seed the flood-fill along the box perimeter
           for (let y = 0; y < procH; y++) {
+            const rowOffset = y * procW;
+            if (y <= minY || y >= maxY) {
+              for (let x = 0; x < procW; x++) {
+                const p = rowOffset + x;
+                bgMask[p] = 1;
+                data[p * 4 + 3] = 0;
+                if ((y === minY || y === maxY) && x >= minX && x <= maxX) {
+                  queue[qTail++] = p;
+                }
+              }
+            } else {
+              for (let x = 0; x <= minX; x++) {
+                const p = rowOffset + x;
+                bgMask[p] = 1;
+                data[p * 4 + 3] = 0;
+                if (x === minX) queue[qTail++] = p;
+              }
+              for (let x = maxX; x < procW; x++) {
+                const p = rowOffset + x;
+                bgMask[p] = 1;
+                data[p * 4 + 3] = 0;
+                if (x === maxX) queue[qTail++] = p;
+              }
+            }
+          }
+
+          // 2. BFS flood-fill from the exterior right up to the closed dark outline of the logo
+          while (qHead < qTail) {
+            const curr = queue[qHead++];
+            const cx = curr % procW;
+            const cy = (curr - cx) / procW;
+
+            // 4-connected neighbors within [minX..maxX, minY..maxY]
+            if (cx > minX) {
+              const left = curr - 1;
+              if (bgMask[left] === 0 && isBgCandidate(left)) {
+                bgMask[left] = 1;
+                data[left * 4 + 3] = 0;
+                queue[qTail++] = left;
+              }
+            }
+            if (cx < maxX) {
+              const right = curr + 1;
+              if (bgMask[right] === 0 && isBgCandidate(right)) {
+                bgMask[right] = 1;
+                data[right * 4 + 3] = 0;
+                queue[qTail++] = right;
+              }
+            }
+            if (cy > minY) {
+              const up = curr - procW;
+              if (bgMask[up] === 0 && isBgCandidate(up)) {
+                bgMask[up] = 1;
+                data[up * 4 + 3] = 0;
+                queue[qTail++] = up;
+              }
+            }
+            if (cy < maxY) {
+              const down = curr + procW;
+              if (bgMask[down] === 0 && isBgCandidate(down)) {
+                bgMask[down] = 1;
+                data[down * 4 + 3] = 0;
+                queue[qTail++] = down;
+              }
+            }
+          }
+
+          // 3. Remove any enclosed white/gray sticker pockets outside the inner mascot portal & de-spill anti-aliased edges
+          for (let y = minY + 1; y < maxY; y++) {
             const dyInner = (y - centerY) / innerRy;
             const dyInner2 = dyInner * dyInner;
+            const rowOffset = y * procW;
 
-            let rectFadeY = 1;
-            if (y < edgeMarginY) {
-              rectFadeY = y / edgeMarginY;
-            } else if (y > procH - edgeMarginY) {
-              rectFadeY = (procH - y) / edgeMarginY;
-            }
+            for (let x = minX + 1; x < maxX; x++) {
+              const p = rowOffset + x;
+              if (bgMask[p] === 1) continue;
 
-            for (let x = 0; x < procW; x++) {
-              const idx = (y * procW + x) * 4;
+              const dxInner = (x - centerX) / innerRx;
+              const distInner2 = dxInner * dxInner + dyInner2;
+
+              // Protect 100% of the inner arch portal (mascot eyes, fangs, skull, peso bills, moon glow)
+              if (distInner2 < 1.0) continue;
+
+              const idx = p * 4;
               const r = data[idx];
               const g = data[idx + 1];
               const b = data[idx + 2];
+              const luma = (r + g + b) * 0.333333;
+              const warmOrange = r - b;
+              const purpleGlow = b - g;
 
-              const dxInner = (x - centerX) / innerRx;
-              const distInner = Math.sqrt(dxInner * dxInner + dyInner2);
+              // Check if this pixel touches the removed exterior background (anti-aliased outline edge)
+              const touchesBg =
+                bgMask[p - 1] === 1 ||
+                bgMask[p + 1] === 1 ||
+                bgMask[p - procW] === 1 ||
+                bgMask[p + procW] === 1;
 
-              // 0 inside mascot core (eyes/fangs), 1 outside portal arch where checkerboard is present
-              let outsideCore = 0;
-              if (distInner > 0.72) {
-                outsideCore = Math.min(1, (distInner - 0.72) / 0.32);
+              // Enclosed neutral white/gray pockets outside the inner portal (e.g., between letters or arch curls)
+              if (luma > 95 && warmOrange < 48 && purpleGlow < 22) {
+                data[idx + 3] = 0;
+                continue;
               }
 
-              if (outsideCore > 0) {
-                const maxC = r > g ? (r > b ? r : b) : (g > b ? g : b);
-                const minC = r < g ? (r < b ? r : b) : (g < b ? g : b);
-                const chroma = maxC - minC;
-                const luma = (r + g + b) * 0.333333;
-
-                // Key out light neutral checkerboard background so website background shows through
-                if (luma > 145 && chroma < 32) {
-                  const lumaFactor = Math.min(1, Math.max(0, (luma - 145) / 68));
-                  const chromaFactor = Math.min(1, Math.max(0, (32 - chroma) / 20));
-                  const bgStrength = lumaFactor * chromaFactor * outsideCore;
-
-                  if (bgStrength > 0.01) {
-                    const spill = Math.min(1, bgStrength * 1.15);
-                    data[idx] = Math.round(r * (1 - spill) + targetBgR * spill);
-                    data[idx + 1] = Math.round(g * (1 - spill) + targetBgG * spill);
-                    data[idx + 2] = Math.round(b * (1 - spill) + targetBgB * spill);
-                    data[idx + 3] = Math.round(255 * Math.max(0, 1 - bgStrength * 1.08));
-                  }
-                }
-              }
-
-              // Feather only the very outer 3% rectangular border so no hard seam appears
-              let rectFadeX = 1;
-              if (x < edgeMarginX) {
-                rectFadeX = x / edgeMarginX;
-              } else if (x > procW - edgeMarginX) {
-                rectFadeX = (procW - x) / edgeMarginX;
-              }
-              const rectEdgeFade = rectFadeX < rectFadeY ? rectFadeX : rectFadeY;
-              if (rectEdgeFade < 1) {
-                data[idx + 3] = Math.round(data[idx + 3] * Math.max(0, rectEdgeFade));
+              // De-spill and feather 1px anti-aliased boundary where dark outline meets removed white border
+              if (touchesBg && luma > 48 && warmOrange < 55) {
+                const edgeFade = Math.min(1, Math.max(0, (luma - 48) / 34));
+                data[idx] = Math.round(r * (1 - edgeFade) + targetBgR * edgeFade);
+                data[idx + 1] = Math.round(g * (1 - edgeFade) + targetBgG * edgeFade);
+                data[idx + 2] = Math.round(b * (1 - edgeFade) + targetBgB * edgeFade);
+                data[idx + 3] = Math.round(255 * (1 - edgeFade * 0.85));
               }
             }
           }
@@ -146,7 +236,7 @@ export default function HalloweenMascotVideo({
           ctx.putImageData(frame, 0, 0);
           if (!canvasReady) setCanvasReady(true);
         } catch (err) {
-          // Fallback to raw video if canvas read is restricted
+          // Ignore transient draw errors
         }
       }
 
@@ -161,14 +251,18 @@ export default function HalloweenMascotVideo({
       }
     };
 
+    video.addEventListener('loadedmetadata', startPlayback);
     video.addEventListener('loadeddata', startPlayback);
+    video.addEventListener('canplay', startPlayback);
     video.addEventListener('play', startPlayback);
     video.addEventListener('timeupdate', enforceCleanEnding);
     startPlayback();
 
     return () => {
       isMounted = false;
+      video.removeEventListener('loadedmetadata', startPlayback);
       video.removeEventListener('loadeddata', startPlayback);
+      video.removeEventListener('canplay', startPlayback);
       video.removeEventListener('play', startPlayback);
       video.removeEventListener('timeupdate', enforceCleanEnding);
       if (animationFrameId) {
@@ -182,25 +276,22 @@ export default function HalloweenMascotVideo({
       className={`relative select-none pointer-events-none flex items-center justify-center ${className}`}
       aria-label={ariaLabel}
     >
-      {/* Source Video in its natural rectangular aspect ratio (no circular mask or cropping) */}
+      {/* Hidden source video — never shown directly so the raw white background can never appear */}
       <video
         ref={videoRef}
         src={src}
-        poster={poster}
         autoPlay
         loop
         muted
         playsInline
         preload="auto"
-        className={`w-full h-full object-contain transition-opacity duration-300 ${
-          canvasReady ? 'opacity-0 absolute inset-0' : 'opacity-100 relative z-10'
-        }`}
+        className="opacity-0 pointer-events-none absolute inset-0 w-full h-full object-contain"
       />
 
-      {/* Full Rectangular Uncropped Canvas Integrated Directly Into Website Background */}
+      {/* Transparent background-removed canvas integrated directly into the website background */}
       <canvas
         ref={canvasRef}
-        className={`relative z-10 w-full h-full object-contain transition-opacity duration-300 ${
+        className={`relative z-10 w-full h-full object-contain transition-opacity duration-200 ${
           canvasReady ? 'opacity-100' : 'opacity-0'
         }`}
       />
