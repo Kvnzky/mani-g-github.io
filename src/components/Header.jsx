@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingBag, ShieldCheck, Sparkles, Lock, LogOut, Clock } from 'lucide-react';
 import { getManilaCutoffTimestampMs } from '../utils/phtTime';
 import { formatPHP } from '../config/products';
+import HalloweenMascotVideo from './HalloweenMascotVideo';
 
 export default function Header({ 
   currentView, 
@@ -82,18 +83,11 @@ export default function Header({
             }}
             className="cursor-pointer flex items-center gap-2.5 sm:gap-3 group rounded-2xl shrink-0"
           >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-100 flex items-center justify-center border-2 border-[#FF6B00] shadow-pumpkin-tub group-hover:-rotate-6 group-hover:scale-105 transition-transform duration-200 overflow-hidden shrink-0">
-              <video
-                src="./images/mani-halloween-video.mp4"
-                poster="./images/logo.png"
-                autoPlay
-                loop
-                muted
-                playsInline
-                aria-label="Mani Wandering Logo"
-                className="w-full h-full object-cover scale-110 pointer-events-none"
-              />
-            </div>
+            <HalloweenMascotVideo
+              variant="header"
+              ariaLabel="Mani Wandering Logo"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#1F1025] border-2 border-[#FF6B00] shadow-pumpkin-tub group-hover:-rotate-6 group-hover:scale-105 transition-transform duration-200 shrink-0"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-display text-lg sm:text-2xl font-bold tracking-tight text-white leading-none drop-shadow-xs">

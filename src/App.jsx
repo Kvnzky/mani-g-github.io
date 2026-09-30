@@ -10,6 +10,7 @@ import AdminLoginModal from './components/AdminLoginModal';
 import OrderCutoffBanner from './components/OrderCutoffBanner';
 import BrandStoryAndSuki from './components/BrandStoryAndSuki';
 import HalloweenAtmosphere, { PlayfulSkeletonSvg, PlayfulMummySvg, SharpBatSvg } from './components/HalloweenAtmosphere';
+import HalloweenMascotVideo from './components/HalloweenMascotVideo';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
@@ -1232,19 +1233,12 @@ export default function App() {
                       <PlayfulMummySvg className="w-14 h-18 sm:w-16 sm:h-20 drop-shadow-[0_4px_10px_rgba(251,191,36,0.4)] rotate-6" />
                     </div>
 
-                    {/* Warm Jack-O-Lantern circular backdrop & Halloween Mascot Video */}
-                    <div className="w-60 h-60 sm:w-72 sm:h-72 rounded-full bg-gradient-to-tr from-[#FF6B00]/45 via-amber-400/30 to-purple-900/50 border-3 border-[#FF6B00] shadow-pumpkin-tub flex items-center justify-center overflow-hidden">
-                      <video
-                        src="./images/mani-halloween-video.mp4"
-                        poster="./images/logo.png"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        aria-label="Mani Wandering Peanut Mascot"
-                        className="w-full h-full object-cover scale-105 select-none pointer-events-none"
-                      />
-                    </div>
+                    {/* Warm Jack-O-Lantern circular backdrop & Website-Overlay Blended Halloween Mascot Video */}
+                    <HalloweenMascotVideo
+                      variant="hero"
+                      ariaLabel="Mani Wandering Peanut Mascot"
+                      className="w-64 h-64 sm:w-76 sm:h-76 rounded-full border-2 border-[#FF6B00]/85 shadow-pumpkin-tub"
+                    />
 
                     {/* Playful Price Sticker Badge (Top Right) */}
                     <div className="absolute top-1 right-1 sm:right-0 bg-[#FF6B00] text-white px-3 py-1.5 rounded-2xl border-2 border-amber-300 shadow-snack-sm rotate-6 select-none text-center z-20">
