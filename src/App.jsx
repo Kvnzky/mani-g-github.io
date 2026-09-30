@@ -1214,42 +1214,21 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Right Column: Mascot, Pumpkin Glow Backdrop & Playful Skeleton + Mummy Illustrations */}
-                <div className="lg:col-span-5 relative flex items-center justify-center py-2">
-                  <div className="relative w-full max-w-[340px] sm:max-w-[380px] mx-auto flex items-center justify-center">
-                    {/* Playful Skeleton Illustration Peeking Left */}
-                    <div
-                      className="pointer-events-none select-none absolute -left-3 sm:-left-6 bottom-2 z-20 animate-float-slow"
-                      aria-hidden="true"
-                    >
-                      <PlayfulSkeletonSvg className="w-14 h-18 sm:w-16 sm:h-20 drop-shadow-[0_4px_10px_rgba(255,107,0,0.4)] -rotate-6" />
-                    </div>
-
-                    {/* Playful Mummy Illustration Peeking Right */}
-                    <div
-                      className="pointer-events-none select-none absolute -right-3 sm:-right-6 bottom-3 z-20 animate-float-reverse"
-                      aria-hidden="true"
-                    >
-                      <PlayfulMummySvg className="w-14 h-18 sm:w-16 sm:h-20 drop-shadow-[0_4px_10px_rgba(251,191,36,0.4)] rotate-6" />
-                    </div>
-
-                    {/* Warm Jack-O-Lantern circular backdrop & Website-Overlay Blended Halloween Mascot Video */}
-                    <HalloweenMascotVideo
-                      variant="hero"
-                      ariaLabel="Mani Wandering Peanut Mascot"
-                      className="w-64 h-64 sm:w-76 sm:h-76 rounded-full border-2 border-[#FF6B00]/85 shadow-pumpkin-tub"
-                    />
-
-                    {/* Playful Price Sticker Badge (Top Right) */}
-                    <div className="absolute top-1 right-1 sm:right-0 bg-[#FF6B00] text-white px-3 py-1.5 rounded-2xl border-2 border-amber-300 shadow-snack-sm rotate-6 select-none text-center z-20">
+                {/* Right Column: Natural Rectangular Hero Video Seamlessly Integrated Into Background */}
+                <div className="lg:col-span-5 relative flex flex-col items-center justify-center">
+                  <div className="relative w-full max-w-[540px] mx-auto flex flex-col items-center">
+                    {/* Promotional Starts At ₱50/tub Badge Positioned Cleanly Without Obstructing Video */}
+                    <div className="self-end mb-1 sm:mb-1.5 bg-[#FF6B00] text-white px-3.5 py-1.5 rounded-2xl border-2 border-amber-300 shadow-snack-sm rotate-3 select-none text-center z-20">
                       <span className="block text-[9px] font-black uppercase tracking-wider leading-none text-amber-200">Starts At</span>
                       <span className="font-display text-base sm:text-lg font-bold leading-tight">₱50/tub</span>
                     </div>
 
-                    {/* Playful Crunch Sticker (Top Left) */}
-                    <div className="hidden xs:flex absolute top-2 left-1 bg-amber-400 text-[#1F1025] px-2.5 py-1 rounded-xl border-2 border-[#FF6B00] shadow-snack-sm -rotate-6 text-[11px] font-display font-bold items-center gap-1 select-none z-20">
-                      <span>👻 7 Spooky Flavors!</span>
-                    </div>
+                    {/* Direct Rectangular Hero Video (No Circular Frame, Border, or Mask) */}
+                    <HalloweenMascotVideo
+                      variant="hero"
+                      ariaLabel="Mani Wandering Peanut Mascot"
+                      className="w-full aspect-video"
+                    />
                   </div>
                 </div>
               </div>

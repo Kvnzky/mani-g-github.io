@@ -1,13 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 /**
- * Renders the Halloween Mani Wandering mascot video with:
- * 1. Real-time canvas background keying & de-spilling that removes the light
- *    checkerboard background outside the central portal while preserving the
- *    mascot, "MANI WONDERING" title, bats, pumpkins, leaves, and tree branches.
- * 2. Multi-layer website-matched overlays (#1F1025 midnight purple, #2B1B30 dark
- *    indigo, and #FF6B00 jack-o-lantern radial glow) so the video blends
- *    seamlessly into the website backdrop.
+ * Renders the Halloween Mani Wandering mascot video directly in its natural
+ * rectangular aspect ratio (no circular frame, no circular border, no oval mask,
+ * no cropping), seamlessly integrated into the website background.
  */
 export default function HalloweenMascotVideo({
   src = './images/mani-halloween-video.mp4',
@@ -31,7 +27,7 @@ export default function HalloweenMascotVideo({
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
-    // Website dark indigo RGB (#2B1B30) used for de-spilling anti-aliased edges
+    // Website dark indigo RGB (#2B1B30) used for de-spilling anti-aliased checkerboard edges
     const targetBgR = 43;
     const targetBgG = 27;
     const targetBgB = 48;
@@ -43,8 +39,8 @@ export default function HalloweenMascotVideo({
         const vw = video.videoWidth || 640;
         const vh = video.videoHeight || 360;
 
-        // Use a crisp internal processing resolution for smooth 60fps performance
-        const procW = Math.min(vw, variant === 'hero' ? 560 : 240);
+        // Preserve full natural aspect ratio at high resolution without cropping
+        const procW = Math.min(vw, variant === 'hero' ? 800 : 240);
         const procH = Math.max(1, Math.round((procW * vh) / vw));
 
         if (canvas.width !== procW || canvas.height !== procH) {
@@ -57,21 +53,26 @@ export default function HalloweenMascotVideo({
           const frame = ctx.getImageData(0, 0, procW, procH);
           const data = frame.data;
 
-          // Center of the mascot's face/body portal (protects white eyes & fangs)
+          // Protect the mascot's face/body core (white eyes & fangs) while keying out the outer checkerboard
           const centerX = procW * 0.5;
           const centerY = procH * 0.53;
           const innerRx = procW * 0.165;
           const innerRy = procH * 0.31;
 
-          // Outer feather radius so the frame edges dissolve into the website overlay
-          const outerRx = procW * 0.47;
-          const outerRy = procH * 0.48;
+          // Subtle rectangular edge feather (outer 3% of rectangle edges only — no circular/oval clipping)
+          const edgeMarginX = procW * 0.03;
+          const edgeMarginY = procH * 0.03;
 
           for (let y = 0; y < procH; y++) {
             const dyInner = (y - centerY) / innerRy;
             const dyInner2 = dyInner * dyInner;
-            const dyOuter = (y - procH * 0.5) / outerRy;
-            const dyOuter2 = dyOuter * dyOuter;
+
+            let rectFadeY = 1;
+            if (y < edgeMarginY) {
+              rectFadeY = y / edgeMarginY;
+            } else if (y > procH - edgeMarginY) {
+              rectFadeY = (procH - y) / edgeMarginY;
+            }
 
             for (let x = 0; x < procW; x++) {
               const idx = (y * procW + x) * 4;
@@ -82,7 +83,7 @@ export default function HalloweenMascotVideo({
               const dxInner = (x - centerX) / innerRx;
               const distInner = Math.sqrt(dxInner * dxInner + dyInner2);
 
-              // Smooth protection mask: 0 inside mascot core, 1 outside portal arch
+              // 0 inside mascot core (eyes/fangs), 1 outside portal arch where checkerboard is present
               let outsideCore = 0;
               if (distInner > 0.72) {
                 outsideCore = Math.min(1, (distInner - 0.72) / 0.32);
@@ -94,14 +95,13 @@ export default function HalloweenMascotVideo({
                 const chroma = maxC - minC;
                 const luma = (r + g + b) * 0.333333;
 
-                // Checkerboard pixels & white/grey halos are bright and low-chroma (neutral)
+                // Key out light neutral checkerboard background so website background shows through
                 if (luma > 145 && chroma < 32) {
                   const lumaFactor = Math.min(1, Math.max(0, (luma - 145) / 68));
                   const chromaFactor = Math.min(1, Math.max(0, (32 - chroma) / 20));
                   const bgStrength = lumaFactor * chromaFactor * outsideCore;
 
                   if (bgStrength > 0.01) {
-                    // De-spill RGB toward website dark indigo (#2B1B30) to eliminate white fringes
                     const spill = Math.min(1, bgStrength * 1.15);
                     data[idx] = Math.round(r * (1 - spill) + targetBgR * spill);
                     data[idx + 1] = Math.round(g * (1 - spill) + targetBgG * spill);
@@ -111,12 +111,16 @@ export default function HalloweenMascotVideo({
                 }
               }
 
-              // Feather outer frame perimeter so video edges merge into website overlay
-              const dxOuter = (x - procW * 0.5) / outerRx;
-              const distOuter = Math.sqrt(dxOuter * dxOuter + dyOuter2);
-              if (distOuter > 0.84) {
-                const edgeFade = Math.max(0, 1 - (distOuter - 0.84) / 0.16);
-                data[idx + 3] = Math.round(data[idx + 3] * edgeFade);
+              // Feather only the very outer 3% rectangular border so no hard seam appears
+              let rectFadeX = 1;
+              if (x < edgeMarginX) {
+                rectFadeX = x / edgeMarginX;
+              } else if (x > procW - edgeMarginX) {
+                rectFadeX = (procW - x) / edgeMarginX;
+              }
+              const rectEdgeFade = rectFadeX < rectFadeY ? rectFadeX : rectFadeY;
+              if (rectEdgeFade < 1) {
+                data[idx + 3] = Math.round(data[idx + 3] * Math.max(0, rectEdgeFade));
               }
             }
           }
@@ -124,7 +128,7 @@ export default function HalloweenMascotVideo({
           ctx.putImageData(frame, 0, 0);
           if (!canvasReady) setCanvasReady(true);
         } catch (err) {
-          // Fallback to CSS-blended video if canvas read is restricted
+          // Fallback to raw video if canvas read is restricted
         }
       }
 
@@ -154,20 +158,10 @@ export default function HalloweenMascotVideo({
 
   return (
     <div
-      className={`relative overflow-hidden select-none pointer-events-none flex items-center justify-center ${className}`}
+      className={`relative select-none pointer-events-none flex items-center justify-center ${className}`}
       aria-label={ariaLabel}
     >
-      {/* 1. Base Website Gradient Backdrop (#1F1025 to #2B1B30 + #FF6B00 Pumpkin Aura) */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(circle at 50% 52%, rgba(255, 107, 0, 0.34) 0%, rgba(251, 191, 36, 0.16) 34%, rgba(43, 27, 48, 0.88) 68%, #1F1025 100%)'
-        }}
-      />
-
-      {/* 2. Source Video (visible as fallback with CSS radial mask until Canvas takes over) */}
+      {/* Source Video in its natural rectangular aspect ratio (no circular mask or cropping) */}
       <video
         ref={videoRef}
         src={src}
@@ -177,35 +171,17 @@ export default function HalloweenMascotVideo({
         muted
         playsInline
         preload="auto"
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
+        className={`w-full h-full object-contain transition-opacity duration-300 ${
           canvasReady ? 'opacity-0 absolute inset-0' : 'opacity-100 relative z-10'
         }`}
-        style={{
-          WebkitMaskImage:
-            'radial-gradient(circle at 50% 52%, #000 46%, rgba(0,0,0,0.65) 64%, transparent 88%)',
-          maskImage:
-            'radial-gradient(circle at 50% 52%, #000 46%, rgba(0,0,0,0.65) 64%, transparent 88%)'
-        }}
       />
 
-      {/* 3. Background-Keyed Canvas (Blends mascot, bats, leaves & branches directly onto website overlay) */}
+      {/* Full Rectangular Uncropped Canvas Integrated Directly Into Website Background */}
       <canvas
         ref={canvasRef}
-        className={` relative z-10 w-full h-full object-contain transition-opacity duration-300 ${
+        className={`relative z-10 w-full h-full object-contain transition-opacity duration-300 ${
           canvasReady ? 'opacity-100' : 'opacity-0'
         }`}
-      />
-
-      {/* 4. Top Website Overlay: Warm Jack-O-Lantern Glow + Midnight Purple Vignette Ring */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 z-20 pointer-events-none"
-        style={{
-          background:
-            variant === 'hero'
-              ? 'radial-gradient(circle at 50% 52%, rgba(255, 107, 0, 0.08) 0%, rgba(43, 27, 48, 0.18) 58%, rgba(31, 16, 37, 0.72) 86%, rgba(31, 16, 37, 0.95) 100%)'
-              : 'radial-gradient(circle at 50% 52%, transparent 45%, rgba(31, 16, 37, 0.75) 90%, #1F1025 100%)'
-        }}
       />
     </div>
   );
