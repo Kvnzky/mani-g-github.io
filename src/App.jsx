@@ -1232,12 +1232,17 @@ export default function App() {
                       <PlayfulMummySvg className="w-14 h-18 sm:w-16 sm:h-20 drop-shadow-[0_4px_10px_rgba(251,191,36,0.4)] rotate-6" />
                     </div>
 
-                    {/* Warm Jack-O-Lantern circular backdrop behind mascot */}
-                    <div className="w-56 h-56 sm:w-68 sm:h-68 rounded-full bg-gradient-to-tr from-[#FF6B00]/45 via-amber-400/30 to-purple-900/50 border-2 border-dashed border-[#FF6B00] shadow-pumpkin-tub flex items-center justify-center">
-                      <img
-                        src="./images/logo.png"
-                        alt="Mani Wandering Peanut Mascot"
-                        className="w-48 sm:w-60 h-auto object-contain drop-shadow-[0_10px_24px_rgba(255,107,0,0.45)] animate-float-slow select-none"
+                    {/* Warm Jack-O-Lantern circular backdrop & Halloween Mascot Video */}
+                    <div className="w-60 h-60 sm:w-72 sm:h-72 rounded-full bg-gradient-to-tr from-[#FF6B00]/45 via-amber-400/30 to-purple-900/50 border-3 border-[#FF6B00] shadow-pumpkin-tub flex items-center justify-center overflow-hidden">
+                      <video
+                        src="./images/mani-halloween-video.mp4"
+                        poster="./images/logo.png"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        aria-label="Mani Wandering Peanut Mascot"
+                        className="w-full h-full object-cover scale-105 select-none pointer-events-none"
                       />
                     </div>
 

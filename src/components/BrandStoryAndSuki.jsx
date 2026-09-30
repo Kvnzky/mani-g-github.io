@@ -279,11 +279,18 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             {/* Mascot + Skeleton & Mummy Badge Card */}
             <div className="flex items-center gap-3.5 bg-[#1F1025]/90 backdrop-blur-xs p-4 rounded-3xl border-2 border-[#FF6B00]/70 shadow-pumpkin-tub shrink-0 self-start lg:self-center">
               <PlayfulSkeletonSvg className="w-10 h-14 hidden sm:block shrink-0 animate-float-slow" />
-              <img
-                src="./images/logo.png"
-                alt="Mani Wandering Mascot"
-                className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-md animate-float-slow"
-              />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-[#FF6B00] overflow-hidden shrink-0 shadow-md">
+                <video
+                  src="./images/mani-halloween-video.mp4"
+                  poster="./images/logo.png"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  aria-label="Mani Wandering Mascot"
+                  className="w-full h-full object-cover scale-105 pointer-events-none"
+                />
+              </div>
               <div>
                 <div className="font-display text-base sm:text-lg font-bold text-amber-300">
                   “Trick or Treat Crunch!”
