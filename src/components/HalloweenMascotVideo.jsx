@@ -9,6 +9,7 @@ export default function HalloweenMascotVideo({
   src = './images/mani-halloween-video.mp4',
   poster = './images/logo.png',
   variant = 'hero', // 'hero' | 'badge' | 'header'
+  trimEndSeconds = 6.8, // Trim out the unwanted final segment (7.0s-10.0s) so the video ends & loops cleanly
   className = '',
   ariaLabel = 'Mani Wandering Peanut Mascot'
 }) {
@@ -32,15 +33,32 @@ export default function HalloweenMascotVideo({
     const targetBgG = 27;
     const targetBgB = 48;
 
+    // Immediately loop back to start before the unwanted ending artifact appears
+    const enforceCleanEnding = () => {
+      if (trimEndSeconds > 0 && video.currentTime >= trimEndSeconds) {
+        video.currentTime = 0;
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+        return true;
+      }
+      return false;
+    };
+
     const processFrame = () => {
       if (!isMounted) return;
 
       if (video.readyState >= 2 && !video.paused && !video.ended) {
-        const vw = video.videoWidth || 640;
-        const vh = video.videoHeight || 360;
+        if (enforceCleanEnding()) {
+          animationFrameId = requestAnimationFrame(processFrame);
+          return;
+        }
 
-        // Preserve full natural aspect ratio at high resolution without cropping
-        const procW = Math.min(vw, variant === 'hero' ? 800 : 240);
+        const vw = video.videoWidth || 1280;
+        const vh = video.videoHeight || 720;
+
+        // Preserve full natural aspect ratio at native HD resolution for the larger hero display
+        const procW = Math.min(vw, variant === 'hero' ? 1280 : 280);
         const procH = Math.max(1, Math.round((procW * vh) / vw));
 
         if (canvas.width !== procW || canvas.height !== procH) {
@@ -136,6 +154,7 @@ export default function HalloweenMascotVideo({
     };
 
     const startPlayback = () => {
+      enforceCleanEnding();
       video.play().catch(() => {});
       if (!animationFrameId) {
         animationFrameId = requestAnimationFrame(processFrame);
@@ -144,17 +163,19 @@ export default function HalloweenMascotVideo({
 
     video.addEventListener('loadeddata', startPlayback);
     video.addEventListener('play', startPlayback);
+    video.addEventListener('timeupdate', enforceCleanEnding);
     startPlayback();
 
     return () => {
       isMounted = false;
       video.removeEventListener('loadeddata', startPlayback);
       video.removeEventListener('play', startPlayback);
+      video.removeEventListener('timeupdate', enforceCleanEnding);
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [src, variant, canvasReady]);
+  }, [src, variant, trimEndSeconds, canvasReady]);
 
   return (
     <div

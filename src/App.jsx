@@ -1145,9 +1145,9 @@ export default function App() {
                 <SharpBatSvg className="w-12 h-auto drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)] rotate-6" />
               </div>
 
-              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-6 items-center">
                 {/* Left Column: Halloween Headline, Sub-headline & Appetizing CTAs */}
-                <div className="lg:col-span-7 text-center lg:text-left space-y-4">
+                <div className="lg:col-span-5 text-center lg:text-left space-y-4">
                   {/* Top Halloween Special Pill Badge */}
                   <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-[#FF6B00] text-white border-2 border-amber-300 shadow-snack-sm -rotate-1">
                     <span>🎃 Trick or Treat Crunch! • Spooky Halloween Special</span>
@@ -1214,20 +1214,14 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Right Column: Natural Rectangular Hero Video Seamlessly Integrated Into Background */}
-                <div className="lg:col-span-5 relative flex flex-col items-center justify-center">
-                  <div className="relative w-full max-w-[540px] mx-auto flex flex-col items-center">
-                    {/* Promotional Starts At ₱50/tub Badge Positioned Cleanly Without Obstructing Video */}
-                    <div className="self-end mb-1 sm:mb-1.5 bg-[#FF6B00] text-white px-3.5 py-1.5 rounded-2xl border-2 border-amber-300 shadow-snack-sm rotate-3 select-none text-center z-20">
-                      <span className="block text-[9px] font-black uppercase tracking-wider leading-none text-amber-200">Starts At</span>
-                      <span className="font-display text-base sm:text-lg font-bold leading-tight">₱50/tub</span>
-                    </div>
-
-                    {/* Direct Rectangular Hero Video (No Circular Frame, Border, or Mask) */}
+                {/* Right Column: Large, Unobstructed Natural Rectangular Hero Video */}
+                <div className="lg:col-span-7 relative flex items-center justify-center">
+                  <div className="relative w-full max-w-[680px] sm:max-w-[760px] lg:max-w-none mx-auto flex items-center justify-center">
+                    {/* Direct Rectangular Hero Video (No Circular Frame, No Badge, Significantly Larger Focal Point) */}
                     <HalloweenMascotVideo
                       variant="hero"
                       ariaLabel="Mani Wandering Peanut Mascot"
-                      className="w-full aspect-video"
+                      className="w-full aspect-video lg:scale-105 xl:scale-110 origin-center"
                     />
                   </div>
                 </div>
