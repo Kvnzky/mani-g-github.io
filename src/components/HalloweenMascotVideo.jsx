@@ -15,6 +15,7 @@ export default function HalloweenMascotVideo({
 }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const canvasReadyRef = useRef(false);
   const [canvasReady, setCanvasReady] = useState(false);
 
   useEffect(() => {
@@ -234,7 +235,10 @@ export default function HalloweenMascotVideo({
           }
 
           ctx.putImageData(frame, 0, 0);
-          if (!canvasReady) setCanvasReady(true);
+          if (!canvasReadyRef.current) {
+            canvasReadyRef.current = true;
+            setCanvasReady(true);
+          }
         } catch (err) {
           // Ignore transient draw errors
         }
@@ -279,7 +283,7 @@ export default function HalloweenMascotVideo({
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [src, variant, trimEndSeconds, canvasReady]);
+  }, [src, variant, trimEndSeconds]);
 
   return (
     <div

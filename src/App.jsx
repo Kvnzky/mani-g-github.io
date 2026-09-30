@@ -9,7 +9,7 @@ import AdminPortal from './components/AdminPortal';
 import AdminLoginModal from './components/AdminLoginModal';
 import OrderCutoffBanner from './components/OrderCutoffBanner';
 import BrandStoryAndSuki from './components/BrandStoryAndSuki';
-import HalloweenAtmosphere, { PlayfulSkeletonSvg, PlayfulMummySvg, SharpBatSvg, CornerWebWithSpider } from './components/HalloweenAtmosphere';
+import HalloweenAtmosphere, { PlayfulSkeletonSvg, SharpBatSvg, CornerWebWithSpider } from './components/HalloweenAtmosphere';
 import HalloweenMascotVideo from './components/HalloweenMascotVideo';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
@@ -21,7 +21,7 @@ import {
   getManilaTimeStr12,
   normalizeCutoffTime
 } from './utils/phtTime';
-import { AlertCircle, ChevronRight, Lock, X, Sparkles, Flame, Plus, ArrowDown } from 'lucide-react';
+import { AlertCircle, ChevronRight, Lock, X, Sparkles, Flame, ArrowDown } from 'lucide-react';
 
 // Helper to get the base root path (before any /admin segment) so relative assets never break on reload
 const getBaseRootPath = () => {
