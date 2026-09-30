@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sparkles, Flame, HeartHandshake, Plus, ArrowUpRight } from 'lucide-react';
 import { formatPHP } from '../config/products';
-import { PlayfulSkeletonSvg, PlayfulMummySvg } from './HalloweenAtmosphere';
+import { PlayfulSkeletonSvg, PlayfulMummySvg, CornerWebWithSpider } from './HalloweenAtmosphere';
 
 const SUKI_COMBOS = [
   {
@@ -151,24 +151,29 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
 
   return (
     <div className="space-y-12 sm:space-y-16 pt-6">
-      {/* SECTION 1: MGA SUKI FAVORITES & CURATED COMBOS */}
+      {/* SECTION 1: MGA SUKI FAVORITES & CURATED COMBOS (with Supporting Skeleton Character) */}
       <section id="suki-favorites" className="space-y-6 scroll-mt-24">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#FF6B00] text-white border border-amber-300 -rotate-1 mb-2 shadow-2xs">
-              <Flame className="w-3.5 h-3.5 text-amber-200 fill-amber-200" />
-              <span>🎃 Mga Suki Crowd Favorites</span>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex shrink-0 bg-[#2B1B30] p-2 rounded-3xl border-2 border-[#FF6B00] shadow-pumpkin-tub">
+              <PlayfulSkeletonSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(255,107,0,0.4)]" />
             </div>
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-xs">
-              Not Sure Which Tub to Pick? Try a Suki Combo! 🥜
-            </h2>
-            <p className="text-xs sm:text-sm text-amber-100/90 font-medium mt-1 max-w-2xl">
-              Popular flavor combinations inspired by how our mga suki pair their tubs. Add a bundle to your basket in one tap!
-            </p>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#FF6B00] text-white border border-amber-300 -rotate-1 mb-2 shadow-2xs">
+                <Flame className="w-3.5 h-3.5 text-amber-200 fill-amber-200" />
+                <span>🎃 Mga Suki Crowd Favorites</span>
+              </div>
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-xs">
+                Not Sure Which Tub to Pick? Try a Suki Combo! 🥜
+              </h2>
+              <p className="text-xs sm:text-sm text-amber-100/90 font-medium mt-1 max-w-2xl">
+                Popular flavor combinations inspired by how our mga suki pair their tubs. Add a bundle to your basket in one tap!
+              </p>
+            </div>
           </div>
           <a
             href="#flavors-menu"
-            className="inline-flex items-center gap-1 text-xs font-extrabold text-amber-300 hover:text-white bg-[#2B1B30] hover:bg-[#FF6B00] px-3.5 py-2 rounded-xl border-2 border-[#FF6B00] transition-all self-start sm:self-auto"
+            className="inline-flex items-center gap-1 text-xs font-extrabold text-amber-300 hover:text-white bg-[#2B1B30] hover:bg-[#FF6B00] px-3.5 py-2 rounded-xl border-2 border-[#FF6B00] transition-all self-start sm:self-auto shrink-0"
           >
             <span>Browse Individual Tubs</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -252,11 +257,15 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
         </div>
       </section>
 
-      {/* SECTION 2: BRAND STORY ("KWENTO NG MANI WANDERING") */}
+      {/* SECTION 2: BRAND STORY ("KWENTO NG MANI WANDERING") with Featured Mummy Character Focal Point */}
       <section
         id="brand-story"
         className="rounded-3xl bg-gradient-to-br from-[#2B1B30] via-[#1F1025] to-[#2B1B30] text-cream p-6 sm:p-8 lg:p-10 border-2 border-[#FF6B00] shadow-pumpkin-card relative overflow-hidden scroll-mt-24"
       >
+        {/* Anchored Corner Cobweb & Spider inside Brand Story Section */}
+        <CornerWebWithSpider position="left" size="sm" showSpider={false} />
+        <CornerWebWithSpider position="right" size="sm" showSpider={true} />
+
         {/* Subtle decorative pumpkin & golden glow */}
         <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#FF6B00]/20 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
@@ -276,23 +285,25 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
               </p>
             </div>
 
-            {/* Mascot + Skeleton & Mummy Badge Card */}
-            <div className="flex items-center gap-3.5 bg-[#1F1025]/90 backdrop-blur-xs p-4 rounded-3xl border-2 border-[#FF6B00]/70 shadow-pumpkin-tub shrink-0 self-start lg:self-center">
-              <PlayfulSkeletonSvg className="w-10 h-14 hidden sm:block shrink-0 animate-float-slow" />
-              <img
-                src="./images/mani-halloween-logo.png"
-                alt="Mani Wandering Mascot"
-                className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-[0_2px_10px_rgba(255,107,0,0.45)] shrink-0 select-none"
-              />
-              <div>
+            {/* Featured Mummy Character Focal Point Card */}
+            <div className="flex items-center gap-4 bg-[#1F1025]/95 backdrop-blur-xs p-4 sm:p-5 rounded-3xl border-2 border-[#FF6B00] shadow-pumpkin-tub shrink-0 self-start lg:self-center">
+              <PlayfulMummySvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(245,158,11,0.45)]" />
+              <div className="space-y-1">
+                <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FF6B00] text-white border border-amber-300">
+                  Mummy’s Favorite Stash
+                </span>
                 <div className="font-display text-base sm:text-lg font-bold text-amber-300">
                   “Trick or Treat Crunch!”
                 </div>
-                <p className="text-xs text-amber-100/85 font-medium max-w-[200px] mt-0.5">
-                  7 signature flavors crafted for horror movie nights, merienda, pulutan &amp; road trips.
+                <p className="text-xs text-amber-100/85 font-medium max-w-[210px]">
+                  7 signature flavors wrapped up fresh for horror movie nights, merienda, pulutan &amp; road trips.
                 </p>
               </div>
-              <PlayfulMummySvg className="w-10 h-14 hidden sm:block shrink-0 animate-float-reverse" />
+              <img
+                src="./images/mani-halloween-logo.png"
+                alt="Mani Wandering Mascot"
+                className="w-14 h-14 sm:w-16 sm:h-16 hidden sm:block object-contain drop-shadow-[0_2px_10px_rgba(255,107,0,0.45)] shrink-0 select-none"
+              />
             </div>
           </div>
 

@@ -21,21 +21,90 @@ export function SharpBatSvg({ className = 'w-12 h-7' }) {
 }
 
 /**
- * Autumn Maple / Oak Leaf SVG
+ * Multi-Shape Autumn Leaf SVG (Maple, Oak, Birch, Ginkgo)
  */
-export function AutumnLeafSvg({ className = 'w-6 h-6', color = '#FF6B00' }) {
+export function AutumnLeafSvg({
+  className = 'w-6 h-6',
+  color = '#FF6B00',
+  accent = '#FBBF24',
+  variant = 'maple'
+}) {
+  if (variant === 'oak') {
+    return (
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true" className={className}>
+        <path
+          d="M24 3 C28 3 30 7 28 10 C33 9 37 12 34 17 C39 17 42 21 37 25 C40 28 38 33 33 33 C31 36 27 37 25 39 L24 45 L23 39 C21 37 17 36 15 33 C10 33 8 28 11 25 C6 21 9 17 14 17 C11 12 15 9 20 10 C18 7 20 3 24 3 Z"
+          fill={color}
+          stroke="#1F1025"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M24 9 L24 43 M24 18 L17 14 M24 23 L31 19 M24 29 L16 25 M24 32 L31 28"
+          stroke="#1F1025"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  if (variant === 'birch') {
+    return (
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true" className={className}>
+        <path
+          d="M24 4 C33 11 39 20 37 29 C35 36 29 39 25 40 L24 45 L23 40 C19 39 13 36 11 29 C9 20 15 11 24 4 Z"
+          fill={color}
+          stroke="#1F1025"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M24 9 C29 15 32 22 31 29"
+          stroke={accent}
+          strokeOpacity="0.55"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M24 10 L24 44 M24 20 L16 15 M24 25 L32 20 M24 31 L17 27"
+          stroke="#1F1025"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  if (variant === 'ginkgo') {
+    return (
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true" className={className}>
+        <path
+          d="M24 36 L24 45 M24 36 C12 34 6 24 9 14 C12 9 18 8 22 13 L24 17 L26 13 C30 8 36 9 39 14 C42 24 36 34 24 36 Z"
+          fill={color}
+          stroke="#1F1025"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M24 35 L16 17 M24 35 L24 19 M24 35 L32 17"
+          stroke="#1F1025"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  // Default: Classic Multi-Pointed Maple Leaf
   return (
-    <svg
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden="true"
-      className={className}
-    >
+    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true" className={className}>
       <path
         d="M24 3 L28 13 L39 9 L34 19 L44 23 L33 28 L36 37 L26 34 L24 45 L22 34 L12 37 L15 28 L4 23 L14 19 L9 9 L20 13 Z"
         fill={color}
         stroke="#1F1025"
-        strokeWidth="1.5"
+        strokeWidth="1.6"
         strokeLinejoin="round"
       />
       <path
@@ -49,163 +118,492 @@ export function AutumnLeafSvg({ className = 'w-6 h-6', color = '#FF6B00' }) {
 }
 
 /**
- * Playful Friendly Skeleton Character Illustration
+ * Redesigned Polished Cartoon Skeleton Character Illustration
+ * Matches the Mani Wandering mascot aesthetic: bold #1F1025 outlines, dimensional bone shading,
+ * expressive glowing eyes, dapper trick-or-treat bowtie, waving hand, and holding a golden roasted peanut.
  */
-export function PlayfulSkeletonSvg({ className = 'w-16 h-20' }) {
+export function PlayfulSkeletonSvg({ className = 'w-24 h-28' }) {
   return (
     <svg
-      viewBox="0 0 96 120"
+      viewBox="0 0 180 200"
       fill="none"
       aria-hidden="true"
-      className={className}
+      className={`animate-float-slow ${className}`}
     >
-      {/* Warm Pumpkin Aura */}
-      <circle cx="48" cy="58" r="40" fill="#FF6B00" fillOpacity="0.14" />
-      {/* Skull cranium */}
+      {/* Warm Pumpkin Backlight Aura */}
+      <ellipse cx="92" cy="102" rx="68" ry="74" fill="#FF6B00" fillOpacity="0.14" />
+      <ellipse cx="92" cy="178" rx="44" ry="8" fill="#120717" fillOpacity="0.45" />
+
+      {/* Waving Left Arm (Viewer's Left) with smooth wave animation */}
+      <g className="animate-skeleton-wave">
+        {/* Upper Humerus Bone */}
+        <path
+          d="M60 116 L36 96 L26 70"
+          stroke="#1F1025"
+          strokeWidth="12"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M60 116 L36 96 L26 70"
+          stroke="#FFFDF7"
+          strokeWidth="6.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Cute Cartoon Bony Hand Waving */}
+        <circle cx="25" cy="66" r="8" fill="#FFFDF7" stroke="#1F1025" strokeWidth="3" />
+        <path
+          d="M19 61 L14 50 M24 58 L22 46 M30 60 L31 48 M33 65 L39 58"
+          stroke="#1F1025"
+          strokeWidth="5.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M19 61 L14 50 M24 58 L22 46 M30 60 L31 48 M33 65 L39 58"
+          stroke="#FFFDF7"
+          strokeWidth="2.8"
+          strokeLinecap="round"
+        />
+      </g>
+
+      {/* Spine Column */}
+      <path d="M90 102 L90 156" stroke="#1F1025" strokeWidth="13" strokeLinecap="round" />
+      <path d="M90 102 L90 156" stroke="#E5DDF5" strokeWidth="7" strokeLinecap="round" />
+
+      {/* Sculpted Cartoon Ribcage */}
+      <g>
+        {/* Top Rib */}
+        <path
+          d="M64 115 C74 123 106 123 116 115"
+          stroke="#1F1025"
+          strokeWidth="12"
+          strokeLinecap="round"
+        />
+        <path
+          d="M64 115 C74 123 106 123 116 115"
+          stroke="#FFFDF7"
+          strokeWidth="6.5"
+          strokeLinecap="round"
+        />
+        {/* Middle Rib */}
+        <path
+          d="M68 129 C77 136 103 136 112 129"
+          stroke="#1F1025"
+          strokeWidth="11.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M68 129 C77 136 103 136 112 129"
+          stroke="#FFFDF7"
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+        {/* Lower Rib */}
+        <path
+          d="M73 142 C81 147 99 147 107 142"
+          stroke="#1F1025"
+          strokeWidth="10.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M73 142 C81 147 99 147 107 142"
+          stroke="#FFFDF7"
+          strokeWidth="5.5"
+          strokeLinecap="round"
+        />
+        {/* Sternum Center Highlight */}
+        <path d="M90 112 L90 140" stroke="#FFFDF7" strokeWidth="5" strokeLinecap="round" />
+      </g>
+
+      {/* Pelvis & Cute Legs */}
       <path
-        d="M26 34 C26 17 70 17 70 34 C70 43 65 48 61 51 L61 59 C61 62 58 64 55 64 L41 64 C38 64 35 62 35 59 L35 51 C31 48 26 43 26 34 Z"
+        d="M71 154 C71 148 109 148 109 154 C111 163 101 167 90 165 C79 167 69 163 71 154 Z"
         fill="#FFFDF7"
         stroke="#1F1025"
-        strokeWidth="3"
+        strokeWidth="3.2"
       />
-      {/* Spooky-cute eye sockets */}
-      <circle cx="39" cy="36" r="6" fill="#1F1025" />
-      <circle cx="57" cy="36" r="6" fill="#1F1025" />
-      <circle cx="40.5" cy="34.5" r="2" fill="#FF6B00" />
-      <circle cx="58.5" cy="34.5" r="2" fill="#FF6B00" />
-      {/* Nose cavity */}
-      <path d="M48 42 L45 48 L51 48 Z" fill="#1F1025" />
-      {/* Friendly stitched grin */}
-      <path d="M39 55 L57 55" stroke="#1F1025" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M43 52 L43 58 M48 52 L48 58 M53 52 L53 58" stroke="#1F1025" strokeWidth="2" strokeLinecap="round" />
-      {/* Spine & Ribcage */}
-      <path d="M48 64 L48 98" stroke="#FFFDF7" strokeWidth="4" strokeLinecap="round" />
-      <path d="M34 72 Q48 77 62 72" stroke="#FFFDF7" strokeWidth="4" strokeLinecap="round" />
-      <path d="M36 81 Q48 86 60 81" stroke="#FFFDF7" strokeWidth="4" strokeLinecap="round" />
-      <path d="M39 90 Q48 94 57 90" stroke="#FFFDF7" strokeWidth="3.5" strokeLinecap="round" />
-      {/* Waving Bony Arms */}
-      <path d="M34 72 L20 60 L15 48" stroke="#FFFDF7" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M62 72 L76 62 L82 50" stroke="#FFFDF7" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Mini glowing peanut held by skeleton */}
-      <ellipse cx="14" cy="44" rx="5" ry="7" transform="rotate(-20 14 44)" fill="#F59E0B" stroke="#1F1025" strokeWidth="2" />
-      {/* Pelvis */}
-      <path d="M38 99 C38 95 58 95 58 99 C58 104 52 106 48 106 C44 106 38 104 38 99 Z" fill="#FFFDF7" stroke="#1F1025" strokeWidth="2.5" />
+      <circle cx="79" cy="157" r="3" fill="#1F1025" />
+      <circle cx="101" cy="157" r="3" fill="#1F1025" />
+      {/* Bony Legs */}
+      <path d="M80 164 L77 176 M100 164 L103 176" stroke="#1F1025" strokeWidth="10" strokeLinecap="round" />
+      <path d="M80 164 L77 176 M100 164 L103 176" stroke="#FFFDF7" strokeWidth="5" strokeLinecap="round" />
+
+      {/* Right Arm (Viewer's Right) Holding a Golden Roasted Peanut */}
+      <g>
+        <path
+          d="M118 116 L140 106 L148 88"
+          stroke="#1F1025"
+          strokeWidth="12"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M118 116 L140 106 L148 88"
+          stroke="#FFFDF7"
+          strokeWidth="6.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Golden Roasted Mani Peanut Held Up */}
+        <g transform="translate(136, 56) rotate(14)">
+          <path
+            d="M14 4 C21 4 24 10 21 16 C20 18 20 20 22 23 C25 29 20 36 13 36 C6 36 3 29 6 23 C8 20 8 18 7 16 C4 10 7 4 14 4 Z"
+            fill="#F59E0B"
+            stroke="#1F1025"
+            strokeWidth="3"
+          />
+          <path
+            d="M11 9 C14 14 14 25 11 31 M17 9 C15 15 15 25 17 31"
+            stroke="#B45309"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <circle cx="11" cy="11" r="2" fill="#FEF08A" />
+        </g>
+        <circle cx="149" cy="86" r="6.5" fill="#FFFDF7" stroke="#1F1025" strokeWidth="3" />
+      </g>
+
+      {/* Festive Spooky Bowtie at Neck */}
+      <g transform="translate(90, 104)">
+        <path
+          d="M-18 -8 L-2 -2 L-18 8 C-21 4 -21 -4 -18 -8 Z M18 -8 L2 -2 L18 8 C21 4 21 -4 18 -8 Z"
+          fill="#FF6B00"
+          stroke="#1F1025"
+          strokeWidth="2.8"
+          strokeLinejoin="round"
+        />
+        <circle cx="0" cy="0" r="5" fill="#FBBF24" stroke="#1F1025" strokeWidth="2.6" />
+      </g>
+
+      {/* Sculpted Cartoon Skull Head with Subtle Tilt */}
+      <g className="animate-head-tilt">
+        {/* Skull Base Shadow & Ivory Cranium */}
+        <path
+          d="M46 56 C46 24 134 24 134 56 C134 69 127 78 117 83 L115 94 C115 99 109 102 102 102 L78 102 C71 102 65 99 65 94 L63 83 C53 78 46 69 46 56 Z"
+          fill="#FFFDF7"
+          stroke="#1F1025"
+          strokeWidth="3.8"
+          strokeLinejoin="round"
+        />
+        {/* Subtle Lavender-Bone Inner Shading along Left/Bottom */}
+        <path
+          d="M52 58 C52 70 59 76 67 80 L69 93 C74 96 82 97 90 97"
+          stroke="#E5DDF5"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        {/* Forehead Crown Highlight */}
+        <path
+          d="M66 37 C78 31 102 31 114 37"
+          stroke="#FFFFFF"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+        />
+
+        {/* Friendly Arched Brow Ridges */}
+        <path d="M62 47 Q73 42 82 47" stroke="#1F1025" strokeWidth="2.8" strokeLinecap="round" />
+        <path d="M98 47 Q107 42 118 47" stroke="#1F1025" strokeWidth="2.8" strokeLinecap="round" />
+
+        {/* Expressive Eye Sockets with Warm Glowing Pupils & Catchlights */}
+        <ellipse cx="73" cy="60" rx="11.5" ry="12.5" fill="#1F1025" />
+        <ellipse cx="107" cy="60" rx="11.5" ry="12.5" fill="#1F1025" />
+        <circle cx="74" cy="60" r="5.5" fill="#FF6B00" />
+        <circle cx="108" cy="60" r="5.5" fill="#FF6B00" />
+        <circle cx="71" cy="56.5" r="2.6" fill="#FFFFFF" />
+        <circle cx="105" cy="56.5" r="2.6" fill="#FFFFFF" />
+        <circle cx="77" cy="63" r="1.3" fill="#FEF08A" />
+        <circle cx="111" cy="63" r="1.3" fill="#FEF08A" />
+
+        {/* Cute Rosy Pumpkin Cheeks */}
+        <ellipse cx="57" cy="70" rx="5.5" ry="3.2" fill="#FF6B00" fillOpacity="0.48" />
+        <ellipse cx="123" cy="70" rx="5.5" ry="3.2" fill="#FF6B00" fillOpacity="0.48" />
+
+        {/* Cute Upside-Down Heart Nose Cavity */}
+        <path
+          d="M90 67 L85 75 C85 77 88 78 90 76 C92 78 95 77 95 75 Z"
+          fill="#1F1025"
+        />
+
+        {/* Cheerful Stitched Cartoon Grin */}
+        <path
+          d="M72 85 Q90 94 108 85"
+          stroke="#1F1025"
+          strokeWidth="3.2"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <path
+          d="M79 84 L79 91 M86 86 L86 93 M94 86 L94 93 M101 84 L101 91"
+          stroke="#1F1025"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+        />
+      </g>
     </svg>
   );
 }
 
 /**
- * Playful Wrapped Mummy Character Illustration
+ * Redesigned Polished Wrapped Mummy Character Illustration
+ * Cute, friendly Halloween mummy with layered linen bandage wraps, glowing expressive eyes,
+ * fluttering bandage ribbon, and hugging a glowing Mani Wandering peanut tub.
  */
-export function PlayfulMummySvg({ className = 'w-16 h-20' }) {
+export function PlayfulMummySvg({ className = 'w-24 h-28' }) {
   return (
     <svg
-      viewBox="0 0 96 120"
+      viewBox="0 0 180 200"
       fill="none"
       aria-hidden="true"
-      className={className}
+      className={`animate-mummy-sway ${className}`}
     >
-      {/* Soft Golden Glow */}
-      <circle cx="48" cy="58" r="40" fill="#F59E0B" fillOpacity="0.14" />
-      {/* Mummy Head */}
-      <circle cx="48" cy="38" r="22" fill="#F5EBD6" stroke="#1F1025" strokeWidth="3" />
-      {/* Dark peek-slot for glowing eyes */}
-      <rect x="31" y="30" width="34" height="12" rx="6" fill="#1F1025" />
-      {/* Glowing Golden Eyes */}
-      <circle cx="41" cy="36" r="3.5" fill="#FF6B00" />
-      <circle cx="55" cy="36" r="3.5" fill="#FF6B00" />
-      <circle cx="42" cy="35" r="1.2" fill="#FEF08A" />
-      <circle cx="56" cy="35" r="1.2" fill="#FEF08A" />
-      {/* Bandage wrap lines across head */}
-      <path d="M27 28 L68 22 M26 45 L69 49 M32 53 L65 43 M34 20 L62 28" stroke="#D6C5A3" strokeWidth="2.5" strokeLinecap="round" />
-      {/* Mummy Torso wrapped in bandages */}
-      <rect x="32" y="59" width="32" height="42" rx="12" fill="#F5EBD6" stroke="#1F1025" strokeWidth="3" />
-      <path d="M33 68 L63 73 M33 79 L63 74 M33 88 L63 93" stroke="#D6C5A3" strokeWidth="2.5" strokeLinecap="round" />
-      {/* Cute trailing bandage strip */}
-      <path d="M64 74 Q78 78 75 92 Q73 100 82 103" stroke="#F5EBD6" strokeWidth="4" strokeLinecap="round" />
-      {/* Friendly Arms */}
-      <path d="M32 66 L18 76" stroke="#F5EBD6" strokeWidth="6" strokeLinecap="round" />
-      <path d="M64 66 L78 56" stroke="#F5EBD6" strokeWidth="6" strokeLinecap="round" />
+      {/* Soft Golden Moonlight Aura & Ground Shadow */}
+      <ellipse cx="90" cy="102" rx="68" ry="74" fill="#F59E0B" fillOpacity="0.15" />
+      <ellipse cx="90" cy="180" rx="46" ry="8" fill="#120717" fillOpacity="0.45" />
+
+      {/* Cute Fluttering Loose Bandage Tail on Right */}
+      <path
+        d="M126 118 C144 114 156 124 149 138 C144 148 154 156 164 152"
+        stroke="#1F1025"
+        strokeWidth="12"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M126 118 C144 114 156 124 149 138 C144 148 154 156 164 152"
+        stroke="#FAF3E3"
+        strokeWidth="6.5"
+        strokeLinecap="round"
+        fill="none"
+      />
+
+      {/* Mummy Wrapped Legs */}
+      <rect x="68" y="150" width="18" height="26" rx="9" fill="#EFE2C6" stroke="#1F1025" strokeWidth="3.4" />
+      <rect x="94" y="150" width="18" height="26" rx="9" fill="#EFE2C6" stroke="#1F1025" strokeWidth="3.4" />
+      <path d="M70 161 L84 164 M96 163 L110 160" stroke="#C8B28B" strokeWidth="2.4" strokeLinecap="round" />
+
+      {/* Mummy Wrapped Chibi Torso */}
+      <rect x="56" y="96" width="68" height="62" rx="26" fill="#FAF3E3" stroke="#1F1025" strokeWidth="3.6" />
+      {/* Bandage Layer Stripes Across Torso */}
+      <path
+        d="M58 110 L122 117 M57 124 L123 118 M58 136 L122 143 M62 149 L118 142"
+        stroke="#D5C09A"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      {/* Left Wrapped Arm Waving Cheerfully */}
+      <path
+        d="M58 110 C40 104 30 92 34 78"
+        stroke="#1F1025"
+        strokeWidth="16"
+        strokeLinecap="round"
+      />
+      <path
+        d="M58 110 C40 104 30 92 34 78"
+        stroke="#FAF3E3"
+        strokeWidth="10"
+        strokeLinecap="round"
+      />
+      <path d="M35 88 L43 91 M42 99 L49 103" stroke="#D5C09A" strokeWidth="2.4" strokeLinecap="round" />
+
+      {/* Glowing Mani Wandering Peanut Tub Held by Mummy */}
+      <g transform="translate(62, 112)">
+        {/* Overflowing Golden Peanuts at Top of Tub */}
+        <ellipse cx="18" cy="10" rx="7" ry="5" fill="#F59E0B" stroke="#1F1025" strokeWidth="2.2" />
+        <ellipse cx="29" cy="8" rx="7.5" ry="5.5" fill="#FBBF24" stroke="#1F1025" strokeWidth="2.2" />
+        <ellipse cx="40" cy="10" rx="7" ry="5" fill="#D97706" stroke="#1F1025" strokeWidth="2.2" />
+        {/* Snack Tub Body */}
+        <path
+          d="M8 12 L48 12 L44 40 C43 43 40 45 36 45 L20 45 C16 45 13 43 12 40 Z"
+          fill="#FF6B00"
+          stroke="#1F1025"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        {/* Tub Lid Rim */}
+        <rect x="5" y="9" width="46" height="6" rx="3" fill="#FBBF24" stroke="#1F1025" strokeWidth="2.5" />
+        {/* Cute Label on Tub */}
+        <rect x="15" y="21" width="26" height="15" rx="4" fill="#1F1025" stroke="#FEF08A" strokeWidth="1.5" />
+        <text x="28" y="31" textAnchor="middle" fill="#FBBF24" fontSize="7.5" fontWeight="900" fontFamily="sans-serif">
+          MANI
+        </text>
+      </g>
+
+      {/* Right Wrapped Arm Hugging the Peanut Tub */}
+      <path
+        d="M122 112 C136 120 130 136 112 136"
+        stroke="#1F1025"
+        strokeWidth="15"
+        strokeLinecap="round"
+      />
+      <path
+        d="M122 112 C136 120 130 136 112 136"
+        stroke="#FAF3E3"
+        strokeWidth="9.5"
+        strokeLinecap="round"
+      />
+
+      {/* Mummy Head with Subtle Head Tilt */}
+      <g className="animate-head-tilt">
+        {/* Head Base */}
+        <rect x="44" y="26" width="92" height="74" rx="36" fill="#FAF3E3" stroke="#1F1025" strokeWidth="3.8" />
+        {/* Warm Inner Shading on Head */}
+        <path
+          d="M49 52 C49 36 65 30 90 30 C115 30 131 36 131 52"
+          stroke="#FFFFFF"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+        />
+
+        {/* Dark Cozy Face Peek-Slot */}
+        <rect x="55" y="49" width="70" height="28" rx="14" fill="#1F1025" stroke="#D5C09A" strokeWidth="2" />
+
+        {/* Big Expressive Glowing Amber-Gold Eyes */}
+        <circle cx="75" cy="63" r="8.5" fill="#FF6B00" />
+        <circle cx="105" cy="63" r="8.5" fill="#FF6B00" />
+        <circle cx="75" cy="63" r="5" fill="#FEF08A" />
+        <circle cx="105" cy="63" r="5" fill="#FEF08A" />
+        {/* Starry White Eye Catchlights */}
+        <circle cx="72" cy="59.5" r="2.6" fill="#FFFFFF" />
+        <circle cx="102" cy="59.5" r="2.6" fill="#FFFFFF" />
+        <circle cx="78" cy="66" r="1.3" fill="#FFFFFF" />
+        <circle cx="108" cy="66" r="1.3" fill="#FFFFFF" />
+
+        {/* Rosy Cheeks Inside Peek-Slot */}
+        <ellipse cx="62" cy="69" rx="4.5" ry="2.5" fill="#FF6B00" fillOpacity="0.6" />
+        <ellipse cx="118" cy="69" rx="4.5" ry="2.5" fill="#FF6B00" fillOpacity="0.6" />
+
+        {/* Cute Happy Smile with Single Tiny Fang */}
+        <path d="M85 68 Q90 73 95 68" stroke="#FEF08A" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+        <polygon points="91,70 93,74 95,70" fill="#FFFFFF" />
+
+        {/* Crisscrossing Bandage Wraps Across Forehead & Chin */}
+        <path
+          d="M48 44 L132 36 M46 37 L128 49 M48 80 L132 86 M54 90 L126 78"
+          stroke="#D5C09A"
+          strokeWidth="3.2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M48 44 L132 36 M48 80 L132 86"
+          stroke="#1F1025"
+          strokeWidth="1.4"
+          strokeOpacity="0.35"
+          strokeLinecap="round"
+        />
+      </g>
     </svg>
   );
 }
 
 /**
- * Corner Cobweb + Crawling/Dangling Spider SVG
+ * Realistic, Cleanly Anchored Corner Cobweb + Hanging Spider SVG
+ * Uses `position: absolute` (never floating `fixed` on scroll) so it stays naturally
+ * anchored to the top corners of the page or section.
  */
-function CornerWebWithSpider({ position = 'left' }) {
+export function CornerWebWithSpider({ position = 'left', size = 'lg', showSpider = true }) {
   const isRight = position === 'right';
+  const sizeClasses =
+    size === 'sm'
+      ? 'w-24 h-24 sm:w-32 sm:h-32'
+      : 'w-32 h-32 sm:w-44 sm:h-44 lg:w-52 lg:h-52';
+
   return (
     <div
       aria-hidden="true"
-      className={`pointer-events-none select-none fixed top-14 ${
+      className={`pointer-events-none select-none absolute top-0 ${
         isRight ? 'right-0 scale-x-[-1]' : 'left-0'
-      } z-20 w-28 h-28 sm:w-40 sm:h-40 opacity-65`}
+      } z-20 ${sizeClasses} opacity-75`}
     >
-      <svg viewBox="0 0 160 160" fill="none" className="w-full h-full">
-        {/* Radial cobweb strands */}
+      <svg viewBox="0 0 200 200" fill="none" className="w-full h-full">
+        {/* Anchor threads flush along top (y=0) and left (x=0) edges plus 6 radial spokes */}
         <path
-          d="M0 0 L150 20 M0 0 L135 70 M0 0 L105 115 M0 0 L65 145 M0 0 L20 155"
+          d="M0 0 L196 0 M0 0 L192 38 M0 0 L178 82 M0 0 L152 124 M0 0 L118 158 M0 0 L76 182 M0 0 L34 194 M0 0 L0 196"
+          stroke="#FBBF24"
+          strokeOpacity="0.48"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+
+        {/* Ring 1 (Inner catenary silk ring anchored from y=0 to x=0) */}
+        <path
+          d="M36 0 Q32 5 35 7 Q30 12 32 15 Q26 20 27 22 Q20 26 21 29 Q13 31 14 33 Q6 34 6 35 Q3 35 0 36"
           stroke="#F59E0B"
           strokeOpacity="0.45"
-          strokeWidth="1.5"
+          strokeWidth="1.2"
+          fill="none"
         />
-        {/* Curved concentric web rings */}
+
+        {/* Ring 2 */}
         <path
-          d="M40 6 Q38 22 28 30 Q18 38 6 42"
+          d="M74 0 Q66 10 71 14 Q61 24 66 30 Q52 39 56 46 Q41 53 44 59 Q26 63 28 67 Q12 69 13 72 Q5 72 0 74"
           stroke="#F59E0B"
-          strokeOpacity="0.4"
+          strokeOpacity="0.42"
+          strokeWidth="1.25"
+          fill="none"
+        />
+
+        {/* Ring 3 */}
+        <path
+          d="M114 0 Q102 15 110 22 Q94 37 102 47 Q81 60 87 71 Q64 81 68 90 Q41 96 44 104 Q19 107 20 111 Q8 112 0 114"
+          stroke="#FF6B00"
+          strokeOpacity="0.38"
           strokeWidth="1.3"
           fill="none"
         />
+
+        {/* Ring 4 */}
         <path
-          d="M78 11 Q72 38 55 58 Q36 76 10 82"
-          stroke="#F59E0B"
-          strokeOpacity="0.4"
+          d="M156 0 Q140 20 151 30 Q128 50 140 64 Q110 82 119 97 Q86 111 93 124 Q56 132 60 143 Q26 146 27 152 Q11 153 0 156"
+          stroke="#FBBF24"
+          strokeOpacity="0.34"
           strokeWidth="1.3"
           fill="none"
         />
-        <path
-          d="M116 16 Q105 56 80 86 Q50 112 15 120"
-          stroke="#F59E0B"
-          strokeOpacity="0.35"
-          strokeWidth="1.3"
-          fill="none"
-        />
+
+        {/* Subtle golden dewdrop highlights at web nodes */}
+        <circle cx="71" cy="14" r="1.6" fill="#FEF08A" fillOpacity="0.7" />
+        <circle cx="102" cy="47" r="1.8" fill="#FF6B00" fillOpacity="0.7" />
+        <circle cx="68" cy="90" r="1.6" fill="#FEF08A" fillOpacity="0.7" />
       </svg>
 
-      {/* Dangling Spider on Silk Thread */}
-      <div
-        className={`absolute ${
-          isRight ? 'left-10 top-6' : 'left-8 top-8'
-        } animate-spider-bob`}
-      >
-        <svg viewBox="0 0 40 80" fill="none" className="w-8 h-16">
-          {/* Silk thread */}
-          <line x1="20" y1="0" x2="20" y2="48" stroke="#FBBF24" strokeOpacity="0.55" strokeWidth="1.2" />
-          {/* Spider body */}
-          <circle cx="20" cy="54" r="6.5" fill="#1F1025" stroke="#FF6B00" strokeWidth="1.5" />
-          <circle cx="20" cy="46" r="4" fill="#1F1025" stroke="#FF6B00" strokeWidth="1.2" />
-          {/* 8 angular spider legs */}
-          <path
-            d="M14 50 L6 45 L3 50 M13 53 L5 52 L2 57 M14 56 L6 59 L4 64 M15 59 L9 64 L7 69"
-            stroke="#FF6B00"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M26 50 L34 45 L37 50 M27 53 L35 52 L38 57 M26 56 L34 59 L36 64 M25 59 L31 64 L33 69"
-            stroke="#FF6B00"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Tiny glowing spider eyes */}
-          <circle cx="18.5" cy="45.5" r="1" fill="#FF6B00" />
-          <circle cx="21.5" cy="45.5" r="1" fill="#FF6B00" />
-        </svg>
-      </div>
+      {/* Dangling Spider Anchored to Radial Spoke */}
+      {showSpider && (
+        <div
+          className={`absolute ${
+            isRight ? 'left-[58px] top-[34px]' : 'left-[64px] top-[28px]'
+          } animate-spider-bob`}
+        >
+          <svg viewBox="0 0 44 86" fill="none" className="w-8 h-16 sm:w-9 sm:h-18 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
+            {/* Silk suspension line anchored to top */}
+            <line x1="22" y1="0" x2="22" y2="50" stroke="#FEF08A" strokeOpacity="0.65" strokeWidth="1.3" />
+            {/* Spider abdomen & cephalothorax */}
+            <circle cx="22" cy="58" r="7" fill="#1F1025" stroke="#FF6B00" strokeWidth="1.6" />
+            <circle cx="22" cy="49" r="4.5" fill="#1F1025" stroke="#FF6B00" strokeWidth="1.4" />
+            {/* Tiny golden hourglass/chevron mark on spider back */}
+            <polygon points="22,55 19.5,59 24.5,59" fill="#FF6B00" fillOpacity="0.85" />
+            {/* 8 articulated angular legs */}
+            <path
+              d="M16 52 L7 46 L3 52 M15 56 L5 54 L2 60 M15 60 L6 63 L4 69 M17 63 L10 69 L8 75"
+              stroke="#FF6B00"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M28 52 L37 46 L41 52 M29 56 L39 54 L42 60 M29 60 L38 63 L40 69 M27 63 L34 69 L36 75"
+              stroke="#FF6B00"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {/* Glowing eyes */}
+            <circle cx="20.2" cy="48.5" r="1.1" fill="#FEF08A" />
+            <circle cx="23.8" cy="48.5" r="1.1" fill="#FEF08A" />
+          </svg>
+        </div>
+      )}
     </div>
   );
 }
@@ -307,14 +705,34 @@ function CuteRoamingGhost({ variant = 'primary' }) {
   );
 }
 
+/**
+ * 18 Multi-Depth Falling Autumn Leaves with Varied Shapes, Sizes, Speeds, and Staggered Timing
+ * (Negative delays ensure leaves are naturally distributed across the page immediately on load)
+ */
 const FALLING_LEAVES = [
-  { id: 1, left: '6%', delay: '0s', duration: '15s', color: '#FF6B00', size: 'w-5 h-5' },
-  { id: 2, left: '19%', delay: '3.5s', duration: '18s', color: '#F59E0B', size: 'w-6 h-6' },
-  { id: 3, left: '34%', delay: '7s', duration: '16s', color: '#EA580C', size: 'w-4 h-4' },
-  { id: 4, left: '52%', delay: '1.8s', duration: '19s', color: '#FBBF24', size: 'w-5 h-5' },
-  { id: 5, left: '68%', delay: '5.2s', duration: '17s', color: '#DC2626', size: 'w-6 h-6' },
-  { id: 6, left: '83%', delay: '2.4s', duration: '16s', color: '#FF6B00', size: 'w-5 h-5' },
-  { id: 7, left: '93%', delay: '8.5s', duration: '20s', color: '#F59E0B', size: 'w-4 h-4' }
+  // Foreground-depth larger leaves
+  { id: 1, left: '3%', delay: '-2.5s', duration: '15s', swayDuration: '4.8s', color: '#FF6B00', variant: 'maple', size: 'w-6 h-6 sm:w-7 sm:h-7', opacity: 'opacity-70', altSway: false, mobileHidden: false },
+  { id: 2, left: '14%', delay: '-9.2s', duration: '17s', swayDuration: '5.5s', color: '#F59E0B', variant: 'oak', size: 'w-6 h-6', opacity: 'opacity-65', altSway: true, mobileHidden: false },
+  { id: 3, left: '28%', delay: '-14.0s', duration: '16s', swayDuration: '4.6s', color: '#DC2626', variant: 'maple', size: 'w-6 h-6 sm:w-7 sm:h-7', opacity: 'opacity-65', altSway: false, mobileHidden: true },
+  { id: 4, left: '74%', delay: '-5.8s', duration: '15.5s', swayDuration: '5.1s', color: '#EA580C', variant: 'ginkgo', size: 'w-6 h-6', opacity: 'opacity-70', altSway: true, mobileHidden: false },
+  { id: 5, left: '91%', delay: '-11.4s', duration: '16.5s', swayDuration: '4.9s', color: '#FBBF24', variant: 'maple', size: 'w-6 h-6 sm:w-7 sm:h-7', opacity: 'opacity-65', altSway: false, mobileHidden: false },
+
+  // Mid-ground medium leaves
+  { id: 6, left: '8%', delay: '-6.4s', duration: '19s', swayDuration: '5.8s', color: '#EA580C', variant: 'birch', size: 'w-5 h-5', opacity: 'opacity-55', altSway: true, mobileHidden: true },
+  { id: 7, left: '21%', delay: '-1.2s', duration: '18.5s', swayDuration: '5.2s', color: '#FBBF24', variant: 'ginkgo', size: 'w-5 h-5', opacity: 'opacity-55', altSway: false, mobileHidden: false },
+  { id: 8, left: '37%', delay: '-12.6s', duration: '20s', swayDuration: '6.0s', color: '#FF6B00', variant: 'oak', size: 'w-5 h-5', opacity: 'opacity-55', altSway: true, mobileHidden: false },
+  { id: 9, left: '49%', delay: '-4.1s', duration: '19.5s', swayDuration: '5.4s', color: '#DC2626', variant: 'birch', size: 'w-5 h-5', opacity: 'opacity-50', altSway: false, mobileHidden: true },
+  { id: 10, left: '61%', delay: '-15.3s', duration: '18s', swayDuration: '4.9s', color: '#F59E0B', variant: 'maple', size: 'w-5 h-5', opacity: 'opacity-55', altSway: true, mobileHidden: false },
+  { id: 11, left: '82%', delay: '-7.7s', duration: '20.5s', swayDuration: '6.2s', color: '#FF6B00', variant: 'oak', size: 'w-5 h-5', opacity: 'opacity-55', altSway: false, mobileHidden: true },
+  { id: 12, left: '96%', delay: '-3.3s', duration: '19s', swayDuration: '5.6s', color: '#DC2626', variant: 'birch', size: 'w-5 h-5', opacity: 'opacity-55', altSway: true, mobileHidden: false },
+
+  // Distant background smaller, fainter leaves for depth
+  { id: 13, left: '11%', delay: '-16.8s', duration: '24s', swayDuration: '6.8s', color: '#F59E0B', variant: 'maple', size: 'w-3.5 h-3.5', opacity: 'opacity-35', altSway: false, mobileHidden: true },
+  { id: 14, left: '32%', delay: '-8.0s', duration: '23s', swayDuration: '6.4s', color: '#FF6B00', variant: 'ginkgo', size: 'w-4 h-4', opacity: 'opacity-40', altSway: true, mobileHidden: false },
+  { id: 15, left: '44%', delay: '-18.5s', duration: '25s', swayDuration: '7.0s', color: '#FBBF24', variant: 'oak', size: 'w-3.5 h-3.5', opacity: 'opacity-35', altSway: false, mobileHidden: true },
+  { id: 16, left: '56%', delay: '-10.5s', duration: '22.5s', swayDuration: '6.3s', color: '#EA580C', variant: 'birch', size: 'w-4 h-4', opacity: 'opacity-40', altSway: true, mobileHidden: false },
+  { id: 17, left: '68%', delay: '-1.9s', duration: '24.5s', swayDuration: '6.9s', color: '#F59E0B', variant: 'ginkgo', size: 'w-3.5 h-3.5', opacity: 'opacity-35', altSway: false, mobileHidden: true },
+  { id: 18, left: '87%', delay: '-13.7s', duration: '23.5s', swayDuration: '6.5s', color: '#FF6B00', variant: 'maple', size: 'w-4 h-4', opacity: 'opacity-40', altSway: true, mobileHidden: true }
 ];
 
 const FLYING_BATS = [
@@ -325,63 +743,72 @@ const FLYING_BATS = [
 
 export default function HalloweenAtmosphere() {
   return (
-    <div
-      aria-hidden="true"
-      data-testid="halloween-atmosphere"
-      className="pointer-events-none select-none fixed inset-0 overflow-hidden z-30"
-    >
-      {/* 1. Corner Cobwebs & Crawling/Dangling Spiders */}
-      <CornerWebWithSpider position="left" />
-      <CornerWebWithSpider position="right" />
-
-      {/* 2. Sharp, Webbed-Wing Flying Bats across Upper Background */}
-      {FLYING_BATS.map((bat) => (
-        <div
-          key={bat.id}
-          data-testid={bat.id}
-          style={{
-            top: bat.top,
-            animationDelay: bat.delay,
-            animationDuration: bat.duration
-          }}
-          className={`fixed ${
-            bat.direction === 'rtl' ? 'animate-bat-fly-rtl' : 'animate-bat-fly-ltr'
-          } text-[#120717] drop-shadow-[0_0_8px_rgba(255,107,0,0.45)] opacity-85`}
-        >
-          <div className="animate-bat-flap">
-            <SharpBatSvg className={bat.size} />
-          </div>
-        </div>
-      ))}
-
-      {/* 3. Drifting Autumn Leaves */}
-      {FALLING_LEAVES.map((leaf) => (
-        <div
-          key={leaf.id}
-          style={{
-            left: leaf.left,
-            animationDelay: leaf.delay,
-            animationDuration: leaf.duration
-          }}
-          className="fixed -top-10 animate-leaf-fall opacity-75"
-        >
-          <div className="animate-leaf-sway">
-            <AutumnLeafSvg className={leaf.size} color={leaf.color} />
-          </div>
-        </div>
-      ))}
-
-      {/* 4. Ambient Side Skeleton & Mummy Peekers on Large Screens */}
-      <div className="hidden xl:block fixed bottom-8 left-3 opacity-85 animate-float-slow">
-        <PlayfulSkeletonSvg className="w-16 h-20 drop-shadow-[0_0_12px_rgba(255,107,0,0.35)]" />
-      </div>
-      <div className="hidden xl:block fixed bottom-8 right-3 opacity-85 animate-float-reverse">
-        <PlayfulMummySvg className="w-16 h-20 drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]" />
+    <>
+      {/* 1. Top-of-Page Anchored Corner Cobwebs & Spiders (scroll naturally with page, never float over content) */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute top-14 sm:top-16 inset-x-0 h-64 overflow-hidden z-[5]"
+      >
+        <CornerWebWithSpider position="left" size="lg" showSpider={true} />
+        <CornerWebWithSpider position="right" size="lg" showSpider={true} />
       </div>
 
-      {/* 5. Prominent, Friendly Roaming Ghost Character */}
+      {/* 2. Atmospheric Background Layer (z-[1], behind main UI z-10 so leaves/bats never block cards or text) */}
+      <div
+        aria-hidden="true"
+        data-testid="halloween-atmosphere"
+        className="pointer-events-none select-none fixed inset-0 overflow-hidden z-[1]"
+      >
+        {/* Sharp, Webbed-Wing Flying Bats across Upper Background */}
+        {FLYING_BATS.map((bat) => (
+          <div
+            key={bat.id}
+            data-testid={bat.id}
+            style={{
+              top: bat.top,
+              animationDelay: bat.delay,
+              animationDuration: bat.duration
+            }}
+            className={`fixed ${
+              bat.direction === 'rtl' ? 'animate-bat-fly-rtl' : 'animate-bat-fly-ltr'
+            } text-[#120717] drop-shadow-[0_0_8px_rgba(255,107,0,0.45)] opacity-80`}
+          >
+            <div className="animate-bat-flap">
+              <SharpBatSvg className={bat.size} />
+            </div>
+          </div>
+        ))}
+
+        {/* Multi-Depth Drifting Autumn Leaves */}
+        {FALLING_LEAVES.map((leaf) => (
+          <div
+            key={leaf.id}
+            style={{
+              left: leaf.left,
+              animationDelay: leaf.delay,
+              animationDuration: leaf.duration
+            }}
+            className={`fixed -top-12 animate-leaf-fall ${leaf.opacity} ${
+              leaf.mobileHidden ? 'hidden sm:block' : ''
+            }`}
+          >
+            <div
+              style={{ animationDuration: leaf.swayDuration }}
+              className={leaf.altSway ? 'animate-leaf-sway-alt' : 'animate-leaf-sway'}
+            >
+              <AutumnLeafSvg
+                className={leaf.size}
+                color={leaf.color}
+                variant={leaf.variant}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 3. Roaming Ghost Layer */}
       <CuteRoamingGhost variant="primary" />
       <CuteRoamingGhost variant="secondary" />
-    </div>
+    </>
   );
 }

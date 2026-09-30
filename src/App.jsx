@@ -9,7 +9,7 @@ import AdminPortal from './components/AdminPortal';
 import AdminLoginModal from './components/AdminLoginModal';
 import OrderCutoffBanner from './components/OrderCutoffBanner';
 import BrandStoryAndSuki from './components/BrandStoryAndSuki';
-import HalloweenAtmosphere, { PlayfulSkeletonSvg, PlayfulMummySvg, SharpBatSvg } from './components/HalloweenAtmosphere';
+import HalloweenAtmosphere, { PlayfulSkeletonSvg, PlayfulMummySvg, SharpBatSvg, CornerWebWithSpider } from './components/HalloweenAtmosphere';
 import HalloweenMascotVideo from './components/HalloweenMascotVideo';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
@@ -1137,8 +1137,11 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6 sm:space-y-8">
             {/* 🎃 HERO SECTION: Spooky Halloween Special ("Trick or Treat Crunch!") */}
             <section className="relative rounded-[2rem] bg-hero-snack border-2 border-[#FF6B00] shadow-pumpkin-card overflow-hidden p-5 sm:p-8 lg:p-10">
+              {/* Anchored Corner Cobweb & Hanging Spider inside Hero Section */}
+              <CornerWebWithSpider position="right" size="sm" showSpider={true} />
+
               {/* Decorative Sharp Angular Bats inside Hero Upper Background */}
-              <div className="pointer-events-none select-none absolute top-3 right-8 sm:right-24 opacity-80 animate-float-slow">
+              <div className="pointer-events-none select-none absolute top-3 right-28 sm:right-36 opacity-80 animate-float-slow">
                 <SharpBatSvg className="w-14 sm:w-20 h-auto drop-shadow-[0_2px_8px_rgba(255,107,0,0.45)] -rotate-12" />
               </div>
               <div className="pointer-events-none select-none hidden sm:block absolute top-6 left-[44%] opacity-70 animate-float-reverse">
@@ -1272,23 +1275,29 @@ export default function App() {
               {/* Left Column (Desktop 7 cols): Flavors Catalog */}
               <div id="flavors-menu" className="lg:col-span-7 space-y-5 scroll-mt-24">
                 <section className="space-y-4">
-                  {/* Section Title & Barkada Sampler Quick Action */}
-                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 bg-[#2B1B30]/95 p-4 sm:p-5 rounded-3xl border-2 border-[#FF6B00] shadow-pumpkin-card">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FF6B00] text-white border border-amber-300">
-                          Step 1
-                        </span>
-                        <span className="text-xs font-extrabold text-amber-300">
-                          Choose Your Spooky Tubs 🎃
-                        </span>
+                  {/* Section Title, Supporting Skeleton Character & Barkada Sampler Quick Action */}
+                  <div className="relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#2B1B30]/95 p-4 sm:p-5 rounded-3xl border-2 border-[#FF6B00] shadow-pumpkin-card">
+                    <div className="flex items-center gap-3.5">
+                      {/* Supporting Skeleton Character Waving & Holding a Golden Peanut */}
+                      <div className="shrink-0 bg-[#1F1025]/90 p-1.5 rounded-2xl border border-[#FF6B00]/60 shadow-inner">
+                        <PlayfulSkeletonSvg className="w-14 h-16 sm:w-16 sm:h-20 drop-shadow-[0_2px_10px_rgba(255,107,0,0.35)]" />
                       </div>
-                      <h2 className="font-display text-2xl sm:text-3xl font-bold text-white flex items-center gap-2 tracking-tight">
-                        <span>🥜</span> Meet the 7 Flavors
-                      </h2>
-                      <p className="text-xs sm:text-sm text-amber-100/85 font-medium mt-0.5">
-                        Freshly cooked in small batches. Mix &amp; match your Trick or Treat tubs below!
-                      </p>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FF6B00] text-white border border-amber-300">
+                            Step 1
+                          </span>
+                          <span className="text-xs font-extrabold text-amber-300">
+                            Choose Your Spooky Tubs 🎃
+                          </span>
+                        </div>
+                        <h2 className="font-display text-2xl sm:text-3xl font-bold text-white flex items-center gap-2 tracking-tight">
+                          <span>🥜</span> Meet the 7 Flavors
+                        </h2>
+                        <p className="text-xs sm:text-sm text-amber-100/85 font-medium mt-0.5">
+                          Freshly cooked in small batches. Mix &amp; match your Trick or Treat tubs below!
+                        </p>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">

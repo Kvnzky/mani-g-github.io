@@ -235,43 +235,89 @@
   }
 }
 
-/* Falling Autumn Leaves */
+/* Falling Autumn Leaves with Natural Horizontal Drift & 3D Tumble */
 @keyframes leafFall {
   0% {
-    transform: translate3d(0, -10vh, 0);
+    transform: translate3d(0, -12vh, 0);
     opacity: 0;
   }
-  10% {
-    opacity: 0.85;
+  8% {
+    opacity: 1;
   }
   90% {
-    opacity: 0.85;
+    opacity: 1;
   }
   100% {
-    transform: translate3d(0, 108vh, 0);
+    transform: translate3d(0, 110vh, 0);
     opacity: 0;
   }
 }
 
 @keyframes leafSway {
   0%, 100% {
-    transform: translateX(0px) rotate(0deg);
+    transform: translate3d(0px, 0px, 0) rotate(-14deg) scaleX(1);
   }
-  33% {
-    transform: translateX(22px) rotate(35deg);
+  25% {
+    transform: translate3d(26px, 4px, 0) rotate(18deg) scaleX(0.88);
   }
-  66% {
-    transform: translateX(-18px) rotate(-28deg);
+  50% {
+    transform: translate3d(-8px, 8px, 0) rotate(38deg) scaleX(0.95);
+  }
+  75% {
+    transform: translate3d(-28px, 3px, 0) rotate(6deg) scaleX(0.85);
   }
 }
 
-/* Corner Spider Bobbing */
+@keyframes leafSwayAlt {
+  0%, 100% {
+    transform: translate3d(0px, 0px, 0) rotate(16deg) scaleY(1);
+  }
+  33% {
+    transform: translate3d(-24px, 6px, 0) rotate(-26deg) scaleY(0.86);
+  }
+  66% {
+    transform: translate3d(22px, -3px, 0) rotate(32deg) scaleY(0.94);
+  }
+}
+
+/* Anchored Corner Spider Subtle Silk Pendulum & Bob */
 @keyframes spiderBob {
   0%, 100% {
-    transform: translateY(0px);
+    transform: translate3d(0, 0px, 0) rotate(-2.5deg);
   }
   50% {
-    transform: translateY(14px);
+    transform: translate3d(0, 8px, 0) rotate(2.5deg);
+  }
+}
+
+/* Polished Character Animations (Mummy Sway, Head Tilt, Skeleton Wave) */
+@keyframes mummySway {
+  0%, 100% {
+    transform: translate3d(0, 0px, 0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translate3d(0, -5px, 0) rotate(1.5deg);
+  }
+}
+
+@keyframes characterHeadTilt {
+  0%, 100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+
+@keyframes skeletonWave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-12deg);
+  }
+  75% {
+    transform: rotate(10deg);
   }
 }
 
@@ -280,11 +326,11 @@
 }
 
 .animate-float-slow {
-  animation: floatSlow 4.5s ease-in-out infinite;
+  animation: floatSlow 4.8s ease-in-out infinite;
 }
 
 .animate-float-reverse {
-  animation: floatReverse 5.2s ease-in-out infinite;
+  animation: floatReverse 5.4s ease-in-out infinite;
 }
 
 .animate-pop {
@@ -338,16 +384,36 @@
 }
 
 .animate-leaf-fall {
-  animation: leafFall 15s linear infinite;
+  animation: leafFall 18s linear infinite;
   will-change: transform, opacity;
 }
 
 .animate-leaf-sway {
-  animation: leafSway 4.2s ease-in-out infinite;
+  animation: leafSway 5.2s ease-in-out infinite;
+}
+
+.animate-leaf-sway-alt {
+  animation: leafSwayAlt 6.1s ease-in-out infinite;
 }
 
 .animate-spider-bob {
-  animation: spiderBob 4.5s ease-in-out infinite;
+  transform-origin: top center;
+  animation: spiderBob 5s ease-in-out infinite;
+}
+
+.animate-mummy-sway {
+  transform-origin: bottom center;
+  animation: mummySway 4.6s ease-in-out infinite;
+}
+
+.animate-head-tilt {
+  transform-origin: 90px 82px;
+  animation: characterHeadTilt 4.2s ease-in-out infinite;
+}
+
+.animate-skeleton-wave {
+  transform-origin: 54px 116px;
+  animation: skeletonWave 3.2s ease-in-out infinite;
 }
 
 /* Respect user reduced-motion preferences */
@@ -370,7 +436,11 @@
   .animate-bat-flap,
   .animate-leaf-fall,
   .animate-leaf-sway,
+  .animate-leaf-sway-alt,
   .animate-spider-bob,
+  .animate-mummy-sway,
+  .animate-head-tilt,
+  .animate-skeleton-wave,
   .animate-pulse,
   .animate-ping,
   .animate-bounce {
