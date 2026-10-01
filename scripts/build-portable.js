@@ -255,10 +255,8 @@ const htmlTemplate = `<!DOCTYPE html>
       const validate = () => {
         const errs = {};
         if (!customer.name.trim()) errs.name = 'Customer Name is required';
-        const cleanMobile = customer.mobile.replace(/[\\s\\-()]/g, '');
-        if (!customer.mobile.trim()) {
-          errs.mobile = 'Mobile number is required';
-        } else if (!/^(09|\\+639|639)\\d{9}$/.test(cleanMobile)) {
+        const cleanMobile = (customer.mobile || '').replace(/[\\s\\-()]/g, '');
+        if (cleanMobile && !/^(09|\\+639|639)\\d{9}$/.test(cleanMobile)) {
           errs.mobile = 'Valid mobile number required (e.g. 09171234567)';
         }
         if (!customer.deliveryAddress.trim()) {
@@ -878,7 +876,7 @@ const htmlTemplate = `<!DOCTYPE html>
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-mani-800 mb-1">Mobile Number *</label>
+                          <label className="block text-xs font-bold text-mani-800 mb-1">Mobile Number (Optional)</label>
                           <input
                             type="tel"
                             placeholder="0917 123 4567"

@@ -1056,7 +1056,8 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Customer Name is required.' });
     }
 
-    if (!mobileNumber || !validatePhilippineMobile(mobileNumber)) {
+    const cleanMobile = mobileNumber ? String(mobileNumber).trim() : '';
+    if (cleanMobile && !validatePhilippineMobile(cleanMobile)) {
       return res.status(400).json({
         error: 'Please enter a valid Philippine mobile number (e.g., 09171234567 or +639171234567).'
       });
@@ -1135,7 +1136,7 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
       orderDate: dateStr,
       orderTime: timeStr,
       customerName: customerName.trim().slice(0, 100),
-      mobileNumber: formatPhilippineMobile(mobileNumber),
+      mobileNumber: cleanMobile ? formatPhilippineMobile(cleanMobile) : '',
       deliveryAddress: safeDeliveryAddress,
       paymentMethod: chosenPayment,
       paymentStatus: req.body.paymentStatus || defaultPaymentStatus,

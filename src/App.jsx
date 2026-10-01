@@ -842,11 +842,9 @@ export default function App() {
       errors.customerName = 'Customer Name is required.';
     }
 
-    const cleanMobile = customerData.mobileNumber.replace(/[\s\-()]/g, '');
+    const cleanMobile = (customerData.mobileNumber || '').replace(/[\s\-()]/g, '');
     const mobileRegex = /^(09|\+639|639)\d{9}$/;
-    if (!customerData.mobileNumber.trim()) {
-      errors.mobileNumber = 'Mobile number is required.';
-    } else if (!mobileRegex.test(cleanMobile)) {
+    if (cleanMobile && !mobileRegex.test(cleanMobile)) {
       errors.mobileNumber = 'Please enter a valid mobile number (e.g. 09171234567 or +639171234567).';
     }
 
@@ -917,9 +915,9 @@ export default function App() {
     }
 
     const payload = {
-      customerName: customerData.customerName.trim(),
-      mobileNumber: customerData.mobileNumber.trim(),
-      deliveryAddress: customerData.deliveryAddress.trim(),
+      customerName: (customerData.customerName || '').trim(),
+      mobileNumber: (customerData.mobileNumber || '').trim(),
+      deliveryAddress: (customerData.deliveryAddress || '').trim(),
       paymentMethod: customerData.paymentMethod,
       paymentStatus: defaultPaymentStatus,
       items: orderedItems,

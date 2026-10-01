@@ -442,43 +442,37 @@ async function runVerification() {
     console.log('✓ Step 18 passed: Orders Manager Date Range filtering verified!\n');
 
     // ------------------------------------------------------------------
-    // STEP 19: Delivery Address Feature (Use My Location | Enter Manually & No Address Validation)
+    // STEP 19: Easy Fill-Out Checkout (Optional Mobile & Clean Manual Address Input)
     // ------------------------------------------------------------------
-    console.log('--- [Step 19] Testing Delivery Address Options & Unvalidated Checkout Flow ---');
+    console.log('--- [Step 19] Testing Optional Mobile & Clean Manual Address Flow ---');
     const customerFormSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'CustomerForm.jsx'), 'utf8');
-    assert(customerFormSrc.includes('Use My Location'), 'Step 19: CustomerForm must include Use My Location option');
-    assert(customerFormSrc.includes('Enter Manually'), 'Step 19: CustomerForm must include Enter Manually option');
+    assert(customerFormSrc.includes('Mobile Number (Optional)'), 'Step 19: CustomerForm must label mobile as optional');
+    assert(!customerFormSrc.includes('Mobile Number *'), 'Step 19: CustomerForm must NOT require mobile number with asterisk');
     assert(
       customerFormSrc.includes('House/Unit No., Street, Barangay, City/Municipality, Province'),
       'Step 19: CustomerForm must include the helpful address placeholder'
     );
     assert(
-      customerFormSrc.includes('navigator.geolocation.getCurrentPosition'),
-      'Step 19: CustomerForm must use browser Geolocation API on button click'
-    );
-    assert(
-      customerFormSrc.includes('nominatim.openstreetmap.org/reverse'),
-      'Step 19: CustomerForm must convert coordinates via reverse geocoding'
-    );
-    assert(
-      customerFormSrc.includes('geoError.code === 1') &&
-      customerFormSrc.includes('geoError.code === 2') &&
-      customerFormSrc.includes('geoError.code === 3') &&
-      customerFormSrc.includes('REVERSE_GEOCODE_FAILED'),
-      'Step 19: CustomerForm must gracefully handle permission denied, unavailable, timeout, and reverse-geocoding failure'
+      !customerFormSrc.includes('Use My Location'),
+      'Step 19: CustomerForm must have pin location removed for clean direct entry'
     );
 
-    // Test 19a: Order with detected + edited address
-    const editedGeoOrder = await createTestOrder(
-      'Location Suki',
-      '09176666666',
-      'Unit 4B, 123 Ayala Ave, Brgy. Bel-Air, Makati City, Metro Manila (Gate 2 near guardhouse)',
+    // Test 19a: Order with NO mobile number (mobile number completely optional)
+    const noMobileOrder = await createTestOrder(
+      'Optional Mobile Suki',
+      '',
+      'Unit 4B, 123 Ayala Ave, Brgy. Bel-Air, Makati City',
       2
     );
     assert.strictEqual(
-      editedGeoOrder.deliveryAddress,
-      'Unit 4B, 123 Ayala Ave, Brgy. Bel-Air, Makati City, Metro Manila (Gate 2 near guardhouse)',
-      'Step 19a: Edited detected address must be saved verbatim'
+      noMobileOrder.customerName,
+      'Optional Mobile Suki',
+      'Step 19a: Order without mobile number must succeed'
+    );
+    assert.strictEqual(
+      noMobileOrder.mobileNumber,
+      '',
+      'Step 19a: Order without mobile number must store empty string for mobileNumber'
     );
 
     // Test 19b: Order with short/unusual/informal delivery instructions (no address validation blocking checkout)
@@ -493,7 +487,7 @@ async function runVerification() {
       'Blue gate beside sari-sari store',
       'Step 19b: Informal or unusual address must be accepted without validation errors'
     );
-    console.log('✓ Step 19 passed: Delivery Address (Use My Location + Enter Manually + No Address Validation) verified!\n');
+    console.log('✓ Step 19 passed: Optional Mobile Number & Clean Manual Delivery Address verified!\n');
 
     // ------------------------------------------------------------------
     // STEP 20: Spooky Halloween Theme ("Trick or Treat Crunch!") Verification

@@ -22,7 +22,6 @@ export default function OrderSummaryDrawer({
   const hasAnyPaymentMethod = Object.values(paymentMethods).some(Boolean);
   const isFormIncomplete = Boolean(
     !customerData.customerName?.trim() ||
-    !customerData.mobileNumber?.trim() ||
     !customerData.paymentMethod?.trim() ||
     !hasItems ||
     !hasAnyPaymentMethod
@@ -227,7 +226,7 @@ export default function OrderSummaryDrawer({
               <Phone className="w-3.5 h-3.5 text-amber-700 shrink-0" />
               <span className="font-semibold">Mobile:</span>
               <span className="text-mani-950 font-bold">
-                {customerData.mobileNumber || <span className="italic text-amber-700">Tap below to enter mobile</span>}
+                {customerData.mobileNumber || <span className="italic text-mani-400 font-normal">Optional</span>}
               </span>
             </div>
 
@@ -271,7 +270,7 @@ export default function OrderSummaryDrawer({
             </div>
           ) : Object.keys(validationErrors || {}).length > 0 ? (
             <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-bold">
-              Please complete customer name, mobile number, delivery address, and payment method.
+              Please complete customer name, delivery address, and payment method.
             </div>
           ) : null}
 

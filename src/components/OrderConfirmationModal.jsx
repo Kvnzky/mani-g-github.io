@@ -26,8 +26,7 @@ export default function OrderConfirmationModal({ order, onReset, customQrs }) {
 Order #: ${order.orderId}
 Date: ${order.orderDate} ${order.orderTime}
 Customer: ${order.customerName}
-Mobile: ${order.mobileNumber}
-Delivery Address: ${order.deliveryAddress}
+${order.mobileNumber ? `Mobile: ${order.mobileNumber}\n` : ''}Delivery Address: ${order.deliveryAddress}
 Payment Method: ${order.paymentMethod}
 
 *Items Ordered:*
@@ -113,7 +112,7 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
               </div>
               <div>
                 <span className="text-mani-600 font-medium">Mobile:</span>{' '}
-                <span className="font-bold text-mani-950">{order.mobileNumber}</span>
+                <span className="font-bold text-mani-950">{order.mobileNumber || 'Not provided'}</span>
               </div>
             </div>
             <div>
