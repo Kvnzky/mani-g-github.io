@@ -80,6 +80,15 @@ export default function App() {
       const savedProds = JSON.parse(localStorage.getItem('mani_products') || 'null');
       const savedAvailability = JSON.parse(localStorage.getItem('mani_flavor_availability') || 'null');
       let base = Array.isArray(savedProds) && savedProds.length > 0 ? savedProds : DEFAULT_PRODUCTS;
+      
+      // Ensure all DEFAULT_PRODUCTS exist in base (e.g. newly added flavors)
+      const existingIds = new Set(base.map(p => p.id));
+      const missingDefaults = DEFAULT_PRODUCTS.filter(p => !existingIds.has(p.id));
+      if (missingDefaults.length > 0) {
+        base = [...base, ...missingDefaults].sort((a, b) => (a.sortOrder || 99) - (b.sortOrder || 99));
+        localStorage.setItem('mani_products', JSON.stringify(base));
+      }
+
       if (savedAvailability && typeof savedAvailability === 'object') {
         base = base.map(p => savedAvailability[p.id] !== undefined ? { ...p, available: Boolean(savedAvailability[p.id]) } : p);
       }
@@ -137,6 +146,8 @@ export default function App() {
     bbq: 0,
     'sour-cream': 0,
     cheese: 0,
+    'salted-egg': 0,
+    'spicy-salted-egg': 0,
     'bawang-only': 0
   });
 
@@ -807,10 +818,10 @@ export default function App() {
   // Filtered products for the Flavors Catalog
   const filteredProducts = products.filter((p) => {
     if (activeFlavorFilter === 'bestsellers') {
-      return ['salted', 'spicy', 'bbq', 'bawang-only'].includes(p.id);
+      return ['salted', 'spicy', 'bbq', 'salted-egg', 'spicy-salted-egg', 'bawang-only'].includes(p.id);
     }
     if (activeFlavorFilter === 'savory') {
-      return ['spicy', 'bbq', 'sour-cream', 'cheese'].includes(p.id);
+      return ['spicy', 'bbq', 'sour-cream', 'cheese', 'salted-egg', 'spicy-salted-egg'].includes(p.id);
     }
     if (activeFlavorFilter === 'classic') {
       return ['salted', 'unsalted', 'bawang-only'].includes(p.id);

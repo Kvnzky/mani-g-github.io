@@ -81,10 +81,38 @@ export const DEFAULT_PRODUCTS = [
     price: 50,
     icon: '🧀',
     image: './images/products/cheese.jpg',
-    badge: 'New',
+    badge: 'Crowd Fave',
     available: true,
     sortOrder: 6,
     accentColor: 'bg-amber-100 text-amber-900 border-amber-300'
+  },
+  {
+    id: 'salted-egg',
+    name: 'Salted Egg',
+    halloweenSubLabel: 'Golden Ghoul',
+    tagline: 'Rich & Savory Umami',
+    description: 'Crispy golden roasted peanuts coated in luscious, buttery salted egg yolk seasoning with savory herbs.',
+    price: 50,
+    icon: '🥚',
+    image: './images/products/salted-egg.jpg',
+    badge: 'New Flavor',
+    available: true,
+    sortOrder: 7,
+    accentColor: 'bg-yellow-100 text-yellow-900 border-yellow-400'
+  },
+  {
+    id: 'spicy-salted-egg',
+    name: 'Spicy Salted Egg',
+    halloweenSubLabel: 'Fiery Ghoul',
+    tagline: 'Fiery Golden Umami',
+    description: 'Our rich buttery salted egg yolk glaze infused with a fiery chili kick and crunchy fried garlic flakes.',
+    price: 50,
+    icon: '🌶️',
+    image: './images/products/spicy-salted-egg.jpg',
+    badge: 'New & Fiery',
+    available: true,
+    sortOrder: 8,
+    accentColor: 'bg-orange-100 text-orange-900 border-orange-400'
   },
   {
     id: 'bawang-only',
@@ -97,7 +125,7 @@ export const DEFAULT_PRODUCTS = [
     image: './images/products/bawang-only.jpg',
     badge: 'Must Try',
     available: true,
-    sortOrder: 7,
+    sortOrder: 9,
     accentColor: 'bg-yellow-100 text-yellow-900 border-yellow-300'
   }
 ];
@@ -185,6 +213,34 @@ export const FLAVOR_PERSONALITIES = {
     badgeClass: 'bg-amber-400 text-[#1F1025] border-[#FF6B00]',
     vibeClass: 'bg-yellow-100 text-yellow-950 border-yellow-400/80',
     priceBg: 'bg-[#1F1025] text-amber-300',
+    tiltClass: 'hover:rotate-[0.8deg]'
+  },
+  'salted-egg': {
+    displayIcon: '🥚',
+    halloweenIcon: '🌕',
+    halloweenSubLabel: 'Golden Ghoul',
+    sticker: '✨ NEW UMAMI FAVE',
+    vibe: 'Rich Golden Salted Egg',
+    tagline: 'Rich & Savory Umami',
+    cardBg: 'from-amber-50/95 via-yellow-50/50 to-orange-50/40',
+    frameBg: 'bg-yellow-100/70 border-amber-500/80',
+    badgeClass: 'bg-amber-500 text-white border-amber-300',
+    vibeClass: 'bg-yellow-100/90 text-amber-950 border-amber-400/80',
+    priceBg: 'bg-[#1F1025] text-amber-300',
+    tiltClass: 'hover:-rotate-[0.8deg]'
+  },
+  'spicy-salted-egg': {
+    displayIcon: '🌶️',
+    halloweenIcon: '🔥',
+    halloweenSubLabel: 'Fiery Ghoul',
+    sticker: '🔥 SPICY & SAVORY',
+    vibe: 'Golden Egg + Hot Chili Kick',
+    tagline: 'Fiery Golden Umami',
+    cardBg: 'from-orange-50/95 via-amber-50/50 to-red-50/40',
+    frameBg: 'bg-orange-100/70 border-red-500/80',
+    badgeClass: 'bg-red-600 text-white border-amber-300',
+    vibeClass: 'bg-orange-100/90 text-orange-950 border-orange-400/80',
+    priceBg: 'bg-[#FF6B00] text-white',
     tiltClass: 'hover:rotate-[0.8deg]'
   },
   'bawang-only': {

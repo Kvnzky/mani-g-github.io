@@ -166,6 +166,8 @@ const FLAVOR_THEME = {
   bbq: { bar: 'bg-orange-600', text: 'text-orange-800', light: 'bg-orange-50', border: 'border-orange-200' },
   'sour-cream': { bar: 'bg-teal-500', text: 'text-teal-800', light: 'bg-teal-50', border: 'border-teal-200' },
   cheese: { bar: 'bg-yellow-500', text: 'text-yellow-800', light: 'bg-yellow-50', border: 'border-yellow-200' },
+  'salted-egg': { bar: 'bg-amber-400', text: 'text-amber-900', light: 'bg-amber-50', border: 'border-amber-300' },
+  'spicy-salted-egg': { bar: 'bg-orange-600', text: 'text-orange-950', light: 'bg-orange-50', border: 'border-orange-300' },
   'bawang-only': { bar: 'bg-purple-600', text: 'text-purple-800', light: 'bg-purple-50', border: 'border-purple-200' }
 };
 
@@ -630,6 +632,8 @@ export default function AdminPortal({
       bbq: 'BBQ',
       'sour-cream': 'Sour Cream',
       cheese: 'Cheese',
+      'salted-egg': 'Salted Egg',
+      'spicy-salted-egg': 'Spicy Salted Egg',
       'bawang-only': 'Bawang Only'
     };
 
@@ -654,7 +658,7 @@ export default function AdminPortal({
         }
       });
     } else if (order.flavorQuantities && typeof order.flavorQuantities === 'object') {
-      const orderedKeys = ['salted', 'unsalted', 'spicy', 'bbq', 'sour-cream', 'cheese', 'bawang-only'];
+      const orderedKeys = ['salted', 'unsalted', 'spicy', 'bbq', 'sour-cream', 'cheese', 'salted-egg', 'spicy-salted-egg', 'bawang-only'];
       const extraKeys = Object.keys(order.flavorQuantities).filter((k) => !orderedKeys.includes(k));
       [...orderedKeys, ...extraKeys].forEach((flavorId) => {
         const q = Number(order.flavorQuantities[flavorId]) || 0;
@@ -3008,6 +3012,8 @@ export default function AdminPortal({
                   { name: 'BBQ', qty: dailySummary.bbq, icon: '🔥' },
                   { name: 'Sour Cream', qty: dailySummary.sourCream, icon: '🥛' },
                   { name: 'Cheese', qty: dailySummary.cheese, icon: '🧀' },
+                  { name: 'Salted Egg', qty: dailySummary.saltedEgg !== undefined ? dailySummary.saltedEgg : (dailySummary['salted-egg'] || 0), icon: '🥚' },
+                  { name: 'Spicy Salted Egg', qty: dailySummary.spicySaltedEgg !== undefined ? dailySummary.spicySaltedEgg : (dailySummary['spicy-salted-egg'] || 0), icon: '🌶️' },
                   { name: 'Bawang Only', qty: dailySummary.bawangOnly, icon: '🧄' }
                 ].map((fl) => (
                   <div key={fl.name} className="bg-cream p-3 rounded-xl border border-mani-100 flex items-center justify-between">

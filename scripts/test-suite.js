@@ -1,20 +1,48 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const ORDERS_FILE = path.join(__dirname, '..', 'server', 'data', 'orders.json');
-const SETTINGS_FILE = path.join(__dirname, '..', 'server', 'data', 'settings.json');
+const ROOT_DIR = path.join(__dirname, '..');
+const ORDERS_FILE = path.join(ROOT_DIR, 'server', 'data', 'orders.json');
+const SETTINGS_FILE = path.join(ROOT_DIR, 'server', 'data', 'settings.json');
 
 const BASE_URL = 'http://127.0.0.1:3001';
+
+async function waitForServer(retries = 60) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/cutoff`);
+      if (res.ok) return true;
+    } catch (e) {}
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  throw new Error('Server failed to start within timeout');
+}
 
 async function runTests() {
   const initialOrders = fs.existsSync(ORDERS_FILE) ? fs.readFileSync(ORDERS_FILE, 'utf8') : null;
   const initialSettings = fs.existsSync(SETTINGS_FILE) ? fs.readFileSync(SETTINGS_FILE, 'utf8') : null;
+  let serverProc = null;
 
   try {
-    console.log('🥜 Starting Comprehensive MANI G? Security & Cutoff Test Suite...\n');
+    let alreadyRunning = false;
+    try {
+      const check = await fetch(`${BASE_URL}/api/cutoff`);
+      if (check.ok) alreadyRunning = true;
+    } catch (e) {}
+
+    if (!alreadyRunning) {
+      serverProc = spawn(process.execPath, [path.join(ROOT_DIR, 'server', 'index.js')], {
+        cwd: ROOT_DIR,
+        stdio: 'ignore'
+      });
+      await waitForServer();
+    }
+
+    console.log('🥜 Starting Comprehensive MANI Security & Cutoff Test Suite...\n');
     let passed = 0;
     let failed = 0;
 
@@ -335,7 +363,60 @@ async function runTests() {
     codeGs.includes('Cheese Qty') &&
     codeGs.includes("cheeseQty") &&
     codeGs.includes("'Cheese (₱50)'"),
-    'Google Apps Script backend includes Cheese in 18-column layout (Col 14 / N) at ₱50'
+    'Google Apps Script backend includes Cheese in column layout at ₱50'
+  );
+
+  // -------------------------------------------------------------
+  // 6. SALTED EGG & SPICY SALTED EGG FLAVOR VERIFICATION TESTS
+  // -------------------------------------------------------------
+  console.log('\n--- 6. SALTED EGG & SPICY SALTED EGG FLAVOR VERIFICATION TESTS ---');
+
+  // Test 6.1: Verify Salted Egg & Spicy Salted Egg configured after Cheese and before Bawang Only
+  const saltedEggIdx = productsJs.indexOf("'salted-egg'");
+  const spicyEggIdx = productsJs.indexOf("'spicy-salted-egg'");
+  assert(
+    saltedEggIdx > cheeseIdx && spicyEggIdx > saltedEggIdx && spicyEggIdx < bawangIdx,
+    'Salted Egg and Spicy Salted Egg configured immediately after Cheese and before Bawang Only'
+  );
+
+  // Test 6.2: Order with Salted Egg & Spicy Salted Egg succeeds and records flavor quantities and correct amounts
+  try {
+    const eggOrderRes = await fetch(`${BASE_URL}/api/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-test-suite': 'true' },
+      body: JSON.stringify({
+        customerName: 'Egg Flavor Connoisseur',
+        mobileNumber: '09198765432',
+        deliveryAddress: 'Gold Street, Pasig City',
+        paymentMethod: 'GCash',
+        isTest: true,
+        items: [
+          { id: 'salted-egg', name: 'Salted Egg', quantity: 2, price: 50 },
+          { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', quantity: 1, price: 50 }
+        ]
+      })
+    });
+    const eggOrderData = await eggOrderRes.json();
+    assert(
+      eggOrderRes.status === 201 &&
+      eggOrderData.order.flavorQuantities?.['salted-egg'] === 2 &&
+      eggOrderData.order.flavorQuantities?.['spicy-salted-egg'] === 1 &&
+      eggOrderData.order.totalAmount === 150,
+      'Order with Salted Egg & Spicy Salted Egg calculates 3 packs x ₱50 = ₱150 and maps quantities correctly'
+    );
+  } catch (e) {
+    assert(false, `Salted Egg order test error: ${e.message}`);
+  }
+
+  // Test 6.3: Verify Google Apps Script supports 20-column layout with Salted Egg & Spicy Salted Egg
+  assert(
+    codeGs.includes('Salted Egg Qty') &&
+    codeGs.includes('Spicy Salted Egg Qty') &&
+    codeGs.includes('saltedEggQty') &&
+    codeGs.includes('spicySaltedEggQty') &&
+    codeGs.includes("'Salted Egg (₱50)'") &&
+    codeGs.includes("'Spicy Salted Egg (₱50)'"),
+    'Google Apps Script backend includes Salted Egg & Spicy Salted Egg in 20-column layout at ₱50'
   );
 
   console.log(`\n========================================`);
@@ -351,6 +432,9 @@ async function runTests() {
     }
     if (initialSettings !== null) {
       fs.writeFileSync(SETTINGS_FILE, initialSettings, 'utf8');
+    }
+    if (serverProc) {
+      serverProc.kill();
     }
   }
 }

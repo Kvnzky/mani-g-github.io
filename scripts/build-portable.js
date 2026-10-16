@@ -103,8 +103,10 @@ const htmlTemplate = `<!DOCTYPE html>
       { id: 'spicy', name: 'Spicy', description: 'Classic crunchy mani tossed with hot chili flakes & seasonings.', price: 50, icon: '🌶️', image: './images/products/spicy.jpg', badge: 'Best Seller', available: true },
       { id: 'bbq', name: 'BBQ', description: 'Rich barbecue glaze packed with sweet, smoky & savory notes.', price: 50, icon: '🔥', image: './images/products/bbq.jpg', badge: 'Favorites', available: true },
       { id: 'sour-cream', name: 'Sour Cream', description: 'Tangy blend of zesty sour cream & spring onions.', price: 50, icon: '🥛', image: './images/products/sour-cream.jpg', badge: 'Trending', available: true },
-      { id: 'cheese', name: 'Cheese', description: 'Crisp, golden roasted peanuts tossed in savory, mouthwatering cheese powder.', price: 50, icon: '🧀', image: './images/products/cheese.jpg', badge: 'New', available: true },
-      { id: 'bawang-only', name: 'Bawang Only', description: 'Pure crispy golden garlic chips & whole fried cloves only!', price: 60, icon: '🧄', image: './images/products/bawang-only.jpg', badge: 'Must Try', available: true }
+      { id: 'cheese', name: 'Cheese', description: 'Crisp, golden roasted peanuts tossed in savory, mouthwatering cheese powder.', price: 50, icon: '🧀', image: './images/products/cheese.jpg', badge: 'Popular', available: true },
+      { id: 'salted-egg', name: 'Salted Egg', description: 'Rich and savory golden salted egg yolk glaze with toasted garlic chips.', price: 50, icon: '🥚', image: './images/products/salted-egg.jpg', badge: 'New', available: true },
+      { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', description: 'Savory rich salted egg coating with a fiery spicy chili kick.', price: 50, icon: '🔥', image: './images/products/spicy-salted-egg.jpg', badge: 'Must Try', available: true },
+      { id: 'bawang-only', name: 'Bawang Only', description: 'Pure crispy golden garlic chips & whole fried cloves only!', price: 60, icon: '🧄', image: './images/products/bawang-only.jpg', badge: 'Suki Favorite', available: true }
     ];
 
     const DEFAULT_SPREADSHEET_ID = '';
@@ -132,7 +134,7 @@ const htmlTemplate = `<!DOCTYPE html>
       });
 
       const [quantities, setQuantities] = useState({
-        salted: 0, unsalted: 0, spicy: 0, bbq: 0, 'sour-cream': 0, cheese: 0, 'bawang-only': 0
+        salted: 0, unsalted: 0, spicy: 0, bbq: 0, 'sour-cream': 0, cheese: 0, 'salted-egg': 0, 'spicy-salted-egg': 0, 'bawang-only': 0
       });
 
       // Customer Info: Name, Mobile, Delivery Address, Payment Method
@@ -334,7 +336,7 @@ const htmlTemplate = `<!DOCTYPE html>
 
       const handleReset = () => {
         setConfirmedOrder(null);
-        setQuantities({ salted: 0, unsalted: 0, spicy: 0, bbq: 0, 'sour-cream': 0, cheese: 0, 'bawang-only': 0 });
+        setQuantities({ salted: 0, unsalted: 0, spicy: 0, bbq: 0, 'sour-cream': 0, cheese: 0, 'salted-egg': 0, 'spicy-salted-egg': 0, 'bawang-only': 0 });
         setCustomer({ name: '', mobile: '', deliveryAddress: '', paymentMethod: 'Cash on Delivery' });
         setErrors({});
       };

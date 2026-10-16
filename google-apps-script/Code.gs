@@ -420,8 +420,17 @@ function handleGetOrders(ss, dateFilter, startDateFilter, endDateFilter) {
 
   var lastCol = Math.max(sheet.getLastColumn(), 18);
   var values = sheet.getRange(8, 1, lastRow - 7, lastCol).getValues();
-  var col14Name = String(sheet.getRange(7, 14).getValue() || '');
-  var hasCheese = (col14Name.indexOf('Cheese') !== -1 || sheet.getLastColumn() >= 18);
+  var headerValues = sheet.getRange(7, 1, 1, Math.max(lastCol, 20)).getValues()[0] || [];
+  var hasSaltedEgg = false;
+  var hasCheese = false;
+  for (var h = 0; h < headerValues.length; h++) {
+    var hText = String(headerValues[h] || '').toLowerCase();
+    if (hText.indexOf('salted egg') !== -1) hasSaltedEgg = true;
+    if (hText.indexOf('cheese') !== -1) hasCheese = true;
+  }
+  if (!hasCheese && lastCol >= 18) hasCheese = true;
+  if (!hasSaltedEgg && lastCol >= 20) hasSaltedEgg = true;
+
   var orders = [];
   var cleanStart = startDateFilter ? String(startDateFilter).trim() : '';
   var cleanEnd = endDateFilter ? String(endDateFilter).trim() : '';
@@ -470,10 +479,12 @@ function handleGetOrders(ss, dateFilter, startDateFilter, endDateFilter) {
     var bbq = Number(r[11] || 0);
     var sourCream = Number(r[12] || 0);
     var cheese = hasCheese ? Number(r[13] || 0) : 0;
-    var bawangOnly = hasCheese ? Number(r[14] || 0) : Number(r[13] || 0);
-    var totalPacks = hasCheese ? Number(r[15] || 0) : Number(r[14] || 0);
-    var subtotal = hasCheese ? Number(r[16] || 0) : Number(r[15] || 0);
-    var status = hasCheese ? String(r[17] || 'New') : String(r[16] || 'New');
+    var saltedEgg = hasSaltedEgg ? Number(r[14] || 0) : 0;
+    var spicySaltedEgg = hasSaltedEgg ? Number(r[15] || 0) : 0;
+    var bawangOnly = hasSaltedEgg ? Number(r[16] || 0) : (hasCheese ? Number(r[14] || 0) : Number(r[13] || 0));
+    var totalPacks = hasSaltedEgg ? Number(r[17] || 0) : (hasCheese ? Number(r[15] || 0) : Number(r[14] || 0));
+    var subtotal = hasSaltedEgg ? Number(r[18] || 0) : (hasCheese ? Number(r[16] || 0) : Number(r[15] || 0));
+    var status = hasSaltedEgg ? String(r[19] || 'New') : (hasCheese ? String(r[17] || 'New') : String(r[16] || 'New'));
 
     orders.push({
       id: 'ord_sheet_row_' + (i + 8) + '_' + ordId,
@@ -492,6 +503,8 @@ function handleGetOrders(ss, dateFilter, startDateFilter, endDateFilter) {
         bbq: bbq,
         'sour-cream': sourCream,
         cheese: cheese,
+        'salted-egg': saltedEgg,
+        'spicy-salted-egg': spicySaltedEgg,
         'bawang-only': bawangOnly
       },
       totalPacks: totalPacks,
@@ -541,8 +554,19 @@ function handleConsolidateToMasterList(ss) {
     var shLastRow = sh.getLastRow();
     if (shLastRow < 8) continue;
 
-    var rawRows = sh.getRange(8, 1, shLastRow - 7, Math.max(sh.getLastColumn(), 18)).getValues();
-    var srcHasCheese = (String(sh.getRange(7, 14).getValue() || '').indexOf('Cheese') !== -1 || sh.getLastColumn() >= 18);
+    var srcColCount = Math.max(sh.getLastColumn(), 18);
+    var rawRows = sh.getRange(8, 1, shLastRow - 7, srcColCount).getValues();
+    var srcHeaderVals = sh.getRange(7, 1, 1, Math.max(srcColCount, 20)).getValues()[0] || [];
+    var srcHasSaltedEgg = false;
+    var srcHasCheese = false;
+    for (var shH = 0; shH < srcHeaderVals.length; shH++) {
+      var shHText = String(srcHeaderVals[shH] || '').toLowerCase();
+      if (shHText.indexOf('salted egg') !== -1) srcHasSaltedEgg = true;
+      if (shHText.indexOf('cheese') !== -1) srcHasCheese = true;
+    }
+    if (!srcHasCheese && srcColCount >= 18) srcHasCheese = true;
+    if (!srcHasSaltedEgg && srcColCount >= 20) srcHasSaltedEgg = true;
+
     for (var r = 0; r < rawRows.length; r++) {
       var row = rawRows[r];
       var orderId = String(row[0] || '').trim();
@@ -589,20 +613,22 @@ function handleConsolidateToMasterList(ss) {
       var bbq = Number(row[11] || 0);
       var sourCream = Number(row[12] || 0);
       var cheese = srcHasCheese ? Number(row[13] || 0) : 0;
-      var bawangOnly = srcHasCheese ? Number(row[14] || 0) : Number(row[13] || 0);
-      var orderStatus = srcHasCheese ? String(row[17] || 'New') : String(row[16] || 'New');
+      var saltedEgg = srcHasSaltedEgg ? Number(row[14] || 0) : 0;
+      var spicySaltedEgg = srcHasSaltedEgg ? Number(row[15] || 0) : 0;
+      var bawangOnly = srcHasSaltedEgg ? Number(row[16] || 0) : (srcHasCheese ? Number(row[14] || 0) : Number(row[13] || 0));
+      var orderStatus = srcHasSaltedEgg ? String(row[19] || 'New') : (srcHasCheese ? String(row[17] || 'New') : String(row[16] || 'New'));
 
       var targetRow = Math.max(masterSheet.getLastRow() + 1, 8);
-      var totalPacksFormula = '=SUM(I' + targetRow + ':O' + targetRow + ')';
-      var totalAmountFormula = '=(SUM(I' + targetRow + ':N' + targetRow + ')*50)+(O' + targetRow + '*60)';
+      var totalPacksFormula = '=SUM(I' + targetRow + ':Q' + targetRow + ')';
+      var totalAmountFormula = '=(SUM(I' + targetRow + ':P' + targetRow + ')*50)+(Q' + targetRow + '*60)';
 
       var cleanRow = [
         orderId, oDate, oTime, customer, mobile, paymentMode, address, paidStatus,
-        salted, unsalted, spicy, bbq, sourCream, cheese, bawangOnly,
+        salted, unsalted, spicy, bbq, sourCream, cheese, saltedEgg, spicySaltedEgg, bawangOnly,
         totalPacksFormula, totalAmountFormula, orderStatus
       ];
 
-      masterSheet.getRange(targetRow, 1, 1, 18).setValues([cleanRow]);
+      masterSheet.getRange(targetRow, 1, 1, 20).setValues([cleanRow]);
       formatDataRow(masterSheet, targetRow, cleanRow);
       existingIds[orderId] = true;
       importedCount++;
@@ -826,8 +852,8 @@ function getOrCreateMasterSheet(ss) {
     }
     setupSheetHeadersAndSummary(sheet, MASTER_SHEET_NAME);
   } else {
-    var h14 = String(sheet.getRange(2, 14).getValue() || '');
-    if (h14 !== 'Cheese (₱50)') {
+    var h15 = String(sheet.getRange(2, 15).getValue() || '');
+    if (h15 !== 'Salted Egg (₱50)') {
       setupSheetHeadersAndSummary(sheet, MASTER_SHEET_NAME);
     }
   }
@@ -854,7 +880,7 @@ function handleAddOrder(ss, order) {
 
   var fq = order.flavorQuantities || {};
   if ((!order.flavorQuantities || Object.keys(order.flavorQuantities).length === 0) && Array.isArray(order.items)) {
-    fq = { salted: 0, unsalted: 0, spicy: 0, bbq: 0, 'sour-cream': 0, cheese: 0, 'bawang-only': 0 };
+    fq = { salted: 0, unsalted: 0, spicy: 0, bbq: 0, 'sour-cream': 0, cheese: 0, 'salted-egg': 0, 'spicy-salted-egg': 0, 'bawang-only': 0 };
     order.items.forEach(function(it) {
       var k = it.productId || it.id;
       if (k && fq[k] !== undefined) {
@@ -869,16 +895,18 @@ function handleAddOrder(ss, order) {
   var bbqQty = Number(fq.bbq || 0);
   var sourCreamQty = Number(fq['sour-cream'] || 0);
   var cheeseQty = Number(fq.cheese || 0);
+  var saltedEggQty = Number(fq['salted-egg'] || 0);
+  var spicySaltedEggQty = Number(fq['spicy-salted-egg'] || 0);
   var bawangOnlyQty = Number(fq['bawang-only'] || 0);
 
   var paymentMethod = (order.paymentMethod || order.paymentMode || 'Cash on Delivery').trim();
   var defaultPaidStatus = paymentMethod.toLowerCase().includes('cash') ? 'Unpaid' : 'Paid';
   var paymentStatus = order.paymentStatus || order.paidStatus || defaultPaidStatus;
 
-  var totalPacksFormula = '=SUM(I' + targetRow + ':O' + targetRow + ')';
-  var totalAmountFormula = '=(SUM(I' + targetRow + ':N' + targetRow + ')*50)+(O' + targetRow + '*60)';
+  var totalPacksFormula = '=SUM(I' + targetRow + ':Q' + targetRow + ')';
+  var totalAmountFormula = '=(SUM(I' + targetRow + ':P' + targetRow + ')*50)+(Q' + targetRow + '*60)';
 
-  // 18-Column Standard Order Array
+  // 20-Column Standard Order Array
   var rowData = [
     order.orderId || 'MANI-' + orderDate.replace(/-/g, '') + '-001', // Col 1  (A): Order ID
     orderDate,                                                        // Col 2  (B): Order Date
@@ -894,10 +922,12 @@ function handleAddOrder(ss, order) {
     bbqQty,                                                           // Col 12 (L): BBQ Qty
     sourCreamQty,                                                     // Col 13 (M): Sour Cream Qty
     cheeseQty,                                                        // Col 14 (N): Cheese Qty
-    bawangOnlyQty,                                                    // Col 15 (O): Bawang Only Qty
-    totalPacksFormula,                                                // Col 16 (P): Total Packs (Formula)
-    totalAmountFormula,                                               // Col 17 (Q): Total Amount (Formula)
-    order.status || 'New'                                             // Col 18 (R): Order Status
+    saltedEggQty,                                                     // Col 15 (O): Salted Egg Qty
+    spicySaltedEggQty,                                                // Col 16 (P): Spicy Salted Egg Qty
+    bawangOnlyQty,                                                    // Col 17 (Q): Bawang Only Qty
+    totalPacksFormula,                                                // Col 18 (R): Total Packs (Formula)
+    totalAmountFormula,                                               // Col 19 (S): Total Amount (Formula)
+    order.status || 'New'                                             // Col 20 (T): Order Status
   ];
 
   var range = sheet.getRange(targetRow, 1, 1, rowData.length);
@@ -927,7 +957,8 @@ function handleAddOrder(ss, order) {
  * Format a single data row with alternating backgrounds, currencies, and status colors
  */
 function formatDataRow(sheet, targetRow, rowData) {
-  var range = sheet.getRange(targetRow, 1, 1, 18);
+  var colCount = (rowData && rowData.length) ? rowData.length : (sheet.getLastColumn() >= 20 ? 20 : 18);
+  var range = sheet.getRange(targetRow, 1, 1, colCount);
   range.setFontFamily('Arial');
   range.setFontSize(10);
   range.setVerticalAlignment('middle');
@@ -948,10 +979,50 @@ function formatDataRow(sheet, targetRow, rowData) {
   sheet.getRange(targetRow, 3).setNumberFormat('@');
   sheet.getRange(targetRow, 5).setNumberFormat('@');
 
-  // Number format for pack counts (Cols 9-16)
-  sheet.getRange(targetRow, 9, 1, 8).setNumberFormat('#,##0');
-  // Currency format for Total Amount (Col 17 / Q)
-  sheet.getRange(targetRow, 17).setNumberFormat('"₱"#,##0.00');
+  var is20Col = (colCount >= 20);
+  var is18Col = (colCount === 18 || colCount === 19);
+
+  if (is20Col) {
+    // Number format for pack counts (Cols 9-18: I to R)
+    sheet.getRange(targetRow, 9, 1, 10).setNumberFormat('#,##0');
+    // Currency format for Total Amount (Col 19 / S)
+    sheet.getRange(targetRow, 19).setNumberFormat('"₱"#,##0.00');
+
+    // Order Status formatting (Col 20 / T)
+    var statusCell = sheet.getRange(targetRow, 20);
+    statusCell.setFontWeight('bold');
+    var st = String(rowData[19] || 'New').toLowerCase();
+    if (st === 'new') statusCell.setFontColor('#D97706').setBackground('#FEF3C7');
+    else if (st === 'confirmed') statusCell.setFontColor('#2563EB').setBackground('#DBEAFE');
+    else if (st === 'preparing') statusCell.setFontColor('#EA580C').setBackground('#FFEDD5');
+    else if (st === 'ready') statusCell.setFontColor('#7C3AED').setBackground('#EDE9FE');
+    else if (st === 'completed') statusCell.setFontColor('#059669').setBackground('#D1FAE5');
+    else if (st === 'cancelled') statusCell.setFontColor('#DC2626').setBackground('#FEE2E2');
+  } else if (is18Col) {
+    sheet.getRange(targetRow, 9, 1, 8).setNumberFormat('#,##0');
+    sheet.getRange(targetRow, 17).setNumberFormat('"₱"#,##0.00');
+    var statusCell = sheet.getRange(targetRow, 18);
+    statusCell.setFontWeight('bold');
+    var st = String(rowData[17] || 'New').toLowerCase();
+    if (st === 'new') statusCell.setFontColor('#D97706').setBackground('#FEF3C7');
+    else if (st === 'confirmed') statusCell.setFontColor('#2563EB').setBackground('#DBEAFE');
+    else if (st === 'preparing') statusCell.setFontColor('#EA580C').setBackground('#FFEDD5');
+    else if (st === 'ready') statusCell.setFontColor('#7C3AED').setBackground('#EDE9FE');
+    else if (st === 'completed') statusCell.setFontColor('#059669').setBackground('#D1FAE5');
+    else if (st === 'cancelled') statusCell.setFontColor('#DC2626').setBackground('#FEE2E2');
+  } else {
+    sheet.getRange(targetRow, 9, 1, 7).setNumberFormat('#,##0');
+    sheet.getRange(targetRow, 16).setNumberFormat('"₱"#,##0.00');
+    var statusCell = sheet.getRange(targetRow, 17);
+    statusCell.setFontWeight('bold');
+    var st = String(rowData[16] || 'New').toLowerCase();
+    if (st === 'new') statusCell.setFontColor('#D97706').setBackground('#FEF3C7');
+    else if (st === 'confirmed') statusCell.setFontColor('#2563EB').setBackground('#DBEAFE');
+    else if (st === 'preparing') statusCell.setFontColor('#EA580C').setBackground('#FFEDD5');
+    else if (st === 'ready') statusCell.setFontColor('#7C3AED').setBackground('#EDE9FE');
+    else if (st === 'completed') statusCell.setFontColor('#059669').setBackground('#D1FAE5');
+    else if (st === 'cancelled') statusCell.setFontColor('#DC2626').setBackground('#FEE2E2');
+  }
 
   // Paid Status formatting (Col 8 / H)
   var paidCell = sheet.getRange(targetRow, 8);
@@ -962,21 +1033,10 @@ function formatDataRow(sheet, targetRow, rowData) {
   } else {
     paidCell.setFontColor('#92400E').setBackground('#FEF3C7');
   }
-
-  // Order Status formatting (Col 18 / R)
-  var statusCell = sheet.getRange(targetRow, 18);
-  statusCell.setFontWeight('bold');
-  var st = String(rowData[17] || 'New').toLowerCase();
-  if (st === 'new') statusCell.setFontColor('#D97706').setBackground('#FEF3C7');
-  else if (st === 'confirmed') statusCell.setFontColor('#2563EB').setBackground('#DBEAFE');
-  else if (st === 'preparing') statusCell.setFontColor('#EA580C').setBackground('#FFEDD5');
-  else if (st === 'ready') statusCell.setFontColor('#7C3AED').setBackground('#EDE9FE');
-  else if (st === 'completed') statusCell.setFontColor('#059669').setBackground('#D1FAE5');
-  else if (st === 'cancelled') statusCell.setFontColor('#DC2626').setBackground('#FEE2E2');
 }
 
 /**
- * Setup sheet formatting: Top Daily Summary Dashboard + Column Headers (18 Columns Exact Alignment)
+ * Setup sheet formatting: Top Daily Summary Dashboard + Column Headers (20 Columns Exact Alignment)
  */
 function setupSheetHeadersAndSummary(sheet, titleStr) {
   var isMaster = (titleStr === MASTER_SHEET_NAME || sheet.getName() === MASTER_SHEET_NAME);
@@ -985,8 +1045,8 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     : ('🥜 MANI WANDERING ORDERS — DAILY LOG & SUMMARY (' + (titleStr || sheet.getName()) + ')');
 
   // Title Bar (Row 1)
-  sheet.getRange('A1:R1').breakApart();
-  sheet.getRange('A1:R1').merge()
+  sheet.getRange('A1:T1').breakApart();
+  sheet.getRange('A1:T1').merge()
     .setValue(displayTitle)
     .setFontFamily('Arial')
     .setFontSize(13)
@@ -997,30 +1057,32 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     .setVerticalAlignment('middle');
   sheet.setRowHeight(1, 35);
 
-  // Daily / Master Order Summary Metrics Header (Row 2) - Exactly 18 columns aligned 1:1 with columns A-R
+  // Daily / Master Order Summary Metrics Header (Row 2) - Exactly 20 columns aligned 1:1 with columns A-T
   var summaryHeaders = [
-    'Total Orders',      // Col A (1)
-    'Log Scope',         // Col B (2)
-    'COD Orders',        // Col C (3)
-    'GCash Orders',      // Col D (4)
-    'Maribank Orders',   // Col E (5)
-    'Paid Orders',       // Col F (6)
-    'Unpaid Orders',     // Col G (7)
-    'Payment Ratio',     // Col H (8)
-    'Salted (₱50)',      // Col I (9)
-    'Unsalted (₱50)',    // Col J (10)
-    'Spicy (₱50)',       // Col K (11)
-    'BBQ (₱50)',         // Col L (12)
-    'Sour Cream (₱50)',  // Col M (13)
-    'Cheese (₱50)',      // Col N (14)
-    'Bawang Only (₱60)', // Col O (15)
-    'Total Packs',       // Col P (16)
-    'Total Sales (₱)',   // Col Q (17)
-    'Pending / Active'   // Col R (18)
+    'Total Orders',            // Col A (1)
+    'Log Scope',               // Col B (2)
+    'COD Orders',              // Col C (3)
+    'GCash Orders',            // Col D (4)
+    'Maribank Orders',         // Col E (5)
+    'Paid Orders',             // Col F (6)
+    'Unpaid Orders',           // Col G (7)
+    'Payment Ratio',           // Col H (8)
+    'Salted (₱50)',            // Col I (9)
+    'Unsalted (₱50)',          // Col J (10)
+    'Spicy (₱50)',             // Col K (11)
+    'BBQ (₱50)',               // Col L (12)
+    'Sour Cream (₱50)',        // Col M (13)
+    'Cheese (₱50)',            // Col N (14)
+    'Salted Egg (₱50)',        // Col O (15)
+    'Spicy Salted Egg (₱50)',  // Col P (16)
+    'Bawang Only (₱60)',       // Col Q (17)
+    'Total Packs',             // Col R (18)
+    'Total Sales (₱)',         // Col S (19)
+    'Pending / Active'         // Col T (20)
   ];
 
-  sheet.getRange('A2:R2').breakApart();
-  sheet.getRange('A2:R2').setValues([summaryHeaders])
+  sheet.getRange('A2:T2').breakApart();
+  sheet.getRange('A2:T2').setValues([summaryHeaders])
     .setFontFamily('Arial')
     .setFontSize(9)
     .setFontWeight('bold')
@@ -1030,7 +1092,7 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     .setVerticalAlignment('middle');
   sheet.setRowHeight(2, 24);
 
-  // Dynamic Summary Formulas (Row 3) - Exactly 18 columns aligned 1:1 with columns A-R
+  // Dynamic Summary Formulas (Row 3) - Exactly 20 columns aligned 1:1 with columns A-T
   var logScopeFormula = isMaster ? '="Master List"' : '="' + (titleStr || sheet.getName()) + '"';
   var formulas = [
     '=COUNTA(A8:A)',                                                      // Col A: Total Orders
@@ -1047,14 +1109,16 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     '=SUM(L8:L)',                                                         // Col L: BBQ Qty Sum
     '=SUM(M8:M)',                                                         // Col M: Sour Cream Qty Sum
     '=SUM(N8:N)',                                                         // Col N: Cheese Qty Sum
-    '=SUM(O8:O)',                                                         // Col O: Bawang Only Qty Sum
-    '=SUM(P8:P)',                                                         // Col P: Total Packs Sum
-    '=SUM(Q8:Q)',                                                         // Col Q: Total Revenue Sum
-    '=COUNTIFS(A8:A, "<>", R8:R, "<>Completed") & " active"'              // Col R: Active Orders
+    '=SUM(O8:O)',                                                         // Col O: Salted Egg Qty Sum
+    '=SUM(P8:P)',                                                         // Col P: Spicy Salted Egg Qty Sum
+    '=SUM(Q8:Q)',                                                         // Col Q: Bawang Only Qty Sum
+    '=SUM(R8:R)',                                                         // Col R: Total Packs Sum
+    '=SUM(S8:S)',                                                         // Col S: Total Revenue Sum
+    '=COUNTIFS(A8:A, "<>", T8:T, "<>Completed") & " active"'              // Col T: Active Orders
   ];
 
-  sheet.getRange('A3:R3').breakApart();
-  sheet.getRange('A3:R3').setFormulas([formulas])
+  sheet.getRange('A3:T3').breakApart();
+  sheet.getRange('A3:T3').setFormulas([formulas])
     .setFontFamily('Arial')
     .setFontSize(11)
     .setFontWeight('bold')
@@ -1063,33 +1127,35 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle');
   sheet.setRowHeight(3, 30);
-  sheet.getRange('Q3').setNumberFormat('"₱"#,##0.00');
+  sheet.getRange('S3').setNumberFormat('"₱"#,##0.00');
 
   // Blank Separator (Rows 4, 5, 6)
   sheet.setRowHeight(4, 8);
   sheet.setRowHeight(5, 8);
   sheet.setRowHeight(6, 8);
 
-  // Column Headers (Row 7) - Exactly 18 columns
+  // Column Headers (Row 7) - Exactly 20 columns
   var colHeaders = [
-    'Order ID',          // Col 1  (A)
-    'Order Date',        // Col 2  (B)
-    'Order Time',        // Col 3  (C)
-    'Customer Name',     // Col 4  (D)
-    'Mobile Number',     // Col 5  (E)
-    'Payment Mode',      // Col 6  (F)
-    'Delivery Address',  // Col 7  (G)
-    'Paid Status',       // Col 8  (H)
-    'Salted Qty',        // Col 9  (I)
-    'Unsalted Qty',      // Col 10 (J)
-    'Spicy Qty',         // Col 11 (K)
-    'BBQ Qty',           // Col 12 (L)
-    'Sour Cream Qty',    // Col 13 (M)
-    'Cheese Qty',        // Col 14 (N)
-    'Bawang Only Qty',   // Col 15 (O)
-    'Total Packs',       // Col 16 (P)
-    'Total Amount (₱)',  // Col 17 (Q)
-    'Order Status'       // Col 18 (R)
+    'Order ID',               // Col 1  (A)
+    'Order Date',             // Col 2  (B)
+    'Order Time',             // Col 3  (C)
+    'Customer Name',          // Col 4  (D)
+    'Mobile Number',          // Col 5  (E)
+    'Payment Mode',           // Col 6  (F)
+    'Delivery Address',       // Col 7  (G)
+    'Paid Status',            // Col 8  (H)
+    'Salted Qty',             // Col 9  (I)
+    'Unsalted Qty',           // Col 10 (J)
+    'Spicy Qty',              // Col 11 (K)
+    'BBQ Qty',                // Col 12 (L)
+    'Sour Cream Qty',         // Col 13 (M)
+    'Cheese Qty',             // Col 14 (N)
+    'Salted Egg Qty',         // Col 15 (O)
+    'Spicy Salted Egg Qty',   // Col 16 (P)
+    'Bawang Only Qty',        // Col 17 (Q)
+    'Total Packs',            // Col 18 (R)
+    'Total Amount (₱)',       // Col 19 (S)
+    'Order Status'            // Col 20 (T)
   ];
 
   var hRange = sheet.getRange(7, 1, 1, colHeaders.length);
@@ -1121,10 +1187,12 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
   sheet.setColumnWidth(12, 90); // BBQ
   sheet.setColumnWidth(13, 105);// Sour Cream
   sheet.setColumnWidth(14, 95); // Cheese
-  sheet.setColumnWidth(15, 115);// Bawang Only
-  sheet.setColumnWidth(16, 95); // Total Packs
-  sheet.setColumnWidth(17, 125);// Total Amount
-  sheet.setColumnWidth(18, 115);// Order Status
+  sheet.setColumnWidth(15, 105);// Salted Egg
+  sheet.setColumnWidth(16, 125);// Spicy Salted Egg
+  sheet.setColumnWidth(17, 115);// Bawang Only
+  sheet.setColumnWidth(18, 95); // Total Packs
+  sheet.setColumnWidth(19, 125);// Total Amount
+  sheet.setColumnWidth(20, 115);// Order Status
 }
 
 /**
@@ -1139,6 +1207,16 @@ function fixAndAlignSheet(sheet, dateStr) {
   var lastCol = Math.max(sheet.getLastColumn(), 18);
   var range = sheet.getRange(8, 1, lastRow - 7, lastCol);
   var values = range.getValues();
+  var headerVals = sheet.getRange(7, 1, 1, Math.max(lastCol, 20)).getValues()[0] || [];
+  var srcHasSaltedEgg = false;
+  var srcHasCheese = false;
+  for (var h = 0; h < headerVals.length; h++) {
+    var hText = String(headerVals[h] || '').toLowerCase();
+    if (hText.indexOf('salted egg') !== -1) srcHasSaltedEgg = true;
+    if (hText.indexOf('cheese') !== -1) srcHasCheese = true;
+  }
+  if (!srcHasCheese && lastCol >= 18) srcHasCheese = true;
+  if (!srcHasSaltedEgg && lastCol >= 20) srcHasSaltedEgg = true;
 
   for (var i = 0; i < values.length; i++) {
     var r = values[i];
@@ -1196,31 +1274,23 @@ function fixAndAlignSheet(sheet, dateStr) {
     var spicy = Number(r[10] || 0);
     var bbq = Number(r[11] || 0);
     var sourCream = Number(r[12] || 0);
-    var cheese = 0;
-    var bawangOnly = 0;
-    var orderStatus = 'New';
+    var cheese = srcHasCheese ? Number(r[13] || 0) : 0;
+    var saltedEgg = srcHasSaltedEgg ? Number(r[14] || 0) : 0;
+    var spicySaltedEgg = srcHasSaltedEgg ? Number(r[15] || 0) : 0;
+    var bawangOnly = srcHasSaltedEgg ? Number(r[16] || 0) : (srcHasCheese ? Number(r[14] || 0) : Number(r[13] || 0));
+    var orderStatus = srcHasSaltedEgg ? String(r[19] || 'New') : (srcHasCheese ? String(r[17] || 'New') : String(r[16] || 'New'));
 
-    if (r.length >= 18 && r[17] !== undefined && r[17] !== '') {
-      cheese = Number(r[13] || 0);
-      bawangOnly = Number(r[14] || 0);
-      orderStatus = String(r[17] || 'New');
-    } else {
-      cheese = 0;
-      bawangOnly = Number(r[13] || 0);
-      orderStatus = String(r[16] || 'New');
-    }
-
-    var totalPacksFormula = '=SUM(I' + rowNum + ':O' + rowNum + ')';
-    var totalAmountFormula = '=(SUM(I' + rowNum + ':N' + rowNum + ')*50)+(O' + rowNum + '*60)';
+    var totalPacksFormula = '=SUM(I' + rowNum + ':Q' + rowNum + ')';
+    var totalAmountFormula = '=(SUM(I' + rowNum + ':P' + rowNum + ')*50)+(Q' + rowNum + '*60)';
 
     var cleanRow = [
       orderId, orderDate, orderTime, customer, mobile,
       paymentMode, deliveryAddress, paidStatus,
-      salted, unsalted, spicy, bbq, sourCream, cheese, bawangOnly,
+      salted, unsalted, spicy, bbq, sourCream, cheese, saltedEgg, spicySaltedEgg, bawangOnly,
       totalPacksFormula, totalAmountFormula, orderStatus
     ];
 
-    sheet.getRange(rowNum, 1, 1, 18).setValues([cleanRow]);
+    sheet.getRange(rowNum, 1, 1, 20).setValues([cleanRow]);
     formatDataRow(sheet, rowNum, cleanRow);
   }
 }
@@ -1263,7 +1333,16 @@ function handleUpdateStatus(ss, orderId, orderDate, newStatus, customerName, ord
 
   if (!sheet || row === -1) return { success: false, error: 'Order ' + orderId + ' not found in sheet' };
 
-  var statusCol = (sheet.getLastColumn() >= 18 || String(sheet.getRange(7, 14).getValue() || '').indexOf('Cheese') !== -1) ? 18 : 17;
+  var lastCol = sheet.getLastColumn();
+  var headerVals = sheet.getRange(7, 1, 1, Math.max(lastCol, 20)).getValues()[0] || [];
+  var hasSaltedEgg = false;
+  var hasCheese = false;
+  for (var h = 0; h < headerVals.length; h++) {
+    var hText = String(headerVals[h] || '').toLowerCase();
+    if (hText.indexOf('salted egg') !== -1) hasSaltedEgg = true;
+    if (hText.indexOf('cheese') !== -1) hasCheese = true;
+  }
+  var statusCol = (hasSaltedEgg || lastCol >= 20) ? 20 : ((hasCheese || lastCol >= 18) ? 18 : 17);
   var cell = sheet.getRange(row, statusCol);
   cell.setValue(newStatus);
   cell.setFontWeight('bold');
@@ -1475,6 +1554,8 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
       { key: 'bbq', name: 'BBQ Mani', price: 50 },
       { key: 'sour-cream', name: 'Sour Cream Mani', price: 50 },
       { key: 'cheese', name: 'Cheese Mani', price: 50 },
+      { key: 'salted-egg', name: 'Salted Egg Mani', price: 50 },
+      { key: 'spicy-salted-egg', name: 'Spicy Salted Egg Mani', price: 50 },
       { key: 'bawang-only', name: 'Bawang Only', price: 60 }
     ];
     flavorCatalog.forEach(function(flv) {
@@ -1492,7 +1573,17 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
 
   // Fallback to rowData if available
   if (itemsList.length === 0 && rowData) {
-    var rowCatalog = (rowData.length >= 18) ? [
+    var rowCatalog = (rowData.length >= 20) ? [
+      { name: 'Salted Mani', qty: Number(rowData[8] || 0), price: 50 },
+      { name: 'Unsalted Mani', qty: Number(rowData[9] || 0), price: 50 },
+      { name: 'Spicy Mani', qty: Number(rowData[10] || 0), price: 50 },
+      { name: 'BBQ Mani', qty: Number(rowData[11] || 0), price: 50 },
+      { name: 'Sour Cream Mani', qty: Number(rowData[12] || 0), price: 50 },
+      { name: 'Cheese Mani', qty: Number(rowData[13] || 0), price: 50 },
+      { name: 'Salted Egg Mani', qty: Number(rowData[14] || 0), price: 50 },
+      { name: 'Spicy Salted Egg Mani', qty: Number(rowData[15] || 0), price: 50 },
+      { name: 'Bawang Only', qty: Number(rowData[16] || 0), price: 60 }
+    ] : ((rowData.length >= 18) ? [
       { name: 'Salted Mani', qty: Number(rowData[8] || 0), price: 50 },
       { name: 'Unsalted Mani', qty: Number(rowData[9] || 0), price: 50 },
       { name: 'Spicy Mani', qty: Number(rowData[10] || 0), price: 50 },
@@ -1507,7 +1598,7 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
       { name: 'BBQ Mani', qty: Number(rowData[11] || 0), price: 50 },
       { name: 'Sour Cream Mani', qty: Number(rowData[12] || 0), price: 50 },
       { name: 'Bawang Only', qty: Number(rowData[13] || 0), price: 60 }
-    ];
+    ]);
     rowCatalog.forEach(function(flv) {
       if (flv.qty > 0) {
         itemsList.push({
@@ -1779,6 +1870,8 @@ function handleSendOrderSummaryEmail(ss, payload) {
       bbq: 'BBQ',
       'sour-cream': 'Sour Cream',
       cheese: 'Cheese',
+      'salted-egg': 'Salted Egg',
+      'spicy-salted-egg': 'Spicy Salted Egg',
       'bawang-only': 'Bawang Only'
     };
 
@@ -1792,7 +1885,7 @@ function handleSendOrderSummaryEmail(ss, payload) {
           }
         });
       } else if (o.flavorQuantities) {
-        ['salted', 'unsalted', 'spicy', 'bbq', 'sour-cream', 'cheese', 'bawang-only'].forEach(function(k) {
+        ['salted', 'unsalted', 'spicy', 'bbq', 'sour-cream', 'cheese', 'salted-egg', 'spicy-salted-egg', 'bawang-only'].forEach(function(k) {
           var q = Number(o.flavorQuantities[k]) || 0;
           if (q > 0) {
             parts.push((flavorLabels[k] || k) + ' × ' + q);

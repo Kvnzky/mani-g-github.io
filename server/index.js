@@ -752,6 +752,8 @@ const formatServerOrderItems = (order) => {
     bbq: 'BBQ',
     'sour-cream': 'Sour Cream',
     cheese: 'Cheese',
+    'salted-egg': 'Salted Egg',
+    'spicy-salted-egg': 'Spicy Salted Egg',
     'bawang-only': 'Bawang Only'
   };
 
@@ -777,7 +779,7 @@ const formatServerOrderItems = (order) => {
       }
     });
   } else if (order.flavorQuantities && typeof order.flavorQuantities === 'object') {
-    const stdKeys = ['salted', 'unsalted', 'spicy', 'bbq', 'sour-cream', 'cheese', 'bawang-only'];
+    const stdKeys = ['salted', 'unsalted', 'spicy', 'bbq', 'sour-cream', 'cheese', 'salted-egg', 'spicy-salted-egg', 'bawang-only'];
     const extraKeys = Object.keys(order.flavorQuantities).filter((k) => !stdKeys.includes(k));
     [...stdKeys, ...extraKeys].forEach((k) => {
       const q = Number(order.flavorQuantities[k]) || 0;
@@ -1112,6 +1114,8 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
       bbq: 0,
       'sour-cream': 0,
       cheese: 0,
+      'salted-egg': 0,
+      'spicy-salted-egg': 0,
       'bawang-only': 0
     };
 
@@ -1252,6 +1256,8 @@ app.get('/api/orders', requireAdminAuth, (req, res) => {
     bbq: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.bbq || 0), 0),
     sourCream: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.['sour-cream'] || 0), 0),
     cheese: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.cheese || 0), 0),
+    saltedEgg: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.['salted-egg'] || 0), 0),
+    spicySaltedEgg: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.['spicy-salted-egg'] || 0), 0),
     bawangOnly: dayOrders.reduce((sum, o) => sum + (o.flavorQuantities?.['bawang-only'] || 0), 0),
     cod: dayOrders.filter(o => (o.paymentMethod || '').toLowerCase().includes('cash')).length,
     gcash: dayOrders.filter(o => (o.paymentMethod || '').toLowerCase().includes('gcash')).length,

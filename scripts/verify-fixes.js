@@ -521,6 +521,63 @@ async function runVerification() {
     assert(flavorCardSrc.includes('shadow-pumpkin-tub'), 'Step 20: Product tubs must have warm pumpkin-illuminated box-shadow');
     console.log('✓ Step 20 passed: Spooky Halloween Special ("Trick or Treat Crunch!") verified!\n');
 
+    // ------------------------------------------------------------------
+    // STEP 21: Salted Egg & Spicy Salted Egg Flavors Verification
+    // ------------------------------------------------------------------
+    console.log('--- [Step 21] Testing Salted Egg & Spicy Salted Egg Integration, Pricing, and Ordering ---');
+    assert(productsSrc.includes("'salted-egg'") && productsSrc.includes("'spicy-salted-egg'"), 'Step 21: products.js must include salted-egg and spicy-salted-egg');
+    assert(productsSrc.includes('Salted Egg') && productsSrc.includes('Spicy Salted Egg'), 'Step 21: Product names must be Salted Egg and Spicy Salted Egg');
+    assert(productsSrc.includes('Golden Umami') && productsSrc.includes('Fiery Gold'), 'Step 21: FLAVOR_PERSONALITIES must define personalities for new flavors');
+
+    // Test creating an order with Salted Egg & Spicy Salted Egg
+    const saltedEggOrderRes = await fetch(`${BASE_URL}/api/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: 'Salted Egg Fanatic',
+        mobileNumber: '09170001122',
+        deliveryAddress: 'Unit 777 Golden Plaza, BGC, Taguig',
+        paymentMethod: 'GCash',
+        paymentStatus: 'Paid',
+        items: [
+          { id: 'salted-egg', name: 'Salted Egg', quantity: 2, price: 50, subtotal: 100 },
+          { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', quantity: 3, price: 50, subtotal: 150 }
+        ],
+        flavorQuantities: {
+          salted: 0,
+          unsalted: 0,
+          spicy: 0,
+          bbq: 0,
+          'sour-cream': 0,
+          cheese: 0,
+          'salted-egg': 2,
+          'spicy-salted-egg': 3,
+          'bawang-only': 0
+        },
+        totalPacks: 5,
+        subtotal: 250,
+        isTest: true
+      })
+    });
+    assert.strictEqual(saltedEggOrderRes.status, 201, 'Step 21: Order creation with new flavors must return 201');
+    const eggOrderData = await saltedEggOrderRes.json();
+    const createdEggOrder = eggOrderData.order;
+    assert.strictEqual(createdEggOrder.totalPacks, 5, 'Step 21: Total packs must be 5');
+    assert.strictEqual(createdEggOrder.subtotal, 250, 'Step 21: Subtotal must be 250 (5 * 50)');
+
+    // Verify order is retrieved by Admin and metrics reflect new flavors
+    const eggOrdersListRes = await fetch(`${BASE_URL}/api/orders`, {
+      headers: { Authorization: `Bearer ${token2}` }
+    });
+    const eggOrdersData = await eggOrdersListRes.json();
+    const foundEggOrder = eggOrdersData.allOrders.find(o => o.id === createdEggOrder.id);
+    assert(foundEggOrder, 'Step 21: Admin must be able to view orders containing Salted Egg and Spicy Salted Egg');
+    assert.strictEqual(foundEggOrder.flavorQuantities['salted-egg'], 2, 'Step 21: Salted egg qty must be 2');
+    assert.strictEqual(foundEggOrder.flavorQuantities['spicy-salted-egg'], 3, 'Step 21: Spicy salted egg qty must be 3');
+    assert.strictEqual(eggOrdersData.dailySummary.saltedEgg, 2, 'Step 21: Daily summary saltedEgg must equal 2');
+    assert.strictEqual(eggOrdersData.dailySummary.spicySaltedEgg, 3, 'Step 21: Daily summary spicySaltedEgg must equal 3');
+    console.log('✓ Step 21 passed: Salted Egg and Spicy Salted Egg fully integrated and verified across catalog, ordering, and admin summary!\n');
+
     console.log('================================================================');
     console.log('✅ ALL VERIFICATION STEPS PASSED WITH ZERO ERRORS!');
     console.log('================================================================');

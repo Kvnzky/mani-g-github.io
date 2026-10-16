@@ -54,6 +54,18 @@ const SUKI_COMBOS = [
     ]
   },
   {
+    id: 'golden-egg-duo',
+    badge: 'NEW CRAVING',
+    badgeClass: 'bg-amber-600 text-white border border-amber-300',
+    title: 'Golden Salted Egg Cravers Duo',
+    subtitle: '1 Salted Egg + 1 Spicy Salted Egg',
+    description: 'Rich, savory golden yolk coating with toasted garlic crunch. Enjoy both the velvety umami classic and the fiery spicy twist!',
+    items: [
+      { id: 'salted-egg', qty: 1, label: '🥚 Salted Egg × 1' },
+      { id: 'spicy-salted-egg', qty: 1, label: '🔥 Spicy Salted Egg × 1' }
+    ]
+  },
+  {
     id: 'barkada-stash',
     badge: 'BARKADA TAMBAY',
     badgeClass: 'bg-emerald-600 text-white border border-amber-300',
@@ -71,15 +83,17 @@ const SUKI_COMBOS = [
     id: 'walang-iwanan',
     badge: 'BUONG BARKADA',
     badgeClass: 'bg-purple-700 text-amber-200 border border-[#FF6B00]',
-    title: 'Walang Iwanan Six-Pack',
-    subtitle: '1 Salted + 1 Spicy + 1 BBQ + 1 Sour Cream + 1 Cheese + 1 Bawang Only',
-    description: 'All six flavors, zero arguments. Walang maiiwan at walang mag-aaway sa last handful. The full suki lineup for handaan, reunion, or one very long weekend.',
+    title: 'Walang Iwanan All-Stars Pack',
+    subtitle: '1 of Every Flavor (8 Tubs Total)',
+    description: 'Every single savory, rich, and spicy flavor in one grand package. Walang maiiwan at walang mag-aaway sa last tub. The complete Mani Wandering feast!',
     items: [
       { id: 'salted', qty: 1, label: '🧂 Salted × 1' },
       { id: 'spicy', qty: 1, label: '🌶️ Spicy × 1' },
       { id: 'bbq', qty: 1, label: '🍖 BBQ × 1' },
       { id: 'sour-cream', qty: 1, label: '🥛 Sour Cream × 1' },
       { id: 'cheese', qty: 1, label: '🧀 Cheese × 1' },
+      { id: 'salted-egg', qty: 1, label: '🥚 Salted Egg × 1' },
+      { id: 'spicy-salted-egg', qty: 1, label: '🔥 Spicy Salted Egg × 1' },
       { id: 'bawang-only', qty: 1, label: '🧄 Bawang Only × 1' }
     ]
   }
