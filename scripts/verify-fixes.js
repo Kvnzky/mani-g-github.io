@@ -577,6 +577,40 @@ async function runVerification() {
     assert(eggOrdersData.dailySummary.spicySaltedEgg >= 3, 'Step 21: Daily summary spicySaltedEgg must be at least 3');
     console.log('✓ Step 21 passed: Salted Egg and Spicy Salted Egg fully integrated and verified across catalog, ordering, and admin summary!\n');
 
+    // -------------------------------------------------------------
+    // STEP 22: Alternating Price Badge Colors Verification
+    // -------------------------------------------------------------
+    console.log('--- [Step 22] Testing Alternating Price Badge Colors (Orange -> Dark -> Orange -> Dark) ---');
+    const productsModule = await import('../src/config/products.js');
+    const { DEFAULT_PRODUCTS, FLAVOR_PERSONALITIES, PRICE_BADGE_STYLES } = productsModule;
+
+    assert(PRICE_BADGE_STYLES, 'Step 22: PRICE_BADGE_STYLES must be exported');
+    assert(PRICE_BADGE_STYLES.styleA.includes('#FF6A00') && PRICE_BADGE_STYLES.styleA.includes('text-white'), 'Step 22: Style A must use #FF6A00 and text-white');
+    assert(PRICE_BADGE_STYLES.styleB.includes('#211225') && PRICE_BADGE_STYLES.styleB.includes('#FFD43B'), 'Step 22: Style B must use #211225 and #FFD43B');
+
+    // Check alternating order across DEFAULT_PRODUCTS
+    const expectedStyles = ['styleA', 'styleB'];
+    DEFAULT_PRODUCTS.forEach((product, idx) => {
+      const expectedStyleName = expectedStyles[idx % 2];
+      const personality = FLAVOR_PERSONALITIES[product.id];
+      assert(personality, `Step 22: Flavor personality must exist for ${product.id}`);
+      assert.strictEqual(
+        personality.priceBg,
+        PRICE_BADGE_STYLES[expectedStyleName],
+        `Step 22: Flavor #${idx + 1} (${product.id}) must have alternating style ${expectedStyleName}`
+      );
+    });
+
+    // Check FlavorCard and App integration
+    const currentFlavorCardSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'FlavorCard.jsx'), 'utf8');
+    assert(currentFlavorCardSrc.includes('index'), 'Step 22: FlavorCard must accept index prop');
+    assert(currentFlavorCardSrc.includes('priceBadgeClass'), 'Step 22: FlavorCard must compute priceBadgeClass');
+
+    const currentAppSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'App.jsx'), 'utf8');
+    assert(currentAppSrc.includes('index={index}'), 'Step 22: App.jsx must pass index={index} to FlavorCard');
+
+    console.log('✓ Step 22 passed: Price badges alternate Orange (Style A) and Dark (Style B) consistently across all product cards!\n');
+
     console.log('================================================================');
     console.log('✅ ALL VERIFICATION STEPS PASSED WITH ZERO ERRORS!');
     console.log('================================================================');

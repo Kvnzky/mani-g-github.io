@@ -130,6 +130,11 @@ export const DEFAULT_PRODUCTS = [
   }
 ];
 
+export const PRICE_BADGE_STYLES = {
+  styleA: 'bg-[#FF6A00] text-white border-[#211225]/50',
+  styleB: 'bg-[#211225] text-[#FFD43B] border-[#FFD43B]/60'
+};
+
 export const FLAVOR_PERSONALITIES = {
   salted: {
     displayIcon: '🧂',
@@ -142,7 +147,7 @@ export const FLAVOR_PERSONALITIES = {
     frameBg: 'bg-amber-100/70 border-[#FF6B00]/70',
     badgeClass: 'bg-[#FF6B00] text-white border-amber-300',
     vibeClass: 'bg-amber-100/90 text-amber-950 border-amber-300/80',
-    priceBg: 'bg-[#1F1025] text-amber-300',
+    priceBg: 'bg-[#FF6A00] text-white border-[#211225]/50',
     tiltClass: 'hover:-rotate-[0.8deg]'
   },
   unsalted: {
@@ -156,7 +161,7 @@ export const FLAVOR_PERSONALITIES = {
     frameBg: 'bg-emerald-100/50 border-[#FF6B00]/60',
     badgeClass: 'bg-emerald-700 text-white border-amber-300/60',
     vibeClass: 'bg-emerald-50 text-emerald-900 border-emerald-300/80',
-    priceBg: 'bg-[#1F1025] text-amber-300',
+    priceBg: 'bg-[#211225] text-[#FFD43B] border-[#FFD43B]/60',
     tiltClass: 'hover:rotate-[0.8deg]'
   },
   spicy: {
@@ -170,7 +175,7 @@ export const FLAVOR_PERSONALITIES = {
     frameBg: 'bg-rose-100/60 border-[#FF6B00]',
     badgeClass: 'bg-rose-600 text-white border-amber-300',
     vibeClass: 'bg-rose-100/90 text-rose-950 border-rose-300/80',
-    priceBg: 'bg-[#FF6B00] text-white',
+    priceBg: 'bg-[#FF6A00] text-white border-[#211225]/50',
     tiltClass: 'hover:-rotate-[0.8deg]'
   },
   bbq: {
@@ -184,7 +189,7 @@ export const FLAVOR_PERSONALITIES = {
     frameBg: 'bg-orange-100/60 border-[#FF6B00]/80',
     badgeClass: 'bg-[#FF6B00] text-white border-amber-300',
     vibeClass: 'bg-orange-100/90 text-orange-950 border-orange-300/80',
-    priceBg: 'bg-[#1F1025] text-amber-300',
+    priceBg: 'bg-[#211225] text-[#FFD43B] border-[#FFD43B]/60',
     tiltClass: 'hover:rotate-[0.8deg]'
   },
   'sour-cream': {
@@ -198,7 +203,7 @@ export const FLAVOR_PERSONALITIES = {
     frameBg: 'bg-teal-100/50 border-[#FF6B00]/65',
     badgeClass: 'bg-teal-700 text-white border-amber-300/60',
     vibeClass: 'bg-teal-50 text-teal-950 border-teal-300/80',
-    priceBg: 'bg-[#1F1025] text-amber-300',
+    priceBg: 'bg-[#FF6A00] text-white border-[#211225]/50',
     tiltClass: 'hover:-rotate-[0.8deg]'
   },
   cheese: {
@@ -212,7 +217,7 @@ export const FLAVOR_PERSONALITIES = {
     frameBg: 'bg-yellow-100/70 border-[#FF6B00]/75',
     badgeClass: 'bg-amber-400 text-[#1F1025] border-[#FF6B00]',
     vibeClass: 'bg-yellow-100 text-yellow-950 border-yellow-400/80',
-    priceBg: 'bg-[#1F1025] text-amber-300',
+    priceBg: 'bg-[#211225] text-[#FFD43B] border-[#FFD43B]/60',
     tiltClass: 'hover:rotate-[0.8deg]'
   },
   'salted-egg': {
@@ -226,7 +231,7 @@ export const FLAVOR_PERSONALITIES = {
     frameBg: 'bg-yellow-100/70 border-amber-500/80',
     badgeClass: 'bg-amber-500 text-white border-amber-300',
     vibeClass: 'bg-yellow-100/90 text-amber-950 border-amber-400/80',
-    priceBg: 'bg-[#1F1025] text-amber-300',
+    priceBg: 'bg-[#FF6A00] text-white border-[#211225]/50',
     tiltClass: 'hover:-rotate-[0.8deg]'
   },
   'spicy-salted-egg': {
@@ -240,7 +245,7 @@ export const FLAVOR_PERSONALITIES = {
     frameBg: 'bg-orange-100/70 border-red-500/80',
     badgeClass: 'bg-red-600 text-white border-amber-300',
     vibeClass: 'bg-orange-100/90 text-orange-950 border-orange-400/80',
-    priceBg: 'bg-[#FF6B00] text-white',
+    priceBg: 'bg-[#211225] text-[#FFD43B] border-[#FFD43B]/60',
     tiltClass: 'hover:rotate-[0.8deg]'
   },
   'bawang-only': {
@@ -254,7 +259,7 @@ export const FLAVOR_PERSONALITIES = {
     frameBg: 'bg-amber-200/60 border-[#FF6B00]',
     badgeClass: 'bg-[#1F1025] text-amber-300 border-[#FF6B00]',
     vibeClass: 'bg-amber-100 text-mani-950 border-amber-300',
-    priceBg: 'bg-[#FF6B00] text-white',
+    priceBg: 'bg-[#FF6A00] text-white border-[#211225]/50',
     tiltClass: 'hover:-rotate-[0.8deg]'
   }
 };
@@ -272,7 +277,7 @@ export const getFlavorPersonality = (product) => {
     frameBg: preset.frameBg || 'bg-amber-100/50 border-[#FF6B00]/70',
     badgeClass: preset.badgeClass || 'bg-[#FF6B00] text-white border-amber-300',
     vibeClass: preset.vibeClass || 'bg-amber-100 text-amber-950 border-amber-300',
-    priceBg: preset.priceBg || 'bg-[#1F1025] text-amber-300',
+    priceBg: preset.priceBg || 'bg-[#FF6A00] text-white border-[#211225]/50',
     tiltClass: preset.tiltClass || 'hover:-rotate-1'
   };
 };

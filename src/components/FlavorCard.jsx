@@ -6,13 +6,20 @@ export default function FlavorCard({
   product, 
   quantity, 
   onQuantityChange,
-  onAddToCart 
+  onAddToCart,
+  index
 }) {
   const [stagedQty, setStagedQty] = useState(1);
   const [burstKey, setBurstKey] = useState(0);
   const isAvailable = product.available !== false;
   const isSelected = quantity > 0;
   const personality = getFlavorPersonality(product);
+
+  const priceBadgeClass = typeof index === 'number'
+    ? (index % 2 === 0
+        ? 'bg-[#FF6A00] text-white border-[#211225]/50'
+        : 'bg-[#211225] text-[#FFD43B] border-[#FFD43B]/60')
+    : (personality.priceBg || 'bg-[#FF6A00] text-white border-[#211225]/50');
 
   const triggerParticleBurst = () => {
     setBurstKey((prev) => prev + 1);
@@ -104,7 +111,7 @@ export default function FlavorCard({
           )}
 
           {/* Bottom-Right Obvious Price Tag */}
-          <div className={`absolute bottom-2.5 right-2.5 px-3 py-1 rounded-xl font-display font-bold text-sm sm:text-base border border-amber-300/60 shadow-md flex items-baseline gap-1 z-10 ${personality.priceBg}`}>
+          <div className={`absolute bottom-2.5 right-2.5 px-3 py-1 rounded-xl font-display font-bold text-sm sm:text-base border shadow-md flex items-baseline gap-1 z-10 ${priceBadgeClass}`}>
             <span>{formatPHP(product.price || 50)}</span>
             <span className="text-[10px] font-sans font-bold opacity-85">/ tub</span>
           </div>
