@@ -540,8 +540,8 @@ async function runVerification() {
         paymentMethod: 'GCash',
         paymentStatus: 'Paid',
         items: [
-          { id: 'salted-egg', name: 'Salted Egg', quantity: 2, price: 50, subtotal: 100 },
-          { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', quantity: 3, price: 50, subtotal: 150 }
+          { id: 'salted-egg', name: 'Salted Egg', quantity: 2, price: 65, subtotal: 130 },
+          { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', quantity: 3, price: 65, subtotal: 195 }
         ],
         flavorQuantities: {
           salted: 0,
@@ -555,7 +555,7 @@ async function runVerification() {
           'bawang-only': 0
         },
         totalPacks: 5,
-        subtotal: 250,
+        subtotal: 325,
         isTest: true
       })
     });
@@ -563,7 +563,7 @@ async function runVerification() {
     const eggOrderData = await saltedEggOrderRes.json();
     const createdEggOrder = eggOrderData.order;
     assert.strictEqual(createdEggOrder.totalPacks, 5, 'Step 21: Total packs must be 5');
-    assert.strictEqual(createdEggOrder.subtotal, 250, 'Step 21: Subtotal must be 250 (5 * 50)');
+    assert.strictEqual(createdEggOrder.subtotal, 325, 'Step 21: Subtotal must be 325 (5 * 65)');
 
     // Verify order is retrieved by Admin and metrics reflect new flavors
     const eggOrdersListRes = await fetch(`${BASE_URL}/api/orders`, {

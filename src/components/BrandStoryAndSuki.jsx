@@ -151,7 +151,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
   const computeComboPrice = (comboItems) => {
     return comboItems.reduce((sum, item) => {
       const prod = productMap[item.id];
-      const price = prod ? (prod.price || 50) : (item.id === 'bawang-only' ? 60 : 50);
+      const price = prod ? (prod.price || 50) : (item.id === 'bawang-only' ? 60 : ((item.id === 'salted-egg' || item.id === 'spicy-salted-egg') ? 65 : 50));
       return sum + price * item.qty;
     }, 0);
   };

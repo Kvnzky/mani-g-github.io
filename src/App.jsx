@@ -61,6 +61,46 @@ const parseAdminRoute = () => {
   return { isAdmin, subroute };
 };
 
+// Clean & resilient merger: ensures all DEFAULT_PRODUCTS are permanently present and prices are enforced
+const mergeProductsWithDefaults = (incomingProducts, availabilityMap) => {
+  let list = Array.isArray(incomingProducts) && incomingProducts.length > 0
+    ? [...incomingProducts]
+    : [...DEFAULT_PRODUCTS];
+
+  const incomingIds = new Set(list.map((p) => p.id));
+  const missing = DEFAULT_PRODUCTS.filter((p) => !incomingIds.has(p.id));
+  if (missing.length > 0) {
+    list = [...list, ...missing];
+  }
+
+  list = list.map((p) => {
+    const defaultItem = DEFAULT_PRODUCTS.find((d) => d.id === p.id);
+    if (!defaultItem) return p;
+
+    // Enforce tier pricing: Salted Egg & Spicy Salted Egg @ ₱65, Bawang Only @ ₱60, others @ ₱50
+    const price = (p.id === 'salted-egg' || p.id === 'spicy-salted-egg')
+      ? 65
+      : (p.id === 'bawang-only' ? (p.price || 60) : (p.price || defaultItem.price || 50));
+
+    const isAvailable = availabilityMap && availabilityMap[p.id] !== undefined
+      ? Boolean(availabilityMap[p.id])
+      : (p.available !== undefined ? Boolean(p.available) : defaultItem.available);
+
+    return {
+      ...defaultItem,
+      ...p,
+      price,
+      available: isAvailable,
+      image: p.image || defaultItem.image,
+      badge: p.badge || defaultItem.badge,
+      sortOrder: p.sortOrder !== undefined ? p.sortOrder : defaultItem.sortOrder
+    };
+  });
+
+  list.sort((a, b) => (a.sortOrder || 99) - (b.sortOrder || 99));
+  return list;
+};
+
 export default function App() {
   const initialRoute = parseAdminRoute();
   const initialToken = typeof window !== 'undefined' ? (sessionStorage.getItem('mani_admin_token') || '') : '';
@@ -79,20 +119,9 @@ export default function App() {
     try {
       const savedProds = JSON.parse(localStorage.getItem('mani_products') || 'null');
       const savedAvailability = JSON.parse(localStorage.getItem('mani_flavor_availability') || 'null');
-      let base = Array.isArray(savedProds) && savedProds.length > 0 ? savedProds : DEFAULT_PRODUCTS;
-      
-      // Ensure all DEFAULT_PRODUCTS exist in base (e.g. newly added flavors)
-      const existingIds = new Set(base.map(p => p.id));
-      const missingDefaults = DEFAULT_PRODUCTS.filter(p => !existingIds.has(p.id));
-      if (missingDefaults.length > 0) {
-        base = [...base, ...missingDefaults].sort((a, b) => (a.sortOrder || 99) - (b.sortOrder || 99));
-        localStorage.setItem('mani_products', JSON.stringify(base));
-      }
-
-      if (savedAvailability && typeof savedAvailability === 'object') {
-        base = base.map(p => savedAvailability[p.id] !== undefined ? { ...p, available: Boolean(savedAvailability[p.id]) } : p);
-      }
-      return base;
+      const merged = mergeProductsWithDefaults(savedProds, savedAvailability);
+      localStorage.setItem('mani_products', JSON.stringify(merged));
+      return merged;
     } catch (e) {
       return DEFAULT_PRODUCTS;
     }
@@ -325,23 +354,22 @@ export default function App() {
       localStorage.setItem('mani_cutoff_settings', JSON.stringify(effectiveConfig));
     }
 
-    // 2. Synchronize Flavor Availability
-    if (settings.flavorAvailability && typeof settings.flavorAvailability === 'object') {
-      setProducts((prev) =>
-        prev.map((p) => {
-          if (settings.flavorAvailability[p.id] !== undefined) {
-            return { ...p, available: Boolean(settings.flavorAvailability[p.id]) };
-          }
-          return p;
-        })
-      );
-      localStorage.setItem('mani_flavor_availability', JSON.stringify(settings.flavorAvailability));
+    // 2. Synchronize Flavor Availability & Products
+    const incomingAvailability = (settings.flavorAvailability && typeof settings.flavorAvailability === 'object')
+      ? settings.flavorAvailability
+      : null;
+
+    if (incomingAvailability) {
+      localStorage.setItem('mani_flavor_availability', JSON.stringify(incomingAvailability));
     }
 
-    // 3. Synchronize Products & Pricing
+    // 3. Synchronize Products & Pricing (never discard newly added flavors)
     if (Array.isArray(settings.products) && settings.products.length > 0) {
-      setProducts(settings.products);
-      localStorage.setItem('mani_products', JSON.stringify(settings.products));
+      const merged = mergeProductsWithDefaults(settings.products, incomingAvailability);
+      setProducts(merged);
+      localStorage.setItem('mani_products', JSON.stringify(merged));
+    } else if (incomingAvailability) {
+      setProducts((prev) => mergeProductsWithDefaults(prev, incomingAvailability));
     }
 
     // 4. Synchronize Payment QR Codes & GCash Number
@@ -421,14 +449,7 @@ export default function App() {
           }
 
           if (data.flavorAvailability && typeof data.flavorAvailability === 'object') {
-            setProducts((prev) =>
-              prev.map((p) => {
-                if (data.flavorAvailability[p.id] !== undefined) {
-                  return { ...p, available: Boolean(data.flavorAvailability[p.id]) };
-                }
-                return p;
-              })
-            );
+            setProducts((prev) => mergeProductsWithDefaults(prev, data.flavorAvailability));
           }
           if (data.paymentMethods && typeof data.paymentMethods === 'object') {
             setPaymentMethods((prev) => ({ ...prev, ...data.paymentMethods }));
@@ -499,7 +520,7 @@ export default function App() {
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setProducts(data);
+          setProducts((prev) => mergeProductsWithDefaults(data));
         }
       })
       .catch(() => {});
@@ -629,8 +650,9 @@ export default function App() {
   };
 
   const handleUpdateProducts = (newProducts) => {
-    setProducts(newProducts);
-    localStorage.setItem('mani_products', JSON.stringify(newProducts));
+    const merged = mergeProductsWithDefaults(newProducts);
+    setProducts(merged);
+    localStorage.setItem('mani_products', JSON.stringify(merged));
 
     // 1. Sync to local backend if available
     fetch('/api/products', {
@@ -639,7 +661,7 @@ export default function App() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${adminToken}`
       },
-      body: JSON.stringify(newProducts)
+      body: JSON.stringify(merged)
     }).catch(() => {});
 
     // 2. Sync to Google Apps Script Cloud so mobile immediately receives updated products & pricing
@@ -651,7 +673,7 @@ export default function App() {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'saveSettings',
-          settings: { products: newProducts }
+          settings: { products: merged }
         })
       }).catch(() => {});
     }

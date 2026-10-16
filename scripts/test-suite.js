@@ -391,8 +391,8 @@ async function runTests() {
         paymentMethod: 'GCash',
         isTest: true,
         items: [
-          { id: 'salted-egg', name: 'Salted Egg', quantity: 2, price: 50 },
-          { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', quantity: 1, price: 50 }
+          { id: 'salted-egg', name: 'Salted Egg', quantity: 2, price: 65 },
+          { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', quantity: 1, price: 65 }
         ]
       })
     });
@@ -401,8 +401,8 @@ async function runTests() {
       eggOrderRes.status === 201 &&
       eggOrderData.order.flavorQuantities?.['salted-egg'] === 2 &&
       eggOrderData.order.flavorQuantities?.['spicy-salted-egg'] === 1 &&
-      eggOrderData.order.totalAmount === 150,
-      'Order with Salted Egg & Spicy Salted Egg calculates 3 packs x ₱50 = ₱150 and maps quantities correctly'
+      eggOrderData.order.totalAmount === 195,
+      'Order with Salted Egg & Spicy Salted Egg calculates 3 packs x ₱65 = ₱195 and maps quantities correctly'
     );
   } catch (e) {
     assert(false, `Salted Egg order test error: ${e.message}`);
@@ -414,9 +414,9 @@ async function runTests() {
     codeGs.includes('Spicy Salted Egg Qty') &&
     codeGs.includes('saltedEggQty') &&
     codeGs.includes('spicySaltedEggQty') &&
-    codeGs.includes("'Salted Egg (₱50)'") &&
-    codeGs.includes("'Spicy Salted Egg (₱50)'"),
-    'Google Apps Script backend includes Salted Egg & Spicy Salted Egg in 20-column layout at ₱50'
+    codeGs.includes("'Salted Egg (₱65)'") &&
+    codeGs.includes("'Spicy Salted Egg (₱65)'"),
+    'Google Apps Script backend includes Salted Egg & Spicy Salted Egg in 20-column layout at ₱65'
   );
 
   console.log(`\n========================================`);

@@ -318,6 +318,46 @@ function handleGetSettings() {
     } catch (e) {}
   }
 
+  // Ensure default products array includes all 9 flavors with current pricing
+  var defaultProdsGas = [
+    { id: 'salted', name: 'Salted', tagline: 'Classic & Crunchy', description: 'Crispy deep-fried peanuts generously seasoned with fine rock salt.', price: 50, icon: '🧂', image: './images/products/salted.jpg', badge: 'Popular', available: true, sortOrder: 1, accentColor: 'bg-amber-100 text-amber-900 border-amber-300' },
+    { id: 'unsalted', name: 'Unsalted', tagline: 'Pure & Natural', description: 'Roasted to perfection with zero added salt — wholesome and hearty.', price: 50, icon: '🥜', image: './images/products/unsalted.jpg', badge: 'Healthy', available: true, sortOrder: 2, accentColor: 'bg-stone-100 text-stone-900 border-stone-300' },
+    { id: 'spicy', name: 'Spicy', tagline: 'Fiery Kick', description: 'Classic crunchy mani tossed with hot chili flakes and spicy seasonings.', price: 50, icon: '🌶️', image: './images/products/spicy.jpg', badge: 'Best Seller', available: true, sortOrder: 3, accentColor: 'bg-red-100 text-red-900 border-red-300' },
+    { id: 'bbq', name: 'BBQ', tagline: 'Smoky & Savory', description: 'Rich barbecue seasoning packed with sweet, smoky, and savory notes.', price: 50, icon: '🔥', image: './images/products/bbq.jpg', badge: 'Favorites', available: true, sortOrder: 4, accentColor: 'bg-orange-100 text-orange-900 border-orange-300' },
+    { id: 'sour-cream', name: 'Sour Cream', tagline: 'Tangy & Creamy', description: 'A mouthwatering blend of zesty sour cream and aromatic spring onions.', price: 50, icon: '🥛', image: './images/products/sour-cream.jpg', badge: 'Trending', available: true, sortOrder: 5, accentColor: 'bg-emerald-100 text-emerald-900 border-emerald-300' },
+    { id: 'cheese', name: 'Cheese', tagline: 'Rich & Cheesy', description: 'Crisp, golden roasted peanuts generously tossed in savory, mouthwatering cheese powder.', price: 50, icon: '🧀', image: './images/products/cheese.jpg', badge: 'Crowd Fave', available: true, sortOrder: 6, accentColor: 'bg-amber-100 text-amber-900 border-amber-300' },
+    { id: 'salted-egg', name: 'Salted Egg', tagline: 'Rich & Savory Umami', description: 'Crispy golden roasted peanuts coated in luscious, buttery salted egg yolk seasoning with savory herbs.', price: 65, icon: '🥚', image: './images/products/salted-egg.jpg', badge: 'New Flavor', available: true, sortOrder: 7, accentColor: 'bg-yellow-100 text-yellow-900 border-yellow-400' },
+    { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', tagline: 'Fiery Golden Umami', description: 'Our rich buttery salted egg yolk glaze infused with a fiery chili kick and crunchy fried garlic flakes.', price: 65, icon: '🌶️', image: './images/products/spicy-salted-egg.jpg', badge: 'New & Fiery', available: true, sortOrder: 8, accentColor: 'bg-orange-100 text-orange-900 border-orange-400' },
+    { id: 'bawang-only', name: 'Bawang Only', tagline: 'Garlic Lovers Only', description: 'Pure crispy golden deep-fried garlic chips and whole garlic cloves!', price: 60, icon: '🧄', image: './images/products/bawang-only.jpg', badge: 'Must Try', available: true, sortOrder: 9, accentColor: 'bg-yellow-100 text-yellow-900 border-yellow-300' }
+  ];
+
+  if (!Array.isArray(settings.products) || settings.products.length === 0) {
+    settings.products = defaultProdsGas;
+  } else {
+    var prodMap = {};
+    for (var p = 0; p < settings.products.length; p++) {
+      prodMap[settings.products[p].id] = settings.products[p];
+    }
+    for (var d = 0; d < defaultProdsGas.length; d++) {
+      var dItem = defaultProdsGas[d];
+      if (!prodMap[dItem.id]) {
+        settings.products.push(dItem);
+      } else if (dItem.id === 'salted-egg' || dItem.id === 'spicy-salted-egg') {
+        prodMap[dItem.id].price = 65;
+      }
+    }
+    settings.products.sort(function(a, b) { return (a.sortOrder || 99) - (b.sortOrder || 99); });
+  }
+
+  if (!settings.flavorAvailability) {
+    settings.flavorAvailability = {
+      salted: true, unsalted: true, spicy: true, bbq: true, 'sour-cream': true, cheese: true, 'salted-egg': true, 'spicy-salted-egg': true, 'bawang-only': true
+    };
+  } else {
+    if (settings.flavorAvailability['salted-egg'] === undefined) settings.flavorAvailability['salted-egg'] = true;
+    if (settings.flavorAvailability['spicy-salted-egg'] === undefined) settings.flavorAvailability['spicy-salted-egg'] = true;
+  }
+
   // Fallback defaults
   if (!settings.cutoff) {
     settings.cutoff = {
@@ -620,7 +660,7 @@ function handleConsolidateToMasterList(ss) {
 
       var targetRow = Math.max(masterSheet.getLastRow() + 1, 8);
       var totalPacksFormula = '=SUM(I' + targetRow + ':Q' + targetRow + ')';
-      var totalAmountFormula = '=(SUM(I' + targetRow + ':P' + targetRow + ')*50)+(Q' + targetRow + '*60)';
+      var totalAmountFormula = '=(SUM(I' + targetRow + ':N' + targetRow + ')*50)+(SUM(O' + targetRow + ':P' + targetRow + ')*65)+(Q' + targetRow + '*60)';
 
       var cleanRow = [
         orderId, oDate, oTime, customer, mobile, paymentMode, address, paidStatus,
@@ -853,7 +893,7 @@ function getOrCreateMasterSheet(ss) {
     setupSheetHeadersAndSummary(sheet, MASTER_SHEET_NAME);
   } else {
     var h15 = String(sheet.getRange(2, 15).getValue() || '');
-    if (h15 !== 'Salted Egg (₱50)') {
+    if (h15 !== 'Salted Egg (₱65)') {
       setupSheetHeadersAndSummary(sheet, MASTER_SHEET_NAME);
     }
   }
@@ -904,7 +944,7 @@ function handleAddOrder(ss, order) {
   var paymentStatus = order.paymentStatus || order.paidStatus || defaultPaidStatus;
 
   var totalPacksFormula = '=SUM(I' + targetRow + ':Q' + targetRow + ')';
-  var totalAmountFormula = '=(SUM(I' + targetRow + ':P' + targetRow + ')*50)+(Q' + targetRow + '*60)';
+  var totalAmountFormula = '=(SUM(I' + targetRow + ':N' + targetRow + ')*50)+(SUM(O' + targetRow + ':P' + targetRow + ')*65)+(Q' + targetRow + '*60)';
 
   // 20-Column Standard Order Array
   var rowData = [
@@ -1073,8 +1113,8 @@ function setupSheetHeadersAndSummary(sheet, titleStr) {
     'BBQ (₱50)',               // Col L (12)
     'Sour Cream (₱50)',        // Col M (13)
     'Cheese (₱50)',            // Col N (14)
-    'Salted Egg (₱50)',        // Col O (15)
-    'Spicy Salted Egg (₱50)',  // Col P (16)
+    'Salted Egg (₱65)',        // Col O (15)
+    'Spicy Salted Egg (₱65)',  // Col P (16)
     'Bawang Only (₱60)',       // Col Q (17)
     'Total Packs',             // Col R (18)
     'Total Sales (₱)',         // Col S (19)
@@ -1281,7 +1321,7 @@ function fixAndAlignSheet(sheet, dateStr) {
     var orderStatus = srcHasSaltedEgg ? String(r[19] || 'New') : (srcHasCheese ? String(r[17] || 'New') : String(r[16] || 'New'));
 
     var totalPacksFormula = '=SUM(I' + rowNum + ':Q' + rowNum + ')';
-    var totalAmountFormula = '=(SUM(I' + rowNum + ':P' + rowNum + ')*50)+(Q' + rowNum + '*60)';
+    var totalAmountFormula = '=(SUM(I' + rowNum + ':N' + rowNum + ')*50)+(SUM(O' + rowNum + ':P' + rowNum + ')*65)+(Q' + rowNum + '*60)';
 
     var cleanRow = [
       orderId, orderDate, orderTime, customer, mobile,
@@ -1554,8 +1594,8 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
       { key: 'bbq', name: 'BBQ Mani', price: 50 },
       { key: 'sour-cream', name: 'Sour Cream Mani', price: 50 },
       { key: 'cheese', name: 'Cheese Mani', price: 50 },
-      { key: 'salted-egg', name: 'Salted Egg Mani', price: 50 },
-      { key: 'spicy-salted-egg', name: 'Spicy Salted Egg Mani', price: 50 },
+      { key: 'salted-egg', name: 'Salted Egg Mani', price: 65 },
+      { key: 'spicy-salted-egg', name: 'Spicy Salted Egg Mani', price: 65 },
       { key: 'bawang-only', name: 'Bawang Only', price: 60 }
     ];
     flavorCatalog.forEach(function(flv) {
@@ -1580,8 +1620,8 @@ function sendOrderNotificationEmail(order, rowData, forceSend) {
       { name: 'BBQ Mani', qty: Number(rowData[11] || 0), price: 50 },
       { name: 'Sour Cream Mani', qty: Number(rowData[12] || 0), price: 50 },
       { name: 'Cheese Mani', qty: Number(rowData[13] || 0), price: 50 },
-      { name: 'Salted Egg Mani', qty: Number(rowData[14] || 0), price: 50 },
-      { name: 'Spicy Salted Egg Mani', qty: Number(rowData[15] || 0), price: 50 },
+      { name: 'Salted Egg Mani', qty: Number(rowData[14] || 0), price: 65 },
+      { name: 'Spicy Salted Egg Mani', qty: Number(rowData[15] || 0), price: 65 },
       { name: 'Bawang Only', qty: Number(rowData[16] || 0), price: 60 }
     ] : ((rowData.length >= 18) ? [
       { name: 'Salted Mani', qty: Number(rowData[8] || 0), price: 50 },

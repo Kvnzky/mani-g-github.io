@@ -99,8 +99,8 @@
       { id: 'bbq', name: 'BBQ', description: 'Rich barbecue glaze packed with sweet, smoky & savory notes.', price: 50, icon: '🔥', image: './images/products/bbq.jpg', badge: 'Favorites', available: true },
       { id: 'sour-cream', name: 'Sour Cream', description: 'Tangy blend of zesty sour cream & spring onions.', price: 50, icon: '🥛', image: './images/products/sour-cream.jpg', badge: 'Trending', available: true },
       { id: 'cheese', name: 'Cheese', description: 'Crisp, golden roasted peanuts tossed in savory, mouthwatering cheese powder.', price: 50, icon: '🧀', image: './images/products/cheese.jpg', badge: 'Popular', available: true },
-      { id: 'salted-egg', name: 'Salted Egg', description: 'Rich and savory golden salted egg yolk glaze with toasted garlic chips.', price: 50, icon: '🥚', image: './images/products/salted-egg.jpg', badge: 'New', available: true },
-      { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', description: 'Savory rich salted egg coating with a fiery spicy chili kick.', price: 50, icon: '🔥', image: './images/products/spicy-salted-egg.jpg', badge: 'Must Try', available: true },
+      { id: 'salted-egg', name: 'Salted Egg', description: 'Rich and savory golden salted egg yolk glaze with toasted garlic chips.', price: 65, icon: '🥚', image: './images/products/salted-egg.jpg', badge: 'New', available: true },
+      { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', description: 'Savory rich salted egg coating with a fiery spicy chili kick.', price: 65, icon: '🔥', image: './images/products/spicy-salted-egg.jpg', badge: 'Must Try', available: true },
       { id: 'bawang-only', name: 'Bawang Only', description: 'Pure crispy golden garlic chips & whole fried cloves only!', price: 60, icon: '🧄', image: './images/products/bawang-only.jpg', badge: 'Suki Favorite', available: true }
     ];
 
@@ -124,8 +124,20 @@
     function App() {
       const [view, setView] = useState('order'); // 'order' or 'admin'
       const [products, setProducts] = useState(() => {
-        const saved = localStorage.getItem('mani_products');
-        return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+        try {
+          const saved = JSON.parse(localStorage.getItem('mani_products') || 'null');
+          if (Array.isArray(saved) && saved.length > 0) {
+            const savedIds = new Set(saved.map(p => p.id));
+            const missing = INITIAL_PRODUCTS.filter(p => !savedIds.has(p.id));
+            const merged = [...saved, ...missing].map(p => {
+              if (p.id === 'salted-egg' || p.id === 'spicy-salted-egg') return { ...p, price: 65 };
+              return p;
+            });
+            localStorage.setItem('mani_products', JSON.stringify(merged));
+            return merged;
+          }
+        } catch (e) {}
+        return INITIAL_PRODUCTS;
       });
 
       const [quantities, setQuantities] = useState({

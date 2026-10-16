@@ -1101,7 +1101,11 @@ app.post('/api/orders', orderLimiter, async (req, res) => {
       }
     }
 
-    const subtotal = items.reduce((sum, item) => sum + ((Number(item.quantity) || 0) * (Number(item.price) || 50)), 0);
+    const subtotal = items.reduce((sum, item) => {
+      const fallbackPrice = ['salted-egg', 'spicy-salted-egg'].includes(item.productId || item.id) ? 65 : ((item.productId || item.id) === 'bawang-only' ? 60 : 50);
+      const p = Number(item.price) || fallbackPrice;
+      return sum + ((Number(item.quantity) || 0) * p);
+    }, 0);
 
     // 3. Generate Philippine Date & Order ID
     const { dateStr, timeStr } = getPhilippineDateTime();
