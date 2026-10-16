@@ -84,10 +84,11 @@ const SUKI_COMBOS = [
     badge: 'BUONG BARKADA',
     badgeClass: 'bg-purple-700 text-amber-200 border border-[#FF6B00]',
     title: 'Walang Iwanan All-Stars Pack',
-    subtitle: '1 of Every Flavor (8 Tubs Total)',
-    description: 'Every single savory, rich, and spicy flavor in one grand package. Walang maiiwan at walang mag-aaway sa last tub. The complete Mani Wandering feast!',
+    subtitle: '1 of Every Flavor (9 Tubs Total)',
+    description: 'Every single flavor in one complete bundle. Mula classic asin hanggang sa spicy salted egg at purong bawang — walang maiiwan sa salo-salo!',
     items: [
       { id: 'salted', qty: 1, label: '🧂 Salted × 1' },
+      { id: 'unsalted', qty: 1, label: '🥜 Unsalted × 1' },
       { id: 'spicy', qty: 1, label: '🌶️ Spicy × 1' },
       { id: 'bbq', qty: 1, label: '🍖 BBQ × 1' },
       { id: 'sour-cream', qty: 1, label: '🥛 Sour Cream × 1' },
@@ -110,15 +111,15 @@ const CRAVING_MOMENTS = [
   {
     emoji: '💻',
     tag: 'Work & Study Fuel',
-    title: 'Your Desk’s Best Companion',
-    description: 'Beat the 3PM antok at the office or power through late-night study sessions with protein-packed roasted mani and real garlic.',
+    title: 'Pampagising sa Desk',
+    description: 'Beat the 3PM antok at work or power through late-night review sessions with real roasted garlic and crunchy mani.',
     bgClass: 'bg-orange-100/75 border-[#FF6B00]/60'
   },
   {
     emoji: '🚗',
     tag: 'Road Trips & Barkada',
     title: 'Made to Wander With You',
-    description: 'Cup-holder friendly tubs that travel from expressway road trips to spontaneous barkada Halloween tambay nights.',
+    description: 'Cup-holder friendly tubs that travel from expressway road trips to spontaneous barkada tambay nights.',
     bgClass: 'bg-emerald-100/75 border-emerald-400'
   }
 ];
@@ -178,10 +179,10 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                 <span>🎃 Mga Suki Crowd Favorites</span>
               </div>
               <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-xs">
-                Not Sure Which Tub to Pick? Try a Suki Combo! 🥜
+                Need Help Choosing? Try a Suki Combo! 🥜
               </h2>
-              <p className="text-xs sm:text-sm text-amber-100/90 font-medium mt-1 max-w-2xl">
-                Popular flavor combinations inspired by how our mga suki pair their tubs. Add a bundle to your basket in one tap!
+              <p className="text-xs sm:text-sm text-amber-100/90 font-medium mt-1 max-w-2xl leading-relaxed">
+                Our most-loved flavor pairings, put together based on how our mga suki actually reorder. One tap adds the whole set to your basket!
               </p>
             </div>
           </div>
@@ -292,10 +293,10 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                 <span>Our Snack Story • Kwento ng Mani Wandering</span>
               </div>
               <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
-                Street Snack Culture Meets Spooky Season Cravings. 🎃🥜
+                Street Snack Nostalgia, Upgraded for Everyday Cravings 🎃🥜
               </h2>
               <p className="text-xs sm:text-sm text-amber-100/90 font-medium leading-relaxed">
-                Every Filipino grew up loving the warm, garlicky aroma of freshly cooked kanto mani. We started <strong className="text-amber-300">Mani Wandering</strong> with one simple mission: take that nostalgic, ultra-crunchy Pinoy peanut experience, toss it in bold flavors, load it with golden crispy bawang, and seal it in handy tubs ready to wander wherever life takes you.
+                Every Filipino knows that irresistible smell of freshly cooked kanto mani—warm, savory, and loaded with toasted garlic. We started <strong className="text-amber-300">Mani Wandering</strong> to capture that honest, home-cooked street snack feeling in convenient, resealable tubs you can enjoy anywhere. Small-batch cooking, bold seasonings, and purong crispy bawang chips in every bite.
               </p>
             </div>
 
@@ -309,8 +310,8 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                 <div className="font-display text-base sm:text-lg font-bold text-amber-300">
                   “Trick or Treat Crunch!”
                 </div>
-                <p className="text-xs text-amber-100/85 font-medium max-w-[210px]">
-                  7 signature flavors wrapped up fresh for horror movie nights, merienda, pulutan &amp; road trips.
+                <p className="text-xs text-amber-100/85 font-medium max-w-[210px] leading-snug">
+                  9 signature flavors cooked fresh for horror movie nights, merienda, pulutan, and road trips.
                 </p>
               </div>
               <img

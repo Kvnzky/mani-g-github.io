@@ -1546,7 +1546,7 @@ export default function AdminPortal({
       id: newId,
       name: newFlavorName.trim(),
       price: parseFloat(newFlavorPrice) || 50,
-      description: newFlavorDesc.trim() || 'New artisanal roasted flavor.',
+      description: newFlavorDesc.trim() || 'Freshly cooked Mani flavor.',
       icon: '🥜',
       badge: 'New',
       available: true

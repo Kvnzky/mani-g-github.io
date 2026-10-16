@@ -93,15 +93,15 @@
     const { useState, useEffect } = React;
 
     const INITIAL_PRODUCTS = [
-      { id: 'salted', name: 'Salted', description: 'Crispy deep-fried peanuts seasoned with fine rock salt.', price: 50, icon: '🧂', image: './images/products/salted.jpg', badge: 'Popular', available: true },
-      { id: 'unsalted', name: 'Unsalted', description: 'Roasted to perfection with zero added salt — hearty & pure.', price: 50, icon: '🥜', image: './images/products/unsalted.jpg', badge: 'Healthy', available: true },
-      { id: 'spicy', name: 'Spicy', description: 'Classic crunchy mani tossed with hot chili flakes & seasonings.', price: 50, icon: '🌶️', image: './images/products/spicy.jpg', badge: 'Best Seller', available: true },
-      { id: 'bbq', name: 'BBQ', description: 'Rich barbecue glaze packed with sweet, smoky & savory notes.', price: 50, icon: '🔥', image: './images/products/bbq.jpg', badge: 'Favorites', available: true },
-      { id: 'sour-cream', name: 'Sour Cream', description: 'Tangy blend of zesty sour cream & spring onions.', price: 50, icon: '🥛', image: './images/products/sour-cream.jpg', badge: 'Trending', available: true },
-      { id: 'cheese', name: 'Cheese', description: 'Crisp, golden roasted peanuts tossed in savory, mouthwatering cheese powder.', price: 50, icon: '🧀', image: './images/products/cheese.jpg', badge: 'Popular', available: true },
-      { id: 'salted-egg', name: 'Salted Egg', description: 'Rich and savory golden salted egg yolk glaze with toasted garlic chips.', price: 65, icon: '🥚', image: './images/products/salted-egg.jpg', badge: 'New', available: true },
-      { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', description: 'Savory rich salted egg coating with a fiery spicy chili kick.', price: 65, icon: '🔥', image: './images/products/spicy-salted-egg.jpg', badge: 'Must Try', available: true },
-      { id: 'bawang-only', name: 'Bawang Only', description: 'Pure crispy golden garlic chips & whole fried cloves only!', price: 60, icon: '🧄', image: './images/products/bawang-only.jpg', badge: 'Suki Favorite', available: true }
+      { id: 'salted', name: 'Salted', description: 'Golden-fried peanuts with just the right rock salt and crispy garlic chips. The classic pulutan you can always count on.', price: 50, icon: '🧂', image: './images/products/salted.jpg', badge: 'Popular', available: true },
+      { id: 'unsalted', name: 'Unsalted', description: 'Dry-roasted with zero salt and zero oil. Just clean, earthy peanut crunch for healthy, guilt-free munching.', price: 50, icon: '🥜', image: './images/products/unsalted.jpg', badge: 'Healthy', available: true },
+      { id: 'spicy', name: 'Spicy', description: 'Crispy mani with crushed toasted chili and golden garlic. Saktong anhang na masarap ipares sa malamig na drinks.', price: 50, icon: '🌶️', image: './images/products/spicy.jpg', badge: 'Best Seller', available: true },
+      { id: 'bbq', name: 'BBQ', description: 'Sweet, smoky Pinoy-style barbecue flavor coating every crunchy nut. An instant hit with the whole barkada.', price: 50, icon: '🔥', image: './images/products/bbq.jpg', badge: 'Favorites', available: true },
+      { id: 'sour-cream', name: 'Sour Cream', description: 'Tangy sour cream meets savory toasted onion. Cool, zesty, and addictive from the very first handful.', price: 50, icon: '🥛', image: './images/products/sour-cream.jpg', badge: 'Trending', available: true },
+      { id: 'cheese', name: 'Cheese', description: 'Golden peanuts dusted in thick, savory cheddar powder. Finger-licking cheesy goodness that disappears fast.', price: 50, icon: '🧀', image: './images/products/cheese.jpg', badge: 'Popular', available: true },
+      { id: 'salted-egg', name: 'Salted Egg', description: 'Rich, buttery salted egg yolk with fragrant herbs and garlic. A deep, savory umami crunch that hits the spot.', price: 65, icon: '🥚', image: './images/products/salted-egg.jpg', badge: 'New', available: true },
+      { id: 'spicy-salted-egg', name: 'Spicy Salted Egg', description: 'Our rich buttery salted egg yolk glaze kicked up with fiery chili and fried garlic flakes. Spicy, rich, and hard to stop.', price: 65, icon: '🔥', image: './images/products/spicy-salted-egg.jpg', badge: 'Must Try', available: true },
+      { id: 'bawang-only', name: 'Bawang Only', description: 'Walang mani, purong bawang! Deep-fried whole garlic cloves and paper-thin chips. Papakin or ibudbod sa mainit na kanin.', price: 60, icon: '🧄', image: './images/products/bawang-only.jpg', badge: 'Suki Favorite', available: true }
     ];
 
     const DEFAULT_SPREADSHEET_ID = '';

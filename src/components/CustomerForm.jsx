@@ -72,7 +72,7 @@ export default function CustomerForm({
             </h3>
           </div>
           <p className="text-xs text-mani-600 font-medium mt-1">
-            Enter your name and delivery address so your fresh tubs arrive right on time.
+            Where should we send your fresh tubs? Enter your name and address below.
           </p>
         </div>
 
@@ -126,7 +126,7 @@ export default function CustomerForm({
               </p>
             ) : (
               <p className="text-[11px] text-mani-500 font-medium mt-1">
-                Optional: for rider coordination upon delivery.
+                Optional: for delivery rider updates when your order arrives.
               </p>
             )}
           </div>
@@ -148,7 +148,7 @@ export default function CustomerForm({
               className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-mani-200 bg-cream/60 focus:bg-white focus:border-mani-900 outline-none transition-all resize-y"
             />
             <p className="text-[11px] text-mani-500 font-medium">
-              Enter your complete address, landmarks, or delivery instructions.
+              Complete street address, landmarks, or delivery instructions.
             </p>
           </div>
         </div>
@@ -169,7 +169,7 @@ export default function CustomerForm({
             </h3>
           </div>
           <p className="text-xs text-mani-600 font-medium mt-1">
-            Choose how you'd like to pay and lock in your order!
+            Choose your preferred payment method below.
           </p>
         </div>
 
@@ -295,7 +295,7 @@ export default function CustomerForm({
               <div>
                 <h4 className="font-display text-sm font-bold text-mani-950">Cash on Delivery (COD)</h4>
                 <p className="text-xs text-mani-700 font-medium mt-0.5">
-                  Prepare exact amount if possible — payment is collected upon tub delivery!
+                  Please prepare exact cash if possible. Payment is collected upon tub delivery!
                 </p>
               </div>
             </div>
@@ -429,9 +429,9 @@ export default function CustomerForm({
                 }`}
               >
                 {isSubmitting ? (
-                  <span>Submitting Order...</span>
+                  <span>Placing your order...</span>
                 ) : totalPacks === 0 ? (
-                  <span>Select Tubs Above to Order 🎃🥜</span>
+                  <span>Select at least 1 tub to order 🥜</span>
                 ) : (
                   <>
                     <span>Place Order Now 🎃🥜</span>

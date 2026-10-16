@@ -75,8 +75,8 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
             </h3>
             <p className="text-xs sm:text-sm text-mani-600 font-medium">
               {isManuallyClosed
-                ? 'Our kitchen is currently prepping batches and temporarily closed for new submissions. Check back soon!'
-                : `Order cutoff has ended for the current roast batch. We are packing active orders for delivery on ${cutoffInfo?.deliveryDay || 'Wednesday'}.`}
+                ? 'Our kitchen is currently cooking and packing orders. We’ll reopen for new batches soon!'
+                : `Cutoff has ended for this roast batch. We are now packing orders for delivery on ${cutoffInfo?.deliveryDay || 'Wednesday'}!`}
             </p>
           </div>
         </div>
@@ -148,7 +148,7 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
               Batch Cutoff &amp; Delivery Schedule
             </h3>
             <p className="text-xs sm:text-sm text-mani-600 font-medium mt-0.5">
-              Lock in your tubs before the timer hits zero so we can roast your mani fresh &amp; crunchy!
+              Place your order before the cutoff so we can roast and pack your tubs fresh!
             </p>
           </div>
 

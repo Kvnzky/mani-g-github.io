@@ -427,14 +427,21 @@ async function runTests() {
     process.exit(1);
   }
   } finally {
+    if (serverProc) {
+      try {
+        serverProc.kill();
+      } catch (e) {}
+      await new Promise((r) => setTimeout(r, 250));
+    }
     if (initialOrders !== null) {
-      fs.writeFileSync(ORDERS_FILE, initialOrders, 'utf8');
+      try {
+        fs.writeFileSync(ORDERS_FILE, initialOrders, 'utf8');
+      } catch (e) {}
     }
     if (initialSettings !== null) {
-      fs.writeFileSync(SETTINGS_FILE, initialSettings, 'utf8');
-    }
-    if (serverProc) {
-      serverProc.kill();
+      try {
+        fs.writeFileSync(SETTINGS_FILE, initialSettings, 'utf8');
+      } catch (e) {}
     }
   }
 }

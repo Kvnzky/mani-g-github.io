@@ -872,29 +872,29 @@ export default function App() {
   const validateForm = () => {
     const errors = {};
     if (!customerData.customerName.trim()) {
-      errors.customerName = 'Customer Name is required.';
+      errors.customerName = 'Please enter your name.';
     }
 
     const cleanMobile = (customerData.mobileNumber || '').replace(/[\s\-()]/g, '');
     const mobileRegex = /^(09|\+639|639)\d{9}$/;
     if (cleanMobile && !mobileRegex.test(cleanMobile)) {
-      errors.mobileNumber = 'Please enter a valid mobile number (e.g. 09171234567 or +639171234567).';
+      errors.mobileNumber = 'Please enter a valid mobile number (e.g. 0917 123 4567).';
     }
 
     const hasAnyPaymentMethod = Object.values(paymentMethods).some(Boolean);
     if (!hasAnyPaymentMethod) {
-      errors.paymentMethod = 'All payment methods are temporarily disabled. Please contact us to order.';
+      errors.paymentMethod = 'Online payments are temporarily paused. Please reach out to us directly.';
     } else if (!customerData.paymentMethod) {
-      errors.paymentMethod = 'Please select a mode of payment.';
+      errors.paymentMethod = 'Please choose a payment method.';
     } else {
       const pmId = getPaymentMethodIdByName(customerData.paymentMethod);
       if (paymentMethods[pmId] === false) {
-        errors.paymentMethod = `${customerData.paymentMethod} is currently unavailable. Please choose another payment option.`;
+        errors.paymentMethod = `${customerData.paymentMethod} is temporarily unavailable. Please pick another option.`;
       }
     }
 
     if (totalPacks <= 0) {
-      errors.items = 'Please select at least one Mani flavor.';
+      errors.items = 'Please select at least 1 tub to order.';
     }
 
     setValidationErrors(errors);
@@ -1207,7 +1207,7 @@ export default function App() {
 
                   {/* Clear Value Proposition */}
                   <p className="text-xs sm:text-base text-amber-100/90 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
-                    Freshly roasted, ultra-crunchy Filipino peanuts &amp; golden crispy <strong className="text-amber-300 font-extrabold">bawang chips</strong> packed in resealable tubs. Made for spooky movie nights, merienda, office desk fuel, and barkada hangouts — only <strong className="text-white font-extrabold bg-[#FF6B00] px-1.5 py-0.5 rounded border border-amber-300">₱50–₱60 per tub</strong>!
+                    Freshly roasted, ultra-crunchy Filipino peanuts &amp; golden crispy <strong className="text-amber-300 font-extrabold">bawang chips</strong> packed in resealable tubs. Made for movie nights, merienda, office desk fuel, and barkada hangouts — only <strong className="text-white font-extrabold bg-[#FF6B00] px-1.5 py-0.5 rounded border border-amber-300">₱50–₱65 per tub</strong>!
                   </p>
 
                   {/* Primary & Secondary Hero CTAs */}
@@ -1268,7 +1268,7 @@ export default function App() {
                   <span>•</span>
                   <span>👻 ANONG FEAR MO TODAY? MANI SO GOOD, IT&apos;S SCARY!</span>
                   <span>•</span>
-                  <span>🧛 VAMPIRE&apos;S BANE (SALTED) • 👻 GHOSTLY PURE (UNSALTED) • 🎃 HELLFIRE CRUNCH (SPICY) • 🦇 MIDNIGHT BBQ • 🕸️ PHANTOM CREAM • 🌕 FULL MOON CHEDDAR • 🧟 MONSTER BAWANG</span>
+                  <span>🧛 VAMPIRE&apos;S BANE (SALTED) • 👻 GHOSTLY PURE (UNSALTED) • 🎃 HELLFIRE CRUNCH (SPICY) • 🦇 MIDNIGHT BBQ • 🕸️ PHANTOM CREAM • 🌕 FULL MOON CHEDDAR • 🥚 GOLDEN GHOUL (SALTED EGG) • 🔥 FIERY GHOUL (SPICY SALTED EGG) • 🧟 MONSTER BAWANG</span>
                   <span>•</span>
                   <span>🫙 SEALED IN REUSABLE CRUNCH-LOCK TUBS</span>
                   <span>•</span>
@@ -1278,7 +1278,7 @@ export default function App() {
                   <span>•</span>
                   <span>👻 ANONG FEAR MO TODAY? MANI SO GOOD, IT&apos;S SCARY!</span>
                   <span>•</span>
-                  <span>🧛 VAMPIRE&apos;S BANE (SALTED) • 👻 GHOSTLY PURE (UNSALTED) • 🎃 HELLFIRE CRUNCH (SPICY) • 🦇 MIDNIGHT BBQ • 🕸️ PHANTOM CREAM • 🌕 FULL MOON CHEDDAR • 🧟 MONSTER BAWANG</span>
+                  <span>🧛 VAMPIRE&apos;S BANE (SALTED) • 👻 GHOSTLY PURE (UNSALTED) • 🎃 HELLFIRE CRUNCH (SPICY) • 🦇 MIDNIGHT BBQ • 🕸️ PHANTOM CREAM • 🌕 FULL MOON CHEDDAR • 🥚 GOLDEN GHOUL (SALTED EGG) • 🔥 FIERY GHOUL (SPICY SALTED EGG) • 🧟 MONSTER BAWANG</span>
                   <span>•</span>
                   <span>🫙 SEALED IN REUSABLE CRUNCH-LOCK TUBS</span>
                   <span>•</span>
@@ -1323,10 +1323,10 @@ export default function App() {
                           </span>
                         </div>
                         <h2 className="font-display text-2xl sm:text-3xl font-bold text-white flex items-center gap-2 tracking-tight">
-                          <span>🥜</span> Meet the 7 Flavors
+                          <span>🥜</span> All 9 Flavors
                         </h2>
                         <p className="text-xs sm:text-sm text-amber-100/85 font-medium mt-0.5">
-                          Freshly cooked in small batches. Mix &amp; match your Trick or Treat tubs below!
+                          Freshly cooked in small batches. Pick your single tubs or mix and match your favorites below!
                         </p>
                       </div>
                     </div>

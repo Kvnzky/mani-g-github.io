@@ -78,7 +78,7 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
             🎉 Order Received!
           </h2>
           <p className="text-sm text-mani-600 font-medium">
-            Maraming salamat, <span className="font-bold text-mani-950">{order.customerName}</span>! Your Mani Wandering tubs are queued up!
+            Maraming salamat, <span className="font-bold text-mani-950">{order.customerName}</span>! We’ve received your order and we’ll take it from here.
           </p>
         </div>
 
