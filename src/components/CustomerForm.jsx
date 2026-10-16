@@ -145,8 +145,15 @@ export default function CustomerForm({
               value={formData.deliveryAddress || ''}
               onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
               placeholder="House/Unit No., Street, Barangay, City/Municipality, Province"
-              className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-mani-200 bg-cream/60 focus:bg-white focus:border-mani-900 outline-none transition-all resize-y"
+              className={`w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 ${
+                errors.deliveryAddress ? 'border-red-400 bg-red-50/50' : 'border-mani-200 bg-cream/60 focus:bg-white focus:border-mani-900'
+              } outline-none transition-all resize-y`}
             />
+            {errors.deliveryAddress && (
+              <p className="text-xs text-red-600 font-bold mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {errors.deliveryAddress}
+              </p>
+            )}
             <p className="text-[11px] text-mani-500 font-medium">
               Complete street address, landmarks, or delivery instructions.
             </p>
@@ -429,7 +436,10 @@ export default function CustomerForm({
                 }`}
               >
                 {isSubmitting ? (
-                  <span>Placing your order...</span>
+                  <span className="flex items-center gap-2">
+                    <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <span>Placing your order... Please wait</span>
+                  </span>
                 ) : totalPacks === 0 ? (
                   <span>Select at least 1 tub to order 🥜</span>
                 ) : (

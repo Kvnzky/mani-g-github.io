@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   ShieldCheck, RefreshCw, Search, Calendar, 
   Settings, ExternalLink, Plus, Edit2, Edit3, Check, Package, DollarSign, Upload, Phone, MapPin, CreditCard,
-  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, BarChart3, TrendingUp, CalendarRange, X, Power
+  Clock, Lock, CheckCircle2, AlertTriangle, LogOut, BarChart3, TrendingUp, CalendarRange, X, Power, Palette
 } from 'lucide-react';
 import { formatPHP } from '../config/products';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from '../config/sheetsConfig';
 import { DEFAULT_PAYMENT_METHODS, PAYMENT_METHOD_METADATA } from '../config/paymentConfig';
 import { getManilaDateStr, normalizeCutoffTime, formatManilaTime12 } from '../utils/phtTime';
+import { THEMES, getTheme } from '../config/themes';
 
 // Ensure every order in Order Manager has a strictly unique `id` and apply any saved per-order status overrides
 const getSavedStatusOverrides = () => {
@@ -196,7 +197,11 @@ export default function AdminPortal({
   onUpdateCutoff,
   onRefreshCutoff,
   activeTab: controlledTab,
-  onTabChange
+  onTabChange,
+  currentThemeId = 'halloween',
+  onPublishTheme,
+  onResetThemeToDefault,
+  onPreviewTheme
 }) {
   const [internalTab, setInternalTab] = useState('cutoff');
   const activeTab = controlledTab || internalTab;
@@ -205,6 +210,70 @@ export default function AdminPortal({
     setInternalTab(tabId);
     if (onTabChange) {
       onTabChange(tabId);
+    }
+  };
+
+  // Seasonal Theme Manager State
+  const [selectedThemeId, setSelectedThemeId] = useState(currentThemeId || 'halloween');
+  const [isPublishingTheme, setIsPublishingTheme] = useState(false);
+  const [themeStatusMessage, setThemeStatusMessage] = useState({ text: '', type: '' });
+
+  useEffect(() => {
+    if (currentThemeId) {
+      setSelectedThemeId(currentThemeId);
+    }
+  }, [currentThemeId]);
+
+  const handleSelectTheme = (themeId) => {
+    setSelectedThemeId(themeId);
+    if (onPreviewTheme) {
+      onPreviewTheme(themeId);
+    }
+  };
+
+  const handleApplyTheme = async () => {
+    setIsPublishingTheme(true);
+    setThemeStatusMessage({ text: '', type: '' });
+    try {
+      if (onPublishTheme) {
+        await onPublishTheme(selectedThemeId);
+      }
+      setThemeStatusMessage({
+        text: `Theme successfully updated to "${getTheme(selectedThemeId).name}"! Live on the store.`,
+        type: 'success'
+      });
+    } catch (err) {
+      setThemeStatusMessage({
+        text: err.message || 'Failed to update theme. Please try again.',
+        type: 'error'
+      });
+    } finally {
+      setIsPublishingTheme(false);
+    }
+  };
+
+  const handleResetThemeToDefault = async () => {
+    setSelectedThemeId('default');
+    if (onPreviewTheme) {
+      onPreviewTheme('default');
+    }
+    setIsPublishingTheme(true);
+    setThemeStatusMessage({ text: '', type: '' });
+    try {
+      if (onPublishTheme) {
+        await onPublishTheme('default');
+      }
+      setThemeStatusMessage({
+        text: 'Theme reset to Default brand appearance successfully!',
+        type: 'success'
+      });
+    } catch (err) {
+      setThemeStatusMessage({
+        text: err.message || 'Failed to reset theme.',
+        type: 'error'
+      });
+    } finally {
+      setIsPublishingTheme(false);
     }
   };
   const [orders, setOrders] = useState([]);
@@ -1682,6 +1751,7 @@ export default function AdminPortal({
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none border-b border-mani-200/80">
         {[
           { id: 'cutoff', label: '⏰ Cutoff & Availability', icon: Clock },
+          { id: 'theme', label: '🎨 Seasonal Theme', icon: Palette },
           { id: 'orders', label: '📦 Orders Manager', icon: Package },
           { id: 'order-summary', label: '📊 Order Summary', icon: BarChart3 },
           { id: 'summary', label: '📅 Daily Summary', icon: DollarSign },
@@ -2213,7 +2283,237 @@ export default function AdminPortal({
       )}
 
       {/* ========================================================= */}
-      {/* 2. ORDERS MANAGER TAB                                     */}
+      {/* 2. WEBSITE APPEARANCE / SEASONAL THEME TAB               */}
+      {/* ========================================================= */}
+      {activeTab === 'theme' && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-white border-2 border-mani-200/80 shadow-warm-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                  Website Customization
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Theme: <strong className="font-black">{getTheme(currentThemeId).name}</strong>
+                </span>
+              </div>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-mani-950">
+                Website Appearance &amp; Seasonal Theme Manager
+              </h2>
+              <p className="text-xs sm:text-sm text-mani-600 mt-1 max-w-2xl">
+                Switch the live store appearance for upcoming seasons, holidays, and events without editing code. Changes apply immediately across all customer devices and sessions.
+              </p>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleResetThemeToDefault}
+                className="px-4 py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs sm:text-sm border border-stone-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <span>Reset to Default</span>
+              </button>
+              <button
+                type="button"
+                disabled={isPublishingTheme || selectedThemeId === currentThemeId}
+                onClick={handleApplyTheme}
+                className={`px-5 py-2.5 rounded-2xl font-display font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer shadow-warm ${
+                  selectedThemeId === currentThemeId
+                    ? 'bg-mani-100 text-mani-400 border border-mani-200 cursor-not-allowed shadow-none'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white border-2 border-emerald-400 active:scale-95'
+                }`}
+              >
+                {isPublishingTheme ? (
+                  <span>Publishing...</span>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 stroke-[3]" />
+                    <span>Publish Theme ({getTheme(selectedThemeId).name})</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Feedback Banners */}
+          {themeStatusMessage.text && (
+            <div className={`p-4 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2.5 border-2 animate-fade-in ${
+              themeStatusMessage.type === 'success'
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                : 'bg-red-50 text-red-800 border-red-300'
+            }`}>
+              <CheckCircle2 className="w-5 h-5 shrink-0" />
+              <span>{themeStatusMessage.text}</span>
+            </div>
+          )}
+
+          {selectedThemeId !== currentThemeId && (
+            <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 text-xs sm:text-sm font-bold text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                <span>
+                  You are previewing <strong>{getTheme(selectedThemeId).name}</strong>. It is not live yet. Click <strong>&quot;Publish Theme&quot;</strong> to apply it to the live store.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleApplyTheme}
+                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 cursor-pointer shadow-xs self-start sm:self-center"
+              >
+                Publish Now
+              </button>
+            </div>
+          )}
+
+          {/* Theme Selection Grid (8 Themes in Exact Order) */}
+          <div className="space-y-3">
+            <h3 className="font-display text-lg font-bold text-mani-900 flex items-center gap-2">
+              <span>Choose Theme (Single Select)</span>
+              <span className="text-xs font-sans font-normal text-mani-500">8 available seasonal &amp; event presets</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {THEMES.map((theme, index) => {
+                const isSelected = selectedThemeId === theme.id;
+                const isLive = currentThemeId === theme.id;
+                return (
+                  <div
+                    key={theme.id}
+                    onClick={() => handleSelectTheme(theme.id)}
+                    className={`p-4 sm:p-5 rounded-3xl border-2 transition-all cursor-pointer relative flex flex-col justify-between ${
+                      isSelected
+                        ? 'border-emerald-500 bg-white shadow-warm-lg ring-2 ring-emerald-500/30 -translate-y-1'
+                        : 'border-mani-200/80 bg-white/70 hover:bg-white hover:border-mani-300 shadow-warm-md'
+                    }`}
+                  >
+                    <div>
+                      {/* Top Bar: Order & Live Badge */}
+                      <div className="flex items-center justify-between gap-1 mb-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-mani-400">
+                          #{index + 1}
+                        </span>
+                        {isLive && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white shadow-2xs">
+                            ACTIVE LIVE
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Radio & Title */}
+                      <div className="flex items-start gap-2.5 mb-2">
+                        <input
+                          type="radio"
+                          name="seasonal_theme"
+                          checked={isSelected}
+                          onChange={() => handleSelectTheme(theme.id)}
+                          className="mt-1 w-4 h-4 text-emerald-600 accent-emerald-600 cursor-pointer"
+                        />
+                        <div>
+                          <h4 className="font-display font-bold text-base text-mani-950 leading-tight">
+                            {theme.name}
+                          </h4>
+                          <span className="text-[11px] font-extrabold text-amber-700">
+                            {theme.seasonTag}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-xs text-mani-600 mb-3 leading-relaxed">
+                        {theme.description}
+                      </p>
+                    </div>
+
+                    {/* Color Swatches */}
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-3">
+                        {theme.swatches.map((color, cIdx) => (
+                          <span
+                            key={cIdx}
+                            className="w-5 h-5 rounded-full border border-black/15 shadow-2xs inline-block"
+                            style={{ backgroundColor: color }}
+                            title={color}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Mini Live Preview Strip */}
+                      <div className={`p-2.5 rounded-xl border text-[11px] font-bold flex items-center justify-between ${theme.heroBg}`}>
+                        <span className="truncate mr-1">{theme.seasonalTag || theme.name}</span>
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] ${theme.primaryBtn}`}>Sample</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Interactive Live Preview Box */}
+          <div className="p-5 sm:p-6 rounded-3xl bg-white border-2 border-mani-200 shadow-warm-md space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-mani-100 pb-3">
+              <div>
+                <h3 className="font-display text-lg font-bold text-mani-950 flex items-center gap-2">
+                  <span>Live Visual Preview:</span>
+                  <span className="text-emerald-700">{getTheme(selectedThemeId).name}</span>
+                </h3>
+                <p className="text-xs text-mani-500">
+                  This preview renders how the header, hero, and buttons will appear to your customers.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleApplyTheme}
+                className={`px-4 py-2 rounded-xl font-display font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs self-start sm:self-center ${
+                  selectedThemeId === currentThemeId
+                    ? 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-400'
+                }`}
+              >
+                <span>{selectedThemeId === currentThemeId ? 'Currently Active' : 'Apply This Theme'}</span>
+              </button>
+            </div>
+
+            {/* Preview Stage */}
+            <div className={`rounded-2xl border-2 p-5 space-y-4 ${getTheme(selectedThemeId).pageWrapperBg}`}>
+              {/* Mini Header */}
+              <div className={`p-3 rounded-xl flex items-center justify-between border ${getTheme(selectedThemeId).headerBg}`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🥜</span>
+                  <span className="font-display font-bold text-sm">Mani Wandering</span>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${getTheme(selectedThemeId).heroBadge}`}>
+                  {getTheme(selectedThemeId).seasonalTag}
+                </span>
+              </div>
+
+              {/* Mini Hero */}
+              <div className={`p-4 rounded-xl border-2 space-y-2 ${getTheme(selectedThemeId).heroBg}`}>
+                <h4 className={`font-display text-xl font-bold leading-tight ${getTheme(selectedThemeId).heroHeadlineColor}`}>
+                  {getTheme(selectedThemeId).heroHeadline}
+                </h4>
+                <p className={`text-xs font-bold ${getTheme(selectedThemeId).heroSubheadlineColor}`}>
+                  {getTheme(selectedThemeId).heroSubheadline}
+                </p>
+                <div className="pt-1 flex items-center gap-2">
+                  <button type="button" className={`px-3 py-1.5 rounded-xl text-xs font-bold ${getTheme(selectedThemeId).primaryBtn}`}>
+                    Order Now 🥜
+                  </button>
+                  <button type="button" className={`px-3 py-1.5 rounded-xl text-xs font-bold ${getTheme(selectedThemeId).secondaryBtn}`}>
+                    View Flavors
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 3. ORDERS MANAGER TAB                                     */}
       {/* ========================================================= */}
       {activeTab === 'orders' && (
         <div className="space-y-4">

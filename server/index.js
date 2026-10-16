@@ -72,11 +72,24 @@ const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
 
+// Valid Seasonal Themes in Exact Required Order
+const VALID_THEMES = [
+  'default',
+  'halloween',
+  'thanksgiving',
+  'christmas',
+  'new-year',
+  'chinese-new-year',
+  'valentines-day',
+  'easter'
+];
+
 // Default Settings
 let settings = {
   spreadsheetId: process.env.GOOGLE_SHEET_ID || '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI',
   appsScriptUrl: process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec',
   timezone: TIMEZONE,
+  theme: 'halloween',
   manualFormOpen: true,
   paymentMethods: {
     cod: true,
@@ -98,6 +111,7 @@ if (fs.existsSync(SETTINGS_FILE)) {
     settings = {
       ...settings,
       ...loaded,
+      theme: (loaded.theme && VALID_THEMES.includes(loaded.theme)) ? loaded.theme : 'halloween',
       manualFormOpen: loaded.manualFormOpen !== undefined ? Boolean(loaded.manualFormOpen) : true,
       paymentMethods: {
         cod: true,
@@ -290,6 +304,7 @@ const evaluateCutoff = () => {
       deliveryDay,
       flavorAvailability,
       paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
+      theme: settings.theme || 'halloween',
       timezone: TIMEZONE,
       serverTime: now.toISOString(),
       currentPhilippineDate: dateStr,
@@ -324,6 +339,7 @@ const evaluateCutoff = () => {
     deliveryDay,
     flavorAvailability,
     paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
+    theme: settings.theme || 'halloween',
     timezone: TIMEZONE,
     serverTime: now.toISOString(),
     currentPhilippineDate: dateStr,
@@ -1401,6 +1417,7 @@ app.get('/api/settings', requireAdminAuth, (req, res) => {
     spreadsheetId: settings.spreadsheetId,
     appsScriptUrl: settings.appsScriptUrl,
     timezone: settings.timezone,
+    theme: settings.theme || 'halloween',
     manualFormOpen: settings.manualFormOpen !== false,
     paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
     cutoff: evaluateCutoff()
@@ -1409,10 +1426,13 @@ app.get('/api/settings', requireAdminAuth, (req, res) => {
 
 // API: Update Settings (Protected)
 app.post('/api/settings', requireAdminAuth, (req, res) => {
-  const { appsScriptUrl, spreadsheetId, paymentMethods, manualFormOpen } = req.body || {};
+  const { appsScriptUrl, spreadsheetId, paymentMethods, manualFormOpen, theme } = req.body || {};
   if (appsScriptUrl !== undefined) settings.appsScriptUrl = appsScriptUrl.trim();
   if (spreadsheetId !== undefined) settings.spreadsheetId = spreadsheetId.trim();
   if (manualFormOpen !== undefined) settings.manualFormOpen = Boolean(manualFormOpen);
+  if (theme && VALID_THEMES.includes(theme)) {
+    settings.theme = theme;
+  }
   if (paymentMethods && typeof paymentMethods === 'object') {
     settings.paymentMethods = {
       cod: paymentMethods.cod !== undefined ? Boolean(paymentMethods.cod) : (settings.paymentMethods?.cod ?? true),
@@ -1422,6 +1442,27 @@ app.post('/api/settings', requireAdminAuth, (req, res) => {
   }
   saveSettings();
   res.json({ success: true, settings });
+});
+
+// Public Theme Endpoint (used on initial client load and polling)
+app.get('/api/theme', (req, res) => {
+  res.json({
+    theme: settings.theme || 'halloween',
+    availableThemes: VALID_THEMES
+  });
+});
+
+// Admin Theme Update Endpoint (Protected)
+app.post('/api/admin/theme', requireAdminAuth, (req, res) => {
+  const { theme } = req.body || {};
+  if (!theme || !VALID_THEMES.includes(theme)) {
+    return res.status(400).json({
+      error: `Invalid theme. Must be one of: ${VALID_THEMES.join(', ')}`
+    });
+  }
+  settings.theme = theme;
+  saveSettings();
+  res.json({ success: true, theme: settings.theme });
 });
 
 // Products API

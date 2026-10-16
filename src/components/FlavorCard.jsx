@@ -1,19 +1,26 @@
 import React, { useState } from 'react';
 import { Plus, Minus, Check } from 'lucide-react';
 import { formatPHP, getFlavorPersonality } from '../config/products';
+import { getTheme } from '../config/themes';
 
 export default function FlavorCard({ 
   product, 
   quantity, 
   onQuantityChange,
   onAddToCart,
-  index
+  index,
+  themeId = 'halloween'
 }) {
   const [stagedQty, setStagedQty] = useState(1);
   const [burstKey, setBurstKey] = useState(0);
   const isAvailable = product.available !== false;
   const isSelected = quantity > 0;
   const personality = getFlavorPersonality(product);
+  const currentTheme = getTheme(themeId);
+  const seasonalSubLabelInfo = currentTheme?.flavorSubLabels?.[product.id] || {
+    icon: personality.halloweenIcon || '🎃',
+    label: personality.halloweenSubLabel || 'Spooky Crunch'
+  };
 
   const priceBadgeClass = typeof index === 'number'
     ? (index % 2 === 0
@@ -138,8 +145,8 @@ export default function FlavorCard({
                   data-testid={`halloween-sublabel-${product.id}`}
                   className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#1F1025] text-amber-300 border border-[#FF6B00] shadow-2xs"
                 >
-                  <span aria-hidden="true">{personality.halloweenIcon}</span>
-                  <span>{personality.halloweenSubLabel}</span>
+                  <span aria-hidden="true">{seasonalSubLabelInfo.icon}</span>
+                  <span>{seasonalSubLabelInfo.label}</span>
                 </span>
                 <span className={`inline-flex items-center text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${personality.vibeClass}`}>
                   {personality.vibe}

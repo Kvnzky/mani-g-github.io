@@ -609,7 +609,129 @@ async function runVerification() {
     const currentAppSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'App.jsx'), 'utf8');
     assert(currentAppSrc.includes('index={index}'), 'Step 22: App.jsx must pass index={index} to FlavorCard');
 
-    console.log('✓ Step 22 passed: Price badges alternate Orange (Style A) and Dark (Style B) consistently across all product cards!\n');
+    // -------------------------------------------------------------
+    // STEP 23: Seasonal Theme Manager & Shopping UX Verification
+    // -------------------------------------------------------------
+    console.log('--- [Step 23] Testing Seasonal Theme Manager (8 Themes in Exact Order) & Shopping UX ---');
+    const themesModule = await import('../src/config/themes.js');
+    const { THEMES, getTheme, VALID_THEME_IDS, DEFAULT_THEME } = themesModule;
+
+    assert.strictEqual(THEMES.length, 8, 'Step 23: Must have exactly 8 seasonal themes');
+    const expectedThemeIds = [
+      'default',
+      'halloween',
+      'thanksgiving',
+      'christmas',
+      'new-year',
+      'chinese-new-year',
+      'valentines-day',
+      'easter'
+    ];
+    assert.deepStrictEqual(
+      THEMES.map((t) => t.id),
+      expectedThemeIds,
+      'Step 23: Themes must match the exact 8 options in the exact sequence'
+    );
+    assert.deepStrictEqual(VALID_THEME_IDS, expectedThemeIds, 'Step 23: VALID_THEME_IDS must match exact sequence');
+
+    // Verify all 8 themes define full tokens & 9 flavor sublabels
+    const flavorKeys = ['salted', 'unsalted', 'spicy', 'bbq', 'sour-cream', 'cheese', 'salted-egg', 'spicy-salted-egg', 'bawang-only'];
+    THEMES.forEach((theme) => {
+      assert(theme.id && theme.name && theme.badge, `Step 23: Theme ${theme.id} must have id, name, and badge`);
+      assert(theme.heroHeadline && theme.heroSubheadline, `Step 23: Theme ${theme.id} must define hero headlines`);
+      flavorKeys.forEach((key) => {
+        assert(
+          theme.flavorSubLabels && theme.flavorSubLabels[key] && theme.flavorSubLabels[key].label,
+          `Step 23: Theme ${theme.id} must define seasonal sublabel for flavor ${key}`
+        );
+      });
+    });
+
+    // Test Public Theme API Endpoint: GET /api/theme
+    const publicThemeRes = await fetch(`${BASE_URL}/api/theme`);
+    assert.strictEqual(publicThemeRes.status, 200, 'Step 23: GET /api/theme should return 200');
+    const publicThemeData = await publicThemeRes.json();
+    assert(VALID_THEME_IDS.includes(publicThemeData.theme), 'Step 23: Public theme must be valid');
+
+    // Test Protected Theme API Endpoint: POST /api/admin/theme without auth
+    const unauthorizedThemeRes = await fetch(`${BASE_URL}/api/admin/theme`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme: 'christmas' })
+    });
+    assert.strictEqual(unauthorizedThemeRes.status, 401, 'Step 23: Unauthorized theme update must return 401');
+
+    // Test Protected Theme API Endpoint: POST /api/admin/theme with invalid theme id
+    const invalidThemeRes = await fetch(`${BASE_URL}/api/admin/theme`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token2}`
+      },
+      body: JSON.stringify({ theme: 'non-existent-theme' })
+    });
+    assert.strictEqual(invalidThemeRes.status, 400, 'Step 23: Invalid theme ID must return 400');
+
+    // Test Protected Theme API Endpoint: Switch to 'christmas'
+    const switchThemeRes = await fetch(`${BASE_URL}/api/admin/theme`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token2}`
+      },
+      body: JSON.stringify({ theme: 'christmas' })
+    });
+    assert.strictEqual(switchThemeRes.status, 200, 'Step 23: Switching theme to christmas must return 200');
+    const switchThemeData = await switchThemeRes.json();
+    assert.strictEqual(switchThemeData.theme, 'christmas', 'Step 23: Returned theme must be christmas');
+
+    // Verify GET /api/theme reflects 'christmas'
+    const updatedThemeRes = await fetch(`${BASE_URL}/api/theme`);
+    const updatedThemeData = await updatedThemeRes.json();
+    assert.strictEqual(updatedThemeData.theme, 'christmas', 'Step 23: GET /api/theme must reflect updated christmas theme');
+
+    // Verify GET /api/cutoff also carries 'christmas'
+    const cutoffThemeRes = await fetch(`${BASE_URL}/api/cutoff`);
+    const cutoffThemeData = await cutoffThemeRes.json();
+    assert.strictEqual(cutoffThemeData.theme, 'christmas', 'Step 23: GET /api/cutoff must include active theme');
+
+    // Verify disk persistence in server/data/settings.json
+    const diskSettingsAfterTheme = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
+    assert.strictEqual(diskSettingsAfterTheme.theme, 'christmas', 'Step 23: Disk settings.json must persist theme');
+
+    // Test Reset to Default Theme
+    const resetThemeRes = await fetch(`${BASE_URL}/api/admin/theme`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token2}`
+      },
+      body: JSON.stringify({ theme: 'default' })
+    });
+    assert.strictEqual(resetThemeRes.status, 200, 'Step 23: Resetting theme to default must return 200');
+    const resetThemeData = await resetThemeRes.json();
+    assert.strictEqual(resetThemeData.theme, 'default');
+
+    // Check frontend component implementations
+    const headerSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'Header.jsx'), 'utf8');
+    assert(headerSrc.includes('how-to-order') && headerSrc.includes('delivery-info'), 'Step 23: Header must include links to how-to-order and delivery-info');
+    assert(headerSrc.includes('contact-footer') && headerSrc.includes('Order Now'), 'Step 23: Header must include contact link and Order Now CTA');
+
+    const howToOrderSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'HowToOrderSection.jsx'), 'utf8');
+    assert(howToOrderSrc.includes('Pick Your Flavors') && howToOrderSrc.includes('Enter Delivery Address'), 'Step 23: HowToOrderSection must explain ordering steps');
+
+    const deliverySrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'DeliveryAndFooter.jsx'), 'utf8');
+    assert(deliverySrc.includes('DeliveryInfoSection') && deliverySrc.includes('FooterSection'), 'Step 23: DeliveryAndFooter must export DeliveryInfoSection and FooterSection');
+
+    const adminSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'AdminPortal.jsx'), 'utf8');
+    assert(adminSrc.includes("id: 'theme'") && adminSrc.includes('Seasonal Theme Manager'), 'Step 23: AdminPortal must contain Seasonal Theme Manager tab');
+
+    const finalAppSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'App.jsx'), 'utf8');
+    assert(finalAppSrc.includes('HowToOrderSection') && finalAppSrc.includes('DeliveryInfoSection'), 'Step 23: App.jsx must render HowToOrderSection and DeliveryInfoSection');
+    assert(finalAppSrc.includes('FooterSection') && finalAppSrc.includes('SeasonalAtmosphere'), 'Step 23: App.jsx must render FooterSection and SeasonalAtmosphere');
+    assert(finalAppSrc.includes('mani_cart_quantities') && finalAppSrc.includes('mani_customer_data'), 'Step 23: App.jsx must persist cart and customer form in localStorage');
+
+    console.log('✓ Step 23 passed: Seasonal Theme Manager and shopping UX optimizations fully verified across backend, frontend, and cloud sync!\n');
 
     console.log('================================================================');
     console.log('✅ ALL VERIFICATION STEPS PASSED WITH ZERO ERRORS!');

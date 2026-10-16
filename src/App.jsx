@@ -11,6 +11,10 @@ import OrderCutoffBanner from './components/OrderCutoffBanner';
 import BrandStoryAndSuki from './components/BrandStoryAndSuki';
 import HalloweenAtmosphere, { PlayfulSkeletonSvg, SharpBatSvg, CornerWebWithSpider } from './components/HalloweenAtmosphere';
 import HalloweenMascotVideo from './components/HalloweenMascotVideo';
+import SeasonalAtmosphere from './components/SeasonalAtmosphere';
+import HowToOrderSection from './components/HowToOrderSection';
+import { DeliveryInfoSection, FooterSection } from './components/DeliveryAndFooter';
+import { THEMES, getTheme, VALID_THEME_IDS, DEFAULT_THEME } from './config/themes';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
@@ -167,26 +171,93 @@ export default function App() {
     }
   });
 
-  // Flavors cart: { [productId]: quantity }
-  const [quantities, setQuantities] = useState({
-    salted: 0,
-    unsalted: 0,
-    spicy: 0,
-    bbq: 0,
-    'sour-cream': 0,
-    cheese: 0,
-    'salted-egg': 0,
-    'spicy-salted-egg': 0,
-    'bawang-only': 0
+  // Active Theme State (Initialized from cached settings or server default)
+  const [currentThemeId, setCurrentThemeId] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem('mani_active_theme');
+      if (savedTheme && VALID_THEME_IDS.includes(savedTheme)) {
+        return savedTheme;
+      }
+    } catch (e) {}
+    return 'halloween';
   });
 
-  // Customer Form Data
-  const [customerData, setCustomerData] = useState({
-    customerName: '',
-    mobileNumber: '',
-    deliveryAddress: '',
-    paymentMethod: 'Cash on Delivery'
+  // Admin Preview Theme (does not affect public visitors until published)
+  const [adminPreviewThemeId, setAdminPreviewThemeId] = useState(null);
+
+  const effectiveThemeId = (currentView === 'admin' && adminPreviewThemeId)
+    ? adminPreviewThemeId
+    : currentThemeId;
+
+  const currentTheme = getTheme(effectiveThemeId);
+
+  // Flavors cart: { [productId]: quantity } with localStorage persistence
+  const [quantities, setQuantities] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mani_cart_quantities') || 'null');
+      if (saved && typeof saved === 'object') {
+        return {
+          salted: 0,
+          unsalted: 0,
+          spicy: 0,
+          bbq: 0,
+          'sour-cream': 0,
+          cheese: 0,
+          'salted-egg': 0,
+          'spicy-salted-egg': 0,
+          'bawang-only': 0,
+          ...saved
+        };
+      }
+    } catch (e) {}
+    return {
+      salted: 0,
+      unsalted: 0,
+      spicy: 0,
+      bbq: 0,
+      'sour-cream': 0,
+      cheese: 0,
+      'salted-egg': 0,
+      'spicy-salted-egg': 0,
+      'bawang-only': 0
+    };
   });
+
+  // Auto-save cart quantities to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('mani_cart_quantities', JSON.stringify(quantities));
+    } catch (e) {}
+  }, [quantities]);
+
+  // Customer Form Data with localStorage persistence
+  const [customerData, setCustomerData] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mani_customer_data') || 'null');
+      if (saved && typeof saved === 'object') {
+        return {
+          customerName: '',
+          mobileNumber: '',
+          deliveryAddress: '',
+          paymentMethod: 'Cash on Delivery',
+          ...saved
+        };
+      }
+    } catch (e) {}
+    return {
+      customerName: '',
+      mobileNumber: '',
+      deliveryAddress: '',
+      paymentMethod: 'Cash on Delivery'
+    };
+  });
+
+  // Auto-save customer details to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('mani_customer_data', JSON.stringify(customerData));
+    } catch (e) {}
+  }, [customerData]);
 
   // Configurable QR codes (v2 with new images)
   const [customQrs, setCustomQrs] = useState(() => {
@@ -388,6 +459,12 @@ export default function App() {
       setPaymentMethods(normalizedPm);
       localStorage.setItem('mani_payment_methods', JSON.stringify(normalizedPm));
     }
+
+    // 6. Synchronize Seasonal Theme
+    if (settings.theme && VALID_THEME_IDS.includes(settings.theme)) {
+      setCurrentThemeId(settings.theme);
+      localStorage.setItem('mani_active_theme', settings.theme);
+    }
   };
 
   // Fallback to local storage cache if completely offline
@@ -455,6 +532,10 @@ export default function App() {
             setPaymentMethods((prev) => ({ ...prev, ...data.paymentMethods }));
             localStorage.setItem('mani_payment_methods', JSON.stringify(data.paymentMethods));
           }
+          if (data.theme && VALID_THEME_IDS.includes(data.theme)) {
+            setCurrentThemeId(data.theme);
+            localStorage.setItem('mani_active_theme', data.theme);
+          }
           return;
         }
       }
@@ -521,6 +602,16 @@ export default function App() {
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setProducts((prev) => mergeProductsWithDefaults(data));
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/theme')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.theme && VALID_THEME_IDS.includes(data.theme)) {
+          setCurrentThemeId(data.theme);
+          localStorage.setItem('mani_active_theme', data.theme);
         }
       })
       .catch(() => {});
@@ -740,6 +831,47 @@ export default function App() {
         mode: 'no-cors'
       }).catch(() => {});
     }
+  };
+
+  const handlePublishTheme = async (themeId) => {
+    if (!VALID_THEME_IDS.includes(themeId)) return;
+    setCurrentThemeId(themeId);
+    setAdminPreviewThemeId(null);
+    localStorage.setItem('mani_active_theme', themeId);
+
+    // 1. Sync to local backend if running
+    try {
+      if (adminToken) {
+        await fetch('/api/admin/theme', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({ theme: themeId })
+        });
+      }
+    } catch (err) {}
+
+    // 2. Sync to Google Apps Script Cloud so mobile immediately receives updated theme
+    const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
+    if (appsUrl) {
+      fetch(appsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveSettings',
+          settings: { theme: themeId }
+        })
+      }).catch(() => {});
+    }
+
+    setToast({
+      show: true,
+      message: `Theme updated to ${getTheme(themeId).name}! Live across the store.`,
+      icon: '🎨'
+    });
   };
 
   const handleQuantityChange = (productId, newQty) => {
@@ -1075,9 +1207,9 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 selection:bg-[#FF6B00] selection:text-white">
-      {/* 👻 Spooky Halloween Atmosphere: Roaming Ghost, Sharp Webbed Bats, Autumn Leaves, Cobwebs, Spiders, Skeletons & Mummies */}
-      {currentView === 'order' && <HalloweenAtmosphere />}
+    <div data-theme={effectiveThemeId} className="relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 selection:bg-[#FF6B00] selection:text-white">
+      {/* 🌟 Seasonal Atmosphere Particles & Ambient Visuals (Halloween bats/ghosts/skeletons, Christmas snow, etc.) */}
+      {currentView === 'order' && <SeasonalAtmosphere themeId={effectiveThemeId} />}
 
       {/* Sleek Floating Toast Notification */}
       {toast.show && (
@@ -1116,6 +1248,7 @@ export default function App() {
         adminUser={adminUser}
         onLogout={handleLogout}
         cutoffInfo={cutoffInfo}
+        themeId={effectiveThemeId}
       />
 
       {/* Main Content */}
@@ -1136,6 +1269,10 @@ export default function App() {
             onRefreshCutoff={fetchCutoff}
             activeTab={adminTab}
             onTabChange={handleAdminTabChange}
+            currentThemeId={currentThemeId}
+            onPublishTheme={handlePublishTheme}
+            onResetThemeToDefault={() => handlePublishTheme('default')}
+            onPreviewTheme={setAdminPreviewThemeId}
           />
         ) : currentView === 'admin' && !adminToken ? (
           /* Dedicated unauthenticated /admin screen holding the AdminLoginModal */
@@ -1184,7 +1321,11 @@ export default function App() {
                 <div className="lg:col-span-5 text-center lg:text-left space-y-4">
                   {/* Top Halloween Special Pill Badge */}
                   <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-[#FF6B00] text-white border-2 border-amber-300 shadow-snack-sm -rotate-1">
-                    <span>🎃 Trick or Treat Crunch! • Spooky Halloween Special</span>
+                    <span>
+                      {effectiveThemeId === 'halloween'
+                        ? '🎃 Trick or Treat Crunch! • Spooky Halloween Special'
+                        : `${currentTheme.badge} • ${currentTheme.name} Special`}
+                    </span>
                   </div>
 
                   {/* Main Headline & Sub-Headline */}
@@ -1194,14 +1335,16 @@ export default function App() {
                         data-testid="hero-headline"
                         className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.05] drop-shadow-[0_4px_16px_rgba(255,107,0,0.45)]"
                       >
-                        ANONG FEAR MO TODAY?
+                        {effectiveThemeId === 'halloween' ? 'ANONG FEAR MO TODAY?' : currentTheme.heroHeadline}
                       </h1>
                     </div>
                     <p
                       data-testid="hero-subheadline"
                       className="font-display text-lg sm:text-2xl font-bold text-amber-300 leading-snug drop-shadow-xs"
                     >
-                      Mani so good, it&apos;s scary. No tricks, just pure crunch!
+                      {effectiveThemeId === 'halloween'
+                        ? "Mani so good, it's scary. No tricks, just pure crunch!"
+                        : currentTheme.heroSubheadline}
                     </p>
                   </div>
 
@@ -1391,6 +1534,7 @@ export default function App() {
                         key={product.id}
                         product={product}
                         index={index}
+                        themeId={effectiveThemeId}
                         quantity={quantities[product.id] || 0}
                         onQuantityChange={handleQuantityChange}
                         onAddToCart={handleAddToCartFeedback}
@@ -1442,9 +1586,31 @@ export default function App() {
               onAddCombo={handleAddCombo}
               isOrdersClosed={isOrdersClosed}
             />
+
+            {/* 📋 Step-by-Step How to Order Section */}
+            <HowToOrderSection
+              themeId={effectiveThemeId}
+              cutoffInfo={cutoffInfo}
+            />
+
+            {/* 🚚 Schedule, Cutoff & Delivery Policies Section */}
+            <DeliveryInfoSection
+              themeId={effectiveThemeId}
+              cutoffInfo={cutoffInfo}
+            />
           </div>
         )}
       </main>
+
+      {/* Customer Footer Section with Links and Subtle Admin Login */}
+      {currentView === 'order' && (
+        <FooterSection
+          themeId={effectiveThemeId}
+          onOpenAdminLogin={() => setIsLoginModalOpen(true)}
+          isAdminAuthenticated={Boolean(adminToken)}
+          onNavigateToAdmin={() => navigateTo('admin')}
+        />
+      )}
 
       {/* Mobile Sticky Quick-Action Bar */}
       {currentView === 'order' && totalPacks > 0 && (

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, ShieldCheck, Sparkles, Lock, LogOut, Clock } from 'lucide-react';
+import { ShoppingBag, ShieldCheck, Sparkles, Lock, LogOut, Clock, Menu, X, ArrowDown } from 'lucide-react';
 import { getManilaCutoffTimestampMs } from '../utils/phtTime';
 import { formatPHP } from '../config/products';
+import { getTheme } from '../config/themes';
 
 export default function Header({ 
   currentView, 
@@ -14,8 +15,12 @@ export default function Header({
   isAdminAuthenticated,
   adminUser,
   onLogout,
-  cutoffInfo
+  cutoffInfo,
+  themeId = 'halloween'
 }) {
+  const currentTheme = getTheme(themeId);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const [remainingSec, setRemainingSec] = useState(() => {
     if (!cutoffInfo || !cutoffInfo.cutoffDate) return 0;
     const targetMs = getManilaCutoffTimestampMs(cutoffInfo.cutoffDate, cutoffInfo.cutoffTime);
@@ -47,6 +52,7 @@ export default function Header({
   };
 
   const scrollToSection = (id) => {
+    setMobileMenuOpen(false);
     if (currentView !== 'order') {
       onNavigate ? onNavigate('order') : setCurrentView('order');
       setTimeout(() => {
@@ -60,7 +66,7 @@ export default function Header({
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-[#1F1025]/95 backdrop-blur-md border-b-2 border-[#FF6B00]/50 shadow-warm">
+    <header className={`sticky top-0 z-30 backdrop-blur-md transition-colors ${currentTheme.headerBg}`}>
       <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2.5 sm:py-3">
         <div className="flex items-center justify-between gap-2">
           {/* Logo & Branding */}
@@ -83,46 +89,70 @@ export default function Header({
             className="cursor-pointer flex items-center gap-2.5 sm:gap-3 group rounded-2xl shrink-0"
           >
             <img
-              src="./images/mani-halloween-logo.png"
+              src={currentTheme.logo || './logo.png'}
               alt="Mani Wandering Logo"
-              className="w-11 h-11 sm:w-13 sm:h-13 object-contain drop-shadow-[0_2px_8px_rgba(255,107,0,0.45)] group-hover:-rotate-6 group-hover:scale-105 transition-transform duration-200 shrink-0 select-none"
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain drop-shadow-[0_2px_8px_rgba(255,107,0,0.45)] group-hover:-rotate-6 group-hover:scale-105 transition-transform duration-200 shrink-0 select-none"
             />
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-display text-lg sm:text-2xl font-bold tracking-tight text-white leading-none drop-shadow-xs">
                   Mani Wandering
                 </span>
-                <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#FF6B00] text-white border border-amber-300 -rotate-2 shadow-2xs">
+                <span className={`hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold -rotate-1 shadow-2xs ${currentTheme.heroBadge || 'bg-[#FF6B00] text-white border border-amber-300'}`}>
                   <Sparkles className="w-3 h-3 text-amber-200" />
-                  🎃 Trick or Treat Crunch!
+                  <span>{currentTheme.seasonalTag || '🎃 Trick or Treat Crunch!'}</span>
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Quick Section Navigation (Desktop) */}
+          {/* Quick Section Navigation (Desktop): Home, Products, How to Order, Contact + Order Now CTA */}
           {currentView === 'order' && (
-            <nav aria-label="Store sections" className="hidden lg:flex items-center gap-1 bg-[#2B1B30]/90 p-1 rounded-2xl border border-[#FF6B00]/40">
+            <nav aria-label="Store navigation" className={`hidden lg:flex items-center gap-1 p-1 rounded-2xl ${currentTheme.headerNavBg || 'bg-[#2B1B30]/90 border border-[#FF6B00]/40'}`}>
+              <button
+                type="button"
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${currentTheme.headerNavText || 'text-amber-200 hover:bg-[#FF6B00] hover:text-white'}`}
+              >
+                Home
+              </button>
               <button
                 type="button"
                 onClick={() => scrollToSection('flavors-menu')}
-                className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-amber-200 hover:bg-[#FF6B00] hover:text-white hover:shadow-2xs transition-all cursor-pointer"
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${currentTheme.headerNavText || 'text-amber-200 hover:bg-[#FF6B00] hover:text-white'}`}
               >
-                🎃 Flavors
+                Products
               </button>
               <button
                 type="button"
-                onClick={() => scrollToSection('suki-favorites')}
-                className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-amber-200 hover:bg-[#FF6B00] hover:text-white hover:shadow-2xs transition-all cursor-pointer"
+                onClick={() => scrollToSection('how-to-order')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${currentTheme.headerNavText || 'text-amber-200 hover:bg-[#FF6B00] hover:text-white'}`}
               >
-                🔥 Mga Suki Combos
+                How to Order
               </button>
               <button
                 type="button"
-                onClick={() => scrollToSection('brand-story')}
-                className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-amber-200 hover:bg-[#FF6B00] hover:text-white hover:shadow-2xs transition-all cursor-pointer"
+                onClick={() => scrollToSection('delivery-info')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${currentTheme.headerNavText || 'text-amber-200 hover:bg-[#FF6B00] hover:text-white'}`}
               >
-                👻 Our Kwento
+                Delivery Info
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('contact-footer')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${currentTheme.headerNavText || 'text-amber-200 hover:bg-[#FF6B00] hover:text-white'}`}
+              >
+                Contact
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('flavors-menu')}
+                className="ml-1 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] border border-amber-300 shadow-2xs transition-all cursor-pointer flex items-center gap-1"
+              >
+                <span>Order Now</span>
+                <ArrowDown className="w-3 h-3 stroke-[2.5]" />
               </button>
             </nav>
           )}
@@ -221,8 +251,78 @@ export default function Header({
                 </span>
               </button>
             )}
+
+            {/* Mobile Menu Toggle */}
+            {currentView === 'order' && (
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer border border-white/20"
+                aria-label="Toggle navigation menu"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Mobile Dropdown Navigation Menu */}
+        {mobileMenuOpen && currentView === 'order' && (
+          <nav aria-label="Mobile navigation" className="lg:hidden mt-3 pt-3 border-t border-amber-300/30 flex flex-col gap-1.5 pb-2 animate-fade-in">
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-left text-amber-200 hover:bg-white/10 flex items-center justify-between"
+            >
+              <span>🏠 Home</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('flavors-menu')}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-left text-amber-200 hover:bg-white/10 flex items-center justify-between"
+            >
+              <span>🥜 Products &amp; Flavors</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('suki-favorites')}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-left text-amber-200 hover:bg-white/10 flex items-center justify-between"
+            >
+              <span>🔥 Suki Combos</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('how-to-order')}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-left text-amber-200 hover:bg-white/10 flex items-center justify-between"
+            >
+              <span>📋 How to Order</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('delivery-info')}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-left text-amber-200 hover:bg-white/10 flex items-center justify-between"
+            >
+              <span>🚚 Delivery &amp; Schedule</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('contact-footer')}
+              className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-left text-amber-200 hover:bg-white/10 flex items-center justify-between"
+            >
+              <span>✉️ Contact &amp; Inquiries</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('flavors-menu')}
+              className="mt-1 px-4 py-3 rounded-xl text-xs font-extrabold bg-[#FF6B00] text-white flex items-center justify-center gap-2 shadow-sm text-center"
+            >
+              <span>Order Now 🥜</span>
+            </button>
+          </nav>
+        )}
       </div>
     </header>
   );
