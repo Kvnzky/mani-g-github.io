@@ -8,27 +8,34 @@ import HalloweenAtmosphere from './HalloweenAtmosphere';
 function ThanksgivingLeaves() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
-      {/* Falling Amber Autumn Leaves */}
+      {/* Falling Amber, Burnt Orange, Burgundy & Sage Autumn Leaves */}
       {[
-        { left: '8%', delay: '0s', duration: '14s', size: 'w-6 h-6', rot: 'rotate-45', color: '#EA580C' },
-        { left: '22%', delay: '3s', duration: '18s', size: 'w-7 h-7', rot: '-rotate-12', color: '#D97706' },
-        { left: '38%', delay: '1s', duration: '16s', size: 'w-5 h-5', rot: 'rotate-12', color: '#B45309' },
-        { left: '55%', delay: '5s', duration: '20s', size: 'w-6 h-6', rot: '-rotate-45', color: '#F59E0B' },
-        { left: '72%', delay: '2s', duration: '15s', size: 'w-8 h-8', rot: 'rotate-30', color: '#EA580C' },
-        { left: '88%', delay: '4s', duration: '17s', size: 'w-5 h-5', rot: '-rotate-30', color: '#D97706' }
+        { left: '6%', delay: '0s', duration: '15s', size: 'w-6 h-6', rot: 'rotate-45', color: '#EA580C', type: 'maple' },
+        { left: '19%', delay: '4s', duration: '19s', size: 'w-5 h-5', rot: '-rotate-12', color: '#D97706', type: 'oak' },
+        { left: '34%', delay: '1.5s', duration: '17s', size: 'w-7 h-7', rot: 'rotate-12', color: '#881337', type: 'maple' },
+        { left: '52%', delay: '6s', duration: '21s', size: 'w-4 h-4', rot: '-rotate-45', color: '#4D7C0F', type: 'oak' },
+        { left: '68%', delay: '2.5s', duration: '16s', size: 'w-6 h-6', rot: 'rotate-30', color: '#F59E0B', type: 'maple' },
+        { left: '83%', delay: '5s', duration: '18s', size: 'w-5 h-5', rot: '-rotate-30', color: '#C2410C', type: 'oak' },
+        { left: '94%', delay: '1s', duration: '20s', size: 'w-6 h-6', rot: 'rotate-20', color: '#881337', type: 'maple' }
       ].map((leaf, i) => (
         <div
           key={i}
-          className="absolute -top-10 opacity-60 animate-fall"
+          className="absolute -top-10 opacity-70 animate-fall"
           style={{
             left: leaf.left,
             animationDelay: leaf.delay,
             animationDuration: leaf.duration
           }}
         >
-          <svg className={`${leaf.size} ${leaf.rot}`} viewBox="0 0 24 24" fill={leaf.color}>
-            <path d="M12 2C8 6 3 9 3 14c0 4 3 7 7 7 1 0 1-1 2-2 1 1 1 2 2 2 4 0 7-3 7-7 0-5-5-8-9-12z" />
-          </svg>
+          {leaf.type === 'maple' ? (
+            <svg className={`${leaf.size} ${leaf.rot}`} viewBox="0 0 24 24" fill={leaf.color}>
+              <path d="M12 2 L13.5 6 L17.5 4.5 L16.5 9 L21 9 L17.5 13.5 L21.5 17.5 L16.5 17.5 L16.5 21 L12 18 L7.5 21 L7.5 17.5 L2.5 17.5 L6.5 13.5 L3 9 L7.5 9 L6.5 4.5 L10.5 6 Z" />
+            </svg>
+          ) : (
+            <svg className={`${leaf.size} ${leaf.rot}`} viewBox="0 0 24 24" fill={leaf.color}>
+              <path d="M12 2C8 6 3 9 3 14c0 4 3 7 7 7 1 0 1-1 2-2 1 1 1 2 2 2 4 0 7-3 7-7 0-5-5-8-9-12z" />
+            </svg>
+          )}
         </div>
       ))}
     </div>

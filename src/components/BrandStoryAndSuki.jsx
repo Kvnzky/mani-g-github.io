@@ -3,6 +3,7 @@ import { Sparkles, Flame, HeartHandshake, Plus, ArrowUpRight } from 'lucide-reac
 import { formatPHP } from '../config/products';
 import { PlayfulSkeletonSvg, PlayfulMummySvg, CornerWebWithSpider } from './HalloweenAtmosphere';
 import { SantaPeanutSvg, ChristmasCornerGarland } from './ChristmasDecorations';
+import { HarvestPeanutSvg, ThanksgivingCornerGarland } from './ThanksgivingDecorations';
 import { getTheme } from '../config/themes';
 
 const SUKI_COMBOS = [
@@ -144,6 +145,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
   const currentTheme = getTheme(themeId);
   const isHalloween = themeId === 'halloween';
   const isChristmas = themeId === 'christmas';
+  const isThanksgiving = themeId === 'thanksgiving';
 
   const getProductMap = () => {
     const map = {};
@@ -176,9 +178,15 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
       <section id="suki-favorites" className="space-y-6 scroll-mt-24">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className={`hidden sm:flex shrink-0 ${isChristmas ? 'bg-[#0D2418] border-2 border-[#DC2626]' : 'bg-[#2B1B30] border-2 border-[#FF6B00]'} p-2 rounded-3xl shadow-snack-sm`}>
+            <div className={`hidden sm:flex shrink-0 ${
+              isChristmas ? 'bg-[#0D2418] border-2 border-[#DC2626]' 
+              : isThanksgiving ? 'bg-[#2A170B] border-2 border-[#EA580C]'
+              : 'bg-[#2B1B30] border-2 border-[#FF6B00]'
+            } p-2 rounded-3xl shadow-snack-sm`}>
               {isChristmas ? (
                 <SantaPeanutSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(220,38,38,0.5)]" />
+              ) : isThanksgiving ? (
+                <HarvestPeanutSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(234,88,12,0.5)]" />
               ) : isHalloween ? (
                 <PlayfulSkeletonSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(255,107,0,0.4)]" />
               ) : (
@@ -290,6 +298,8 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
         className={`rounded-3xl ${
           isChristmas
             ? 'bg-gradient-to-br from-[#123322] via-[#0E281B] to-[#1C422C] text-emerald-50 border-2 border-[#DC2626] shadow-warm-lg'
+            : isThanksgiving
+            ? 'bg-gradient-to-br from-[#381B09] via-[#2A170B] to-[#451F0A] text-amber-50 border-2 border-[#EA580C] shadow-warm-lg'
             : isHalloween
             ? 'bg-gradient-to-br from-[#2B1B30] via-[#1F1025] to-[#2B1B30] text-cream border-2 border-[#FF6B00] shadow-pumpkin-card'
             : 'bg-gradient-to-br from-[#38200D] via-[#2A170B] to-[#38200D] text-cream border-2 border-amber-500 shadow-snack-card'
@@ -306,6 +316,12 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
           <>
             <ChristmasCornerGarland position="left" />
             <ChristmasCornerGarland position="right" />
+          </>
+        )}
+        {isThanksgiving && (
+          <>
+            <ThanksgivingCornerGarland position="left" />
+            <ThanksgivingCornerGarland position="right" />
           </>
         )}
 
@@ -332,9 +348,15 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             </div>
 
             {/* Featured Character Focal Point Card */}
-            <div className={`flex items-center gap-4 ${isChristmas ? 'bg-[#0D2418]/95 border-2 border-[#DC2626]' : 'bg-[#1F1025]/95 border-2 border-[#FF6B00]'} backdrop-blur-xs p-4 sm:p-5 rounded-3xl shadow-snack-sm shrink-0 self-start lg:self-center`}>
+            <div className={`flex items-center gap-4 ${
+              isChristmas ? 'bg-[#0D2418]/95 border-2 border-[#DC2626]' 
+              : isThanksgiving ? 'bg-[#2A170B]/95 border-2 border-[#EA580C]'
+              : 'bg-[#1F1025]/95 border-2 border-[#FF6B00]'
+            } backdrop-blur-xs p-4 sm:p-5 rounded-3xl shadow-snack-sm shrink-0 self-start lg:self-center`}>
               {isChristmas ? (
                 <SantaPeanutSvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(220,38,38,0.5)]" />
+              ) : isThanksgiving ? (
+                <HarvestPeanutSvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(234,88,12,0.5)]" />
               ) : isHalloween ? (
                 <PlayfulMummySvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(245,158,11,0.45)]" />
               ) : (
@@ -352,7 +374,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                 </p>
               </div>
               <img
-                src={isChristmas ? './logo.png' : isHalloween ? './images/mani-halloween-logo.png' : './logo.png'}
+                src="./logo.png"
                 alt="Mani Wandering Mascot"
                 className="w-14 h-14 sm:w-16 sm:h-16 hidden sm:block object-contain drop-shadow-[0_2px_10px_rgba(255,107,0,0.45)] shrink-0 select-none"
               />
@@ -371,6 +393,8 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl ${
                     isChristmas 
                       ? 'bg-[#0D2418]/85 hover:bg-[#DC2626]/30 text-emerald-100 border border-emerald-600/50' 
+                      : isThanksgiving
+                      ? 'bg-[#2A170B]/85 hover:bg-[#EA580C]/30 text-amber-100 border border-[#EA580C]/50'
                       : 'bg-[#1F1025]/85 hover:bg-[#FF6B00]/30 text-amber-100 border border-[#FF6B00]/50'
                   } text-xs font-display font-bold transition-colors select-none`}
                 >

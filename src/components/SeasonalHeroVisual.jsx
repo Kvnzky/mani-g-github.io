@@ -123,6 +123,110 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
     );
   }
 
+  if (themeId === 'thanksgiving') {
+    return (
+      <div className="relative w-full max-w-[620px] mx-auto flex items-center justify-center p-3 select-none">
+        {/* Ambient Warm Harvest Glow Backdrops in Burnt Orange, Burgundy & Harvest Gold */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#EA580C]/25 via-[#881337]/20 to-[#F59E0B]/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-6 -right-6 w-40 h-40 bg-[#F59E0B]/20 rounded-full blur-2xl pointer-events-none animate-pulse" />
+        <div className="absolute -bottom-6 -left-6 w-44 h-44 bg-[#881337]/25 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Main Harvest Composition Card */}
+        <div className="relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#381B09]/95 via-[#2A170B]/95 to-[#231206] border-2 border-[#EA580C] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
+          {/* Decorative Corner Foliage & Harvest Accents */}
+          <div className="absolute -top-2 -right-2 text-2xl rotate-12 drop-shadow-md select-none pointer-events-none">
+            🍂🌾
+          </div>
+          <div className="absolute -bottom-2 -left-2 text-2xl -rotate-12 drop-shadow-md select-none pointer-events-none">
+            🥧🍁
+          </div>
+
+          {/* Central Logo & Autumn Harvest Wreath */}
+          <div className="text-center space-y-4">
+            <div className="relative inline-block animate-float-slow">
+              {/* Autumn Maple & Wheat Leaf cluster above logo */}
+              <div className="absolute -top-4 -right-2 z-20 pointer-events-none transform rotate-12 drop-shadow-md">
+                <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none">
+                  <path d="M24 4 L27 14 L36 10 L34 20 L44 20 L36 28 L42 36 L32 36 L32 44 L24 38 L16 44 L16 36 L6 36 L12 28 L4 20 L14 20 L12 10 L21 14 Z" fill="#EA580C" stroke="#9A3412" strokeWidth="1" />
+                  <ellipse cx="36" cy="12" rx="4" ry="2" fill="#FDE047" stroke="#D97706" strokeWidth="0.8" transform="rotate(30 36 12)" />
+                </svg>
+              </div>
+
+              {/* Glowing Warm Harvest Ring Wreath behind logo */}
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#451F0A] via-[#2A170B] to-[#381B09] border-4 border-[#F59E0B] p-3 shadow-warm-lg flex items-center justify-center mx-auto">
+                <img
+                  src="./logo.png"
+                  alt="Mani Wandering Thanksgiving Harvest Logo"
+                  className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(234,88,12,0.5)]"
+                />
+              </div>
+
+              {/* Autumn Harvest Ribbon Tag */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#881337] to-[#EA580C] text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-amber-300 shadow-snack-sm flex items-center gap-1">
+                <span>🌾 Season of Gratitude</span>
+              </div>
+            </div>
+
+            {/* Featured Autumn Harvest Tubs Mini Showcase */}
+            <div className="pt-2">
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#FDE047] mb-3">
+                🍂 Pinakamasarap na Pang-Salo-Salo at Pasasalamat
+              </p>
+
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                {/* Tub 1: Classic Harvest Salted */}
+                <div className="rounded-2xl p-2 bg-[#231206]/90 border border-[#EA580C]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#F59E0B] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-500/40">
+                    <img src="./images/products/salted.jpg" alt="Harvest Salted Mani" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🍂 Salted</span>
+                    <span className="text-[9px] text-amber-200/90 font-medium">Classic Crunch</span>
+                  </div>
+                </div>
+
+                {/* Tub 2: Campfire Heat Spicy */}
+                <div className="rounded-2xl p-2 bg-[#231206]/90 border border-[#881337]/70 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-amber-300 transition-all scale-105 bg-gradient-to-b from-[#381B09] to-[#231206]">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#EA580C]">
+                    <img src="./images/products/spicy.jpg" alt="Campfire Spicy Mani" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-rose-300 block leading-tight">🔥 Campfire</span>
+                    <span className="text-[9px] text-amber-200/90 font-bold">Chili Garlic</span>
+                  </div>
+                </div>
+
+                {/* Tub 3: Golden Yolk Feast Salted Egg */}
+                <div className="rounded-2xl p-2 bg-[#231206]/90 border border-[#EA580C]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#F59E0B] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-400/40">
+                    <img src="./images/products/salted-egg.jpg" alt="Golden Feast Salted Egg Mani" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🌾 Golden Feast</span>
+                    <span className="text-[9px] text-amber-200/90 font-medium">Rich Butter Yolk</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3 Value Pillars */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-amber-100">
+              <span className="inline-flex items-center gap-1 bg-[#1C0E05]/90 px-2.5 py-1 rounded-xl border border-[#EA580C]/40">
+                <Heart className="w-3 h-3 text-[#EA580C]" /> Salo-Salo Ready
+              </span>
+              <span className="inline-flex items-center gap-1 bg-[#1C0E05]/90 px-2.5 py-1 rounded-xl border border-[#EA580C]/40">
+                <Award className="w-3 h-3 text-[#F59E0B]" /> Purong Crispy Bawang
+              </span>
+              <span className="inline-flex items-center gap-1 bg-[#1C0E05]/90 px-2.5 py-1 rounded-xl border border-[#EA580C]/40">
+                <Sparkles className="w-3 h-3 text-amber-300" /> Fresh Small Batches
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Default / Other Themes Fallback: Classic Brand Showcase
   return (
     <div className="relative w-full max-w-[580px] mx-auto flex items-center justify-center p-3 select-none">

@@ -14,6 +14,7 @@ import HalloweenMascotVideo from './components/HalloweenMascotVideo';
 import SeasonalAtmosphere from './components/SeasonalAtmosphere';
 import SeasonalHeroVisual from './components/SeasonalHeroVisual';
 import { SantaPeanutSvg, ChristmasCornerGarland, ChristmasStarOrnament } from './components/ChristmasDecorations';
+import { HarvestPeanutSvg, ThanksgivingCornerGarland, ThanksgivingLeafOrnament } from './components/ThanksgivingDecorations';
 import { THEMES, getTheme, VALID_THEME_IDS, DEFAULT_THEME } from './config/themes';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
@@ -1298,7 +1299,7 @@ export default function App() {
   };
 
   return (
-    <div data-theme={effectiveThemeId} className={`relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 ${effectiveThemeId === 'christmas' ? 'selection:bg-[#DC2626]' : 'selection:bg-[#FF6B00]'} selection:text-white`}>
+    <div data-theme={effectiveThemeId} className={`relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 ${effectiveThemeId === 'christmas' ? 'selection:bg-[#DC2626]' : effectiveThemeId === 'thanksgiving' ? 'selection:bg-[#EA580C]' : 'selection:bg-[#FF6B00]'} selection:text-white`}>
       {/* 🌟 Seasonal Atmosphere Particles & Ambient Visuals (Halloween bats/ghosts/skeletons, Christmas snow, etc.) */}
       {currentView === 'order' && <SeasonalAtmosphere themeId={effectiveThemeId} />}
 
@@ -1417,6 +1418,18 @@ export default function App() {
                   </div>
                   <div className="pointer-events-none select-none hidden sm:block absolute top-6 left-[44%] opacity-80 animate-float-reverse">
                     <ChristmasStarOrnament className="w-8 sm:w-10 h-auto drop-shadow-[0_2px_10px_rgba(251,191,36,0.5)]" />
+                  </div>
+                </>
+              )}
+              {effectiveThemeId === 'thanksgiving' && (
+                <>
+                  <ThanksgivingCornerGarland position="left" />
+                  <ThanksgivingCornerGarland position="right" />
+                  <div className="pointer-events-none select-none absolute top-3 right-28 sm:right-36 opacity-90 animate-float-slow">
+                    <ThanksgivingLeafOrnament className="w-10 sm:w-14 h-auto drop-shadow-[0_2px_12px_rgba(234,88,12,0.6)]" />
+                  </div>
+                  <div className="pointer-events-none select-none hidden sm:block absolute top-6 left-[44%] opacity-80 animate-float-reverse">
+                    <ThanksgivingLeafOrnament variant="acorn" className="w-8 sm:w-10 h-auto drop-shadow-[0_2px_10px_rgba(217,119,6,0.5)]" />
                   </div>
                 </>
               )}
@@ -1545,9 +1558,15 @@ export default function App() {
                   <div className={`relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${currentTheme?.sectionHeaderBg || 'bg-[#2B1B30]/95 text-white border-2 border-[#FF6B00]'} p-4 sm:p-5 rounded-3xl shadow-snack-card`}>
                     <div className="flex items-center gap-3.5">
                       {/* Supporting Seasonal Character */}
-                      <div className={`shrink-0 ${effectiveThemeId === 'christmas' ? 'bg-[#0D2418]/90 border border-emerald-600/60' : 'bg-[#1F1025]/90 border border-[#FF6B00]/60'} p-1.5 rounded-2xl shadow-inner`}>
+                      <div className={`shrink-0 ${
+                        effectiveThemeId === 'christmas' ? 'bg-[#0D2418]/90 border border-emerald-600/60'
+                        : effectiveThemeId === 'thanksgiving' ? 'bg-[#2A170B]/90 border border-[#EA580C]/60'
+                        : 'bg-[#1F1025]/90 border border-[#FF6B00]/60'
+                      } p-1.5 rounded-2xl shadow-inner`}>
                         {effectiveThemeId === 'christmas' ? (
                           <SantaPeanutSvg className="w-14 h-16 sm:w-16 sm:h-20 drop-shadow-[0_2px_10px_rgba(220,38,38,0.5)]" />
+                        ) : effectiveThemeId === 'thanksgiving' ? (
+                          <HarvestPeanutSvg className="w-14 h-16 sm:w-16 sm:h-20 drop-shadow-[0_2px_10px_rgba(234,88,12,0.5)]" />
                         ) : effectiveThemeId === 'halloween' ? (
                           <PlayfulSkeletonSvg className="w-14 h-16 sm:w-16 sm:h-20 drop-shadow-[0_2px_10px_rgba(255,107,0,0.35)]" />
                         ) : (
@@ -1616,7 +1635,7 @@ export default function App() {
                           {tab.count !== undefined && (
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                               isActive 
-                                ? (effectiveThemeId === 'christmas' ? 'bg-[#0D2418] text-amber-300' : 'bg-[#1F1025] text-amber-300')
+                                ? (effectiveThemeId === 'christmas' ? 'bg-[#0D2418] text-amber-300' : effectiveThemeId === 'thanksgiving' ? 'bg-[#2A170B] text-amber-300' : 'bg-[#1F1025] text-amber-300')
                                 : 'bg-black/30 text-amber-300'
                             }`}>
                               {tab.count}
@@ -1704,7 +1723,7 @@ export default function App() {
           >
             <div className="text-[11px] font-extrabold text-amber-200 flex items-center gap-1.5 flex-wrap">
               <span className={`px-2 py-0.5 rounded-full ${currentTheme?.cartPillBg || 'bg-[#FF6B00] text-white border border-amber-300'}`}>
-                {effectiveThemeId === 'christmas' ? '🎄' : '🎃'} {totalPacks} tub{totalPacks > 1 ? 's' : ''}
+                {effectiveThemeId === 'christmas' ? '🎄' : effectiveThemeId === 'thanksgiving' ? '🍂' : '🎃'} {totalPacks} tub{totalPacks > 1 ? 's' : ''}
               </span>
               {cutoffInfo?.isOpen && cutoffInfo?.enabled && (
                 <span className={`text-[10px] font-bold text-amber-300 ${currentTheme?.headerNavBg || 'bg-[#2B1B30] border border-[#FF6B00]/60'} px-1.5 py-0.5 rounded`}>
