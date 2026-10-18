@@ -714,30 +714,37 @@ async function runVerification() {
 
     // Check frontend component implementations
     const headerSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'Header.jsx'), 'utf8');
-    assert(headerSrc.includes('contact-footer') && headerSrc.includes('Order Now'), 'Step 23: Header must include contact link and Order Now CTA');
-
-    const deliverySrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'DeliveryAndFooter.jsx'), 'utf8');
-    assert(deliverySrc.includes('FooterSection'), 'Step 23: DeliveryAndFooter must export FooterSection');
+    assert(headerSrc.includes('Order Now') && headerSrc.includes('flavors-menu'), 'Step 23: Header must include Order Now CTA and flavors menu');
 
     const adminSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'AdminPortal.jsx'), 'utf8');
     assert(adminSrc.includes("id: 'theme'") && adminSrc.includes('Seasonal Theme Manager'), 'Step 23: AdminPortal must contain Seasonal Theme Manager tab');
 
     const finalAppSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'App.jsx'), 'utf8');
     assert(!finalAppSrc.includes('<HowToOrderSection') && !finalAppSrc.includes('<DeliveryInfoSection'), 'Step 23: App.jsx must not render HowToOrderSection or DeliveryInfoSection');
-    assert(finalAppSrc.includes('FooterSection') && finalAppSrc.includes('SeasonalAtmosphere'), 'Step 23: App.jsx must render FooterSection and SeasonalAtmosphere');
+    assert(!finalAppSrc.includes('<FooterSection'), 'Step 23: App.jsx must not render FooterSection');
+    assert(finalAppSrc.includes('SeasonalAtmosphere'), 'Step 23: App.jsx must render SeasonalAtmosphere');
     assert(finalAppSrc.includes('mani_cart_quantities') && finalAppSrc.includes('mani_customer_data'), 'Step 23: App.jsx must persist cart and customer form in localStorage');
 
-    console.log('✓ Step 23 passed: Streamlined storefront without HowToOrderSection/DeliveryInfoSection and with Seasonal Theme Manager verified!\n');
+    console.log('✓ Step 23 passed: Streamlined storefront without HowToOrderSection, DeliveryInfoSection, or FooterSection verified!\n');
 
     console.log('================================================================');
     console.log('✅ ALL VERIFICATION STEPS PASSED WITH ZERO ERRORS!');
     console.log('================================================================');
   } finally {
-    // Restore original data files
-    fs.writeFileSync(SETTINGS_FILE, originalSettingsRaw, 'utf8');
-    fs.writeFileSync(ORDERS_FILE, originalOrdersRaw, 'utf8');
     if (serverProc) {
       serverProc.kill();
+      await wait(150);
+    }
+    // Restore original data files
+    try {
+      fs.writeFileSync(SETTINGS_FILE, originalSettingsRaw, 'utf8');
+      fs.writeFileSync(ORDERS_FILE, originalOrdersRaw, 'utf8');
+    } catch (e) {
+      await wait(300);
+      try {
+        fs.writeFileSync(SETTINGS_FILE, originalSettingsRaw, 'utf8');
+        fs.writeFileSync(ORDERS_FILE, originalOrdersRaw, 'utf8');
+      } catch (err) {}
     }
   }
 }

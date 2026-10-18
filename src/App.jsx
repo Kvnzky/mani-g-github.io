@@ -12,7 +12,6 @@ import BrandStoryAndSuki from './components/BrandStoryAndSuki';
 import HalloweenAtmosphere, { PlayfulSkeletonSvg, SharpBatSvg, CornerWebWithSpider } from './components/HalloweenAtmosphere';
 import HalloweenMascotVideo from './components/HalloweenMascotVideo';
 import SeasonalAtmosphere from './components/SeasonalAtmosphere';
-import { FooterSection } from './components/DeliveryAndFooter';
 import { THEMES, getTheme, VALID_THEME_IDS, DEFAULT_THEME } from './config/themes';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
@@ -1600,16 +1599,6 @@ export default function App() {
           </div>
         )}
       </main>
-
-      {/* Customer Footer Section with Links and Subtle Admin Login */}
-      {currentView === 'order' && (
-        <FooterSection
-          themeId={effectiveThemeId}
-          onOpenAdminLogin={() => setIsLoginModalOpen(true)}
-          isAdminAuthenticated={Boolean(adminToken)}
-          onNavigateToAdmin={() => navigateTo('admin')}
-        />
-      )}
 
       {/* Mobile Sticky Quick-Action Bar */}
       {currentView === 'order' && totalPacks > 0 && (

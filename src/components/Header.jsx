@@ -141,13 +141,6 @@ export default function Header({
               </button>
               <button
                 type="button"
-                onClick={() => scrollToSection('contact-footer')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${currentTheme.headerNavText || 'text-amber-200 hover:bg-[#FF6B00] hover:text-white'}`}
-              >
-                Contact
-              </button>
-              <button
-                type="button"
                 onClick={() => scrollToSection('flavors-menu')}
                 className="ml-1 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] border border-amber-300 shadow-2xs transition-all cursor-pointer flex items-center gap-1"
               >
@@ -299,13 +292,6 @@ export default function Header({
               className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-left text-amber-200 hover:bg-white/10 flex items-center justify-between"
             >
               <span>📖 Our Snack Story</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToSection('contact-footer')}
-              className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-left text-amber-200 hover:bg-white/10 flex items-center justify-between"
-            >
-              <span>✉️ Contact &amp; Inquiries</span>
             </button>
             <button
               type="button"
