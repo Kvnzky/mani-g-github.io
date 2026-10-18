@@ -9,6 +9,77 @@
     --text-roast: #38200D;
     --accent-amber: #FF6B00;
     --accent-gold: #FBBF24;
+    --theme-border: #FF6B00;
+  }
+
+  :root[data-theme="christmas"],
+  [data-theme="christmas"] {
+    --bg-cream: #0A1D13;
+    --bg-indigo: #0D2418;
+    --text-roast: #ECFDF5;
+    --accent-amber: #DC2626;
+    --accent-gold: #FBBF24;
+    --theme-border: #DC2626;
+  }
+
+  :root[data-theme="default"],
+  [data-theme="default"] {
+    --bg-cream: #FFFDF7;
+    --bg-indigo: #FBF3E4;
+    --text-roast: #38200D;
+    --accent-amber: #D97706;
+    --accent-gold: #FBBF24;
+    --theme-border: #D97706;
+  }
+
+  :root[data-theme="thanksgiving"],
+  [data-theme="thanksgiving"] {
+    --bg-cream: #231206;
+    --bg-indigo: #2A170B;
+    --text-roast: #FEF3C7;
+    --accent-amber: #EA580C;
+    --accent-gold: #FBBF24;
+    --theme-border: #EA580C;
+  }
+
+  :root[data-theme="new-year"],
+  [data-theme="new-year"] {
+    --bg-cream: #070A14;
+    --bg-indigo: #0B1120;
+    --text-roast: #F8FAFC;
+    --accent-amber: #EAB308;
+    --accent-gold: #FBBF24;
+    --theme-border: #EAB308;
+  }
+
+  :root[data-theme="chinese-new-year"],
+  [data-theme="chinese-new-year"] {
+    --bg-cream: #1F0606;
+    --bg-indigo: #290808;
+    --text-roast: #FEF3C7;
+    --accent-amber: #DC2626;
+    --accent-gold: #F59E0B;
+    --theme-border: #DC2626;
+  }
+
+  :root[data-theme="valentines-day"],
+  [data-theme="valentines-day"] {
+    --bg-cream: #1E0512;
+    --bg-indigo: #260817;
+    --text-roast: #FFF1F2;
+    --accent-amber: #E11D48;
+    --accent-gold: #FB7185;
+    --theme-border: #E11D48;
+  }
+
+  :root[data-theme="easter"],
+  [data-theme="easter"] {
+    --bg-cream: #160B29;
+    --bg-indigo: #1D1033;
+    --text-roast: #FDF4FF;
+    --accent-amber: #8B5CF6;
+    --accent-gold: #10B981;
+    --theme-border: #8B5CF6;
   }
 
   html {
@@ -25,6 +96,63 @@
     overflow-x: hidden;
   }
 
+  /* Theme-specific body background overrides */
+  html[data-theme="christmas"] body,
+  body[data-theme="christmas"] {
+    background: linear-gradient(180deg, #0A1D13 0%, #0E281B 55%, #0A1D13 100%);
+    background-color: #0A1D13;
+    color: #ECFDF5;
+    accent-color: #DC2626;
+  }
+
+  html[data-theme="default"] body,
+  body[data-theme="default"] {
+    background: linear-gradient(180deg, #FFFDF7 0%, #FBF3E4 55%, #FFFDF7 100%);
+    background-color: #FFFDF7;
+    color: #38200D;
+    accent-color: #D97706;
+  }
+
+  html[data-theme="thanksgiving"] body,
+  body[data-theme="thanksgiving"] {
+    background: linear-gradient(180deg, #231206 0%, #2A170B 55%, #231206 100%);
+    background-color: #231206;
+    color: #FEF3C7;
+    accent-color: #EA580C;
+  }
+
+  html[data-theme="new-year"] body,
+  body[data-theme="new-year"] {
+    background: linear-gradient(180deg, #070A14 0%, #0B1120 55%, #070A14 100%);
+    background-color: #070A14;
+    color: #F8FAFC;
+    accent-color: #EAB308;
+  }
+
+  html[data-theme="chinese-new-year"] body,
+  body[data-theme="chinese-new-year"] {
+    background: linear-gradient(180deg, #1F0606 0%, #290808 55%, #1F0606 100%);
+    background-color: #1F0606;
+    color: #FEF3C7;
+    accent-color: #DC2626;
+  }
+
+  html[data-theme="valentines-day"] body,
+  body[data-theme="valentines-day"] {
+    background: linear-gradient(180deg, #1E0512 0%, #260817 55%, #1E0512 100%);
+    background-color: #1E0512;
+    color: #FFF1F2;
+    accent-color: #E11D48;
+  }
+
+  html[data-theme="easter"] body,
+  body[data-theme="easter"] {
+    background: linear-gradient(180deg, #160B29 0%, #1D1033 55%, #160B29 100%);
+    background-color: #160B29;
+    color: #FDF4FF;
+    accent-color: #8B5CF6;
+  }
+
   h1, h2, h3, h4, .font-display {
     font-family: 'Fredoka', 'Plus Jakarta Sans', system-ui, sans-serif;
   }
@@ -38,6 +166,16 @@
     outline: 3px solid #FF6B00;
     outline-offset: 2px;
   }
+
+  html[data-theme="christmas"] :focus-visible,
+  [data-theme="christmas"] :focus-visible {
+    outline: 3px solid #DC2626;
+  }
+
+  html[data-theme="default"] :focus-visible,
+  [data-theme="default"] :focus-visible {
+    outline: 3px solid #D97706;
+  }
 }
 
 /* Hide scrollbars on horizontal filter pill bars */
@@ -49,7 +187,7 @@
   scrollbar-width: none;
 }
 
-/* Deep midnight purple & dark indigo gradient (#1F1025 to #2B1B30) with subtle ember/gold speckles */
+/* Peanut pattern backgrounds adapted to active theme */
 .bg-peanut-pattern {
   background-color: #1F1025;
   background-image:
@@ -60,7 +198,70 @@
   background-position: 0 0, 20px 20px, 0 0;
 }
 
-/* Spooky Halloween hero gradient with warm jack-o-lantern orange (#FF6B00) & golden moonlight glow */
+[data-theme="christmas"] .bg-peanut-pattern,
+[data-theme="christmas"].bg-peanut-pattern {
+  background-color: #0A1D13;
+  background-image:
+    radial-gradient(rgba(220, 38, 38, 0.16) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(251, 191, 36, 0.14) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #0A1D13 0%, #0E281B 50%, #0A1D13 100%);
+}
+
+[data-theme="default"] .bg-peanut-pattern,
+[data-theme="default"].bg-peanut-pattern {
+  background-color: #FFFDF7;
+  background-image:
+    radial-gradient(rgba(217, 119, 6, 0.12) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(180, 83, 9, 0.08) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #FFFDF7 0%, #FBF3E4 50%, #FFFDF7 100%);
+}
+
+[data-theme="thanksgiving"] .bg-peanut-pattern,
+[data-theme="thanksgiving"].bg-peanut-pattern {
+  background-color: #231206;
+  background-image:
+    radial-gradient(rgba(234, 88, 12, 0.16) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(251, 191, 36, 0.12) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #231206 0%, #2A170B 50%, #231206 100%);
+}
+
+[data-theme="new-year"] .bg-peanut-pattern,
+[data-theme="new-year"].bg-peanut-pattern {
+  background-color: #070A14;
+  background-image:
+    radial-gradient(rgba(234, 179, 8, 0.16) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(248, 250, 252, 0.1) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #070A14 0%, #0B1120 50%, #070A14 100%);
+}
+
+[data-theme="chinese-new-year"] .bg-peanut-pattern,
+[data-theme="chinese-new-year"].bg-peanut-pattern {
+  background-color: #1F0606;
+  background-image:
+    radial-gradient(rgba(220, 38, 38, 0.18) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(245, 158, 11, 0.14) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #1F0606 0%, #290808 50%, #1F0606 100%);
+}
+
+[data-theme="valentines-day"] .bg-peanut-pattern,
+[data-theme="valentines-day"].bg-peanut-pattern {
+  background-color: #1E0512;
+  background-image:
+    radial-gradient(rgba(225, 29, 72, 0.16) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(251, 113, 133, 0.12) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #1E0512 0%, #260817 50%, #1E0512 100%);
+}
+
+[data-theme="easter"] .bg-peanut-pattern,
+[data-theme="easter"].bg-peanut-pattern {
+  background-color: #160B29;
+  background-image:
+    radial-gradient(rgba(139, 92, 246, 0.16) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(16, 185, 129, 0.12) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #160B29 0%, #1D1033 50%, #160B29 100%);
+}
+
+/* Hero snack background gradients */
 .bg-hero-snack {
   background:
     radial-gradient(circle at 18% 22%, rgba(255, 107, 0, 0.28) 0%, transparent 48%),
@@ -69,12 +270,42 @@
     linear-gradient(160deg, #2B1B30 0%, #1F1025 55%, #2D1836 100%);
 }
 
-/* Warm pumpkin-illuminated box-shadow effect for product tubs & cards */
+[data-theme="christmas"] .bg-hero-snack {
+  background:
+    radial-gradient(circle at 18% 22%, rgba(220, 38, 38, 0.35) 0%, transparent 48%),
+    radial-gradient(circle at 84% 25%, rgba(251, 191, 36, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 50% 92%, rgba(21, 128, 61, 0.3) 0%, transparent 55%),
+    linear-gradient(160deg, #123322 0%, #0A1D13 55%, #1C422C 100%);
+  border-color: #DC2626 !important;
+}
+
+[data-theme="default"] .bg-hero-snack {
+  background:
+    radial-gradient(circle at 18% 22%, rgba(217, 119, 6, 0.22) 0%, transparent 48%),
+    radial-gradient(circle at 84% 25%, rgba(251, 191, 36, 0.25) 0%, transparent 45%),
+    linear-gradient(160deg, #FFF7ED 0%, #FEF3C7 55%, #FDE68A 100%);
+  border-color: #D97706 !important;
+}
+
+/* Box-shadow effects adapted to active theme */
 .shadow-pumpkin-tub {
   box-shadow:
     0 0 22px rgba(255, 107, 0, 0.45),
     0 0 42px rgba(251, 191, 36, 0.22),
     inset 0 0 14px rgba(255, 107, 0, 0.25);
+}
+
+[data-theme="christmas"] .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 22px rgba(220, 38, 38, 0.45),
+    0 0 42px rgba(251, 191, 36, 0.22),
+    inset 0 0 14px rgba(220, 38, 38, 0.25);
+}
+
+[data-theme="default"] .shadow-pumpkin-tub {
+  box-shadow:
+    0 4px 20px -2px rgba(217, 119, 6, 0.2),
+    0 2px 6px -1px rgba(217, 119, 6, 0.1);
 }
 
 .shadow-pumpkin-card {
@@ -84,11 +315,37 @@
     0 4px 0 0 #FF6B00;
 }
 
+[data-theme="christmas"] .shadow-pumpkin-card {
+  box-shadow:
+    0 8px 28px -4px rgba(220, 38, 38, 0.28),
+    0 0 18px rgba(251, 191, 36, 0.16),
+    0 4px 0 0 #DC2626;
+}
+
+[data-theme="default"] .shadow-pumpkin-card {
+  box-shadow:
+    0 6px 0 0 rgba(56, 32, 13, 0.12),
+    0 10px 24px -4px rgba(97, 63, 32, 0.1);
+}
+
 .shadow-pumpkin-card-hover {
   box-shadow:
     0 14px 36px -4px rgba(255, 107, 0, 0.48),
     0 0 26px rgba(251, 191, 36, 0.32),
     0 6px 0 0 #FBBF24;
+}
+
+[data-theme="christmas"] .shadow-pumpkin-card-hover {
+  box-shadow:
+    0 14px 36px -4px rgba(220, 38, 38, 0.48),
+    0 0 26px rgba(251, 191, 36, 0.32),
+    0 6px 0 0 #FBBF24;
+}
+
+[data-theme="default"] .shadow-pumpkin-card-hover {
+  box-shadow:
+    0 10px 0 0 rgba(56, 32, 13, 0.16),
+    0 18px 32px -4px rgba(97, 63, 32, 0.16);
 }
 
 /* Custom scrollbar */
@@ -106,6 +363,34 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #FBBF24;
+}
+
+html[data-theme="christmas"] ::-webkit-scrollbar-track,
+[data-theme="christmas"] ::-webkit-scrollbar-track {
+  background: #0A1D13;
+}
+html[data-theme="christmas"] ::-webkit-scrollbar-thumb,
+[data-theme="christmas"] ::-webkit-scrollbar-thumb {
+  background: #DC2626;
+  border: 2px solid #0A1D13;
+}
+html[data-theme="christmas"] ::-webkit-scrollbar-thumb:hover,
+[data-theme="christmas"] ::-webkit-scrollbar-thumb:hover {
+  background: #FBBF24;
+}
+
+html[data-theme="default"] ::-webkit-scrollbar-track,
+[data-theme="default"] ::-webkit-scrollbar-track {
+  background: #FFFDF7;
+}
+html[data-theme="default"] ::-webkit-scrollbar-thumb,
+[data-theme="default"] ::-webkit-scrollbar-thumb {
+  background: #D97706;
+  border: 2px solid #FFFDF7;
+}
+html[data-theme="default"] ::-webkit-scrollbar-thumb:hover,
+[data-theme="default"] ::-webkit-scrollbar-thumb:hover {
+  background: #B45309;
 }
 
 /* Keyframe Animations */
@@ -385,6 +670,28 @@
 
 .animate-bat-flap {
   animation: batFlap 0.42s ease-in-out infinite;
+}
+
+@keyframes fallAnimation {
+  0% {
+    transform: translate3d(0, -6vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(20px, 108vh, 0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.animate-fall {
+  animation: fallAnimation 14s linear infinite;
+  will-change: transform, opacity;
 }
 
 .animate-leaf-fall {

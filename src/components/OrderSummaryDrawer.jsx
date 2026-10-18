@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { X, Plus, Minus, ArrowRight, Loader2, MapPin, Phone, User, CreditCard, Lock, Clock } from 'lucide-react';
 import { formatPHP } from '../config/products';
+import { getTheme } from '../config/themes';
 
 export default function OrderSummaryDrawer({
   isOpen,
@@ -16,8 +17,10 @@ export default function OrderSummaryDrawer({
   validationErrors,
   isOrdersClosed,
   cutoffInfo,
-  paymentMethods = { cod: true, maribank: true, gcash: true }
+  paymentMethods = { cod: true, maribank: true, gcash: true },
+  themeId = 'halloween'
 }) {
+  const currentTheme = getTheme(themeId);
   const hasItems = totalPacks > 0;
   const hasAnyPaymentMethod = Object.values(paymentMethods).some(Boolean);
   const isFormIncomplete = Boolean(
@@ -294,7 +297,7 @@ export default function OrderSummaryDrawer({
                   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 150);
               }}
-              className="w-full py-3.5 px-5 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack active:translate-y-0.5 transition-all cursor-pointer"
+              className={`w-full py-3.5 px-5 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2 ${currentTheme?.primaryBtn || 'bg-amber-400 hover:bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack'} active:translate-y-0.5 transition-all cursor-pointer`}
             >
               <span>Proceed to Delivery Details</span>
               <ArrowRight className="w-5 h-5 stroke-[2.5]" />
@@ -307,7 +310,7 @@ export default function OrderSummaryDrawer({
               className={`w-full py-3.5 px-5 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-200 ${
                 isFormIncomplete || isSubmitting
                   ? 'bg-mani-100 text-mani-400 border-2 border-mani-200 cursor-not-allowed shadow-none'
-                  : 'bg-amber-400 hover:bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack active:translate-y-0.5 cursor-pointer'
+                  : `${currentTheme?.primaryBtn || 'bg-amber-400 hover:bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack'} cursor-pointer`
               }`}
             >
               {isSubmitting ? (
@@ -317,7 +320,7 @@ export default function OrderSummaryDrawer({
                 </>
               ) : (
                 <>
-                  <span>Place Order Now 🥜</span>
+                  <span>{currentTheme?.checkoutBtnText || 'Place Order Now 🥜'}</span>
                   <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                 </>
               )}

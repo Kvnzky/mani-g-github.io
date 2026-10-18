@@ -142,7 +142,7 @@ export default function Header({
               <button
                 type="button"
                 onClick={() => scrollToSection('flavors-menu')}
-                className="ml-1 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] border border-amber-300 shadow-2xs transition-all cursor-pointer flex items-center gap-1"
+                className={`ml-1 px-3.5 py-1.5 rounded-xl text-xs font-extrabold shadow-2xs transition-all cursor-pointer flex items-center gap-1 ${currentTheme.primaryBtn || 'bg-[#DC2626] text-white border border-amber-300'}`}
               >
                 <span>Order Now</span>
                 <ArrowDown className="w-3 h-3 stroke-[2.5]" />
@@ -161,7 +161,7 @@ export default function Header({
                   cutoffInfo.manualFormOpen === false || !cutoffInfo.isOpen || (cutoffInfo.enabled && remainingSec <= 0)
                     ? 'bg-red-950/90 text-red-200 border-red-500/60 hover:bg-red-900'
                     : cutoffInfo.enabled
-                    ? 'bg-[#2B1B30] text-amber-300 border-[#FF6B00] hover:bg-[#382240]'
+                    ? `${currentTheme.stepPillBg || 'bg-[#0D2418] text-amber-300 border-[#DC2626]'} hover:brightness-110`
                     : 'bg-emerald-950/90 text-emerald-300 border-emerald-500/60 hover:bg-emerald-900'
                 }`}
                 title={
@@ -179,7 +179,7 @@ export default function Header({
                   </>
                 ) : cutoffInfo.enabled ? (
                   <>
-                    <Clock className="w-3.5 h-3.5 text-[#FF6B00] animate-pulse" />
+                    <Clock className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
                     <span className="hidden md:inline font-bold text-amber-200">Cutoff:</span>
                     <span className="font-mono font-black text-white">{formatCountdown(remainingSec)}</span>
                   </>
@@ -200,8 +200,8 @@ export default function Header({
                   onClick={() => onNavigate ? onNavigate(currentView === 'admin' ? 'order' : 'admin') : setCurrentView(currentView === 'admin' ? 'order' : 'admin')}
                   className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer ${
                     currentView === 'admin'
-                      ? 'bg-[#FF6B00] text-white border-amber-300 shadow-inner'
-                      : 'bg-[#2B1B30] text-amber-200 border-[#FF6B00]/50 hover:bg-[#382240]'
+                      ? `${currentTheme.primaryBtn || 'bg-[#DC2626] text-white border-amber-300'} shadow-inner`
+                      : `${currentTheme.stepPillBg || 'bg-[#0D2418] text-amber-200 border-[#DC2626]/50'} hover:brightness-110`
                   }`}
                   title="Toggle Admin Dashboard"
                 >
@@ -227,8 +227,10 @@ export default function Header({
                 type="button"
                 onClick={onOpenCart}
                 aria-label={`Open Order Summary${totalItems > 0 ? ` (${totalItems} tubs, ${formatPHP(subtotal)})` : ''}`}
-                className={`relative px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-extrabold text-xs sm:text-sm border-2 border-amber-300 shadow-snack-sm active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer ${
-                  cartBounce ? 'scale-105 bg-amber-400 text-[#1F1025]' : ''
+                className={`relative px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl font-extrabold text-xs sm:text-sm border-2 shadow-snack-sm active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  currentTheme.cartPillBg || currentTheme.primaryBtn || 'bg-[#DC2626] text-white border-amber-300'
+                } ${
+                  cartBounce ? 'scale-105 brightness-110' : ''
                 }`}
               >
                 <ShoppingBag className="w-4 h-4 stroke-[2.5] shrink-0" />
@@ -237,8 +239,8 @@ export default function Header({
                 </span>
                 <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-black leading-none transition-transform ${
                   totalItems > 0
-                    ? 'bg-[#1F1025] text-amber-300 border border-amber-300/50'
-                    : 'bg-[#1F1025]/40 text-white'
+                    ? 'bg-black/40 text-amber-300 border border-amber-300/50'
+                    : 'bg-black/30 text-white'
                 }`}>
                   {totalItems}
                 </span>
@@ -296,9 +298,9 @@ export default function Header({
             <button
               type="button"
               onClick={() => scrollToSection('flavors-menu')}
-              className="mt-1 px-4 py-3 rounded-xl text-xs font-extrabold bg-[#FF6B00] text-white flex items-center justify-center gap-2 shadow-sm text-center"
+              className={`mt-1 px-4 py-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm text-center ${currentTheme.primaryBtn || 'bg-[#DC2626] text-white'}`}
             >
-              <span>Order Now 🥜</span>
+              <span>{currentTheme.heroOrderBtnText || 'Order Now 🥜'}</span>
             </button>
           </nav>
         )}

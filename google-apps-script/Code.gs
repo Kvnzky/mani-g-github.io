@@ -172,6 +172,20 @@ function doGet(e) {
     return formatResponse(savePmRes, e);
   }
 
+  // Fast path for Seasonal Theme update via GET (instant sync from mobile/desktop)
+  if (action === 'saveTheme') {
+    var theme = e.parameter.theme;
+    var updatedAt = e.parameter.updatedAt ? Number(e.parameter.updatedAt) : new Date().getTime();
+    if (theme) {
+      var saveThemeRes = handleSaveSettings({
+        theme: theme,
+        themeUpdatedAt: updatedAt,
+        updatedAt: updatedAt
+      });
+      return formatResponse(saveThemeRes, e);
+    }
+  }
+
   // Fast test email verification endpoint
   if (action === 'testEmail' || action === 'sendTestEmail') {
     var targetRecipient = e.parameter ? e.parameter.to : null;
@@ -376,6 +390,10 @@ function handleGetSettings() {
       gcash: true
     };
   }
+  if (!settings.theme) {
+    settings.theme = 'christmas';
+    settings.themeUpdatedAt = new Date().getTime();
+  }
 
   return {
     success: true,
@@ -418,6 +436,10 @@ function handleSaveSettings(newSettings) {
   if (payload.deliveryDay) existing.deliveryDay = payload.deliveryDay;
   if (payload.flavorAvailability) existing.flavorAvailability = payload.flavorAvailability;
   if (payload.paymentMethods) existing.paymentMethods = payload.paymentMethods;
+  if (payload.theme) {
+    existing.theme = payload.theme;
+    existing.themeUpdatedAt = payload.themeUpdatedAt || payload.updatedAt || new Date().getTime();
+  }
 
   props.setProperty('MANI_SETTINGS', JSON.stringify(existing));
 

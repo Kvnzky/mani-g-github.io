@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Phone, MapPin, Copy, Check, AlertCircle, ScanLine, ArrowRight, Lock } from 'lucide-react';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from '../config/qrConfig';
 import { formatPHP } from '../config/products';
+import { getTheme } from '../config/themes';
 
 export default function CustomerForm({ 
   formData, 
@@ -13,8 +14,10 @@ export default function CustomerForm({
   isSubmitting = false,
   isOrdersClosed = false,
   totalPacks = 0,
-  subtotal = 0
+  subtotal = 0,
+  themeId = 'halloween'
 }) {
+  const currentTheme = getTheme(themeId);
   const [copiedGcash, setCopiedGcash] = useState(false);
 
   const maribankQr = customQrs?.maribank || DEFAULT_MARIBANK_QR;
@@ -60,11 +63,11 @@ export default function CustomerForm({
       {/* 3. Customer & Shipping Information */}
       <div 
         id="customer-info-section"
-        className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-[#FF6B00] shadow-pumpkin-card space-y-4 transition-all"
+        className={`bg-white rounded-3xl p-5 sm:p-6 border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-card space-y-4 transition-all`}
       >
         <div className="border-b-2 border-dashed border-amber-300/70 pb-3.5">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#FF6B00] text-white border border-amber-300">
+            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white border border-amber-300'}`}>
               Step 3
             </span>
             <h3 className="font-display text-lg sm:text-xl font-bold text-mani-950 flex items-center gap-1.5">
@@ -164,11 +167,11 @@ export default function CustomerForm({
       {/* 5. Payment / Checkout */}
       <div 
         id="payment-checkout-section"
-        className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-[#FF6B00] shadow-pumpkin-card space-y-5 transition-all"
+        className={`bg-white rounded-3xl p-5 sm:p-6 border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-card space-y-5 transition-all`}
       >
         <div className="border-b-2 border-dashed border-amber-300/70 pb-3.5">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#1F1025] text-amber-300 border border-[#FF6B00]">
+            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${currentTheme?.stepPillBg || 'bg-[#1F1025] text-amber-300 border border-[#FF6B00]'}`}>
               Step 4
             </span>
             <h3 className="font-display text-lg sm:text-xl font-bold text-mani-950 flex items-center gap-1.5">
@@ -432,7 +435,7 @@ export default function CustomerForm({
                 className={`w-full py-4 px-5 rounded-2xl font-display font-bold text-base sm:text-lg flex items-center justify-center gap-2 transition-all ${
                   totalPacks === 0 || isSubmitting
                     ? 'bg-mani-100 text-mani-400 border-2 border-mani-200 cursor-not-allowed shadow-none'
-                    : 'bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] border-2 border-amber-300 shadow-pumpkin-tub active:translate-y-0.5 cursor-pointer'
+                    : `${currentTheme?.primaryBtn || 'bg-[#FF6B00] hover:bg-amber-400 text-white border-2 border-amber-300 shadow-pumpkin-tub'} cursor-pointer`
                 }`}
               >
                 {isSubmitting ? (
@@ -444,9 +447,9 @@ export default function CustomerForm({
                   <span>Select at least 1 tub to order 🥜</span>
                 ) : (
                   <>
-                    <span>Place Order Now 🎃🥜</span>
+                    <span>{currentTheme?.checkoutBtnText || 'Place Order Now 🎃🥜'}</span>
                     {totalPacks > 0 && subtotal > 0 && (
-                      <span className="bg-[#1F1025] text-amber-300 border border-amber-300/60 px-3 py-0.5 rounded-xl text-sm font-bold ml-1">
+                      <span className={`${currentTheme?.stepPillBg || 'bg-[#1F1025] text-amber-300 border border-amber-300/60'} px-3 py-0.5 rounded-xl text-sm font-bold ml-1`}>
                         {formatPHP(subtotal)}
                       </span>
                     )}

@@ -12,6 +12,8 @@ import BrandStoryAndSuki from './components/BrandStoryAndSuki';
 import HalloweenAtmosphere, { PlayfulSkeletonSvg, SharpBatSvg, CornerWebWithSpider } from './components/HalloweenAtmosphere';
 import HalloweenMascotVideo from './components/HalloweenMascotVideo';
 import SeasonalAtmosphere from './components/SeasonalAtmosphere';
+import SeasonalHeroVisual from './components/SeasonalHeroVisual';
+import { SantaPeanutSvg, ChristmasCornerGarland, ChristmasStarOrnament } from './components/ChristmasDecorations';
 import { THEMES, getTheme, VALID_THEME_IDS, DEFAULT_THEME } from './config/themes';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
@@ -169,15 +171,29 @@ export default function App() {
     }
   });
 
+  // Track most recent local admin theme update timestamp so background polling never reverts admin theme edits
+  const lastLocalThemeSaveRef = useRef((() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mani_theme_settings') || 'null');
+      return Number(saved?.updatedAt || 0);
+    } catch (e) {
+      return 0;
+    }
+  })());
+
   // Active Theme State (Initialized from cached settings or server default)
   const [currentThemeId, setCurrentThemeId] = useState(() => {
     try {
+      const themeSettings = JSON.parse(localStorage.getItem('mani_theme_settings') || 'null');
+      if (themeSettings?.theme && VALID_THEME_IDS.includes(themeSettings.theme)) {
+        return themeSettings.theme;
+      }
       const savedTheme = localStorage.getItem('mani_active_theme');
       if (savedTheme && VALID_THEME_IDS.includes(savedTheme)) {
         return savedTheme;
       }
     } catch (e) {}
-    return 'halloween';
+    return 'christmas';
   });
 
   // Admin Preview Theme (does not affect public visitors until published)
@@ -188,6 +204,14 @@ export default function App() {
     : currentThemeId;
 
   const currentTheme = getTheme(effectiveThemeId);
+
+  // Synchronize documentElement & body data-theme attribute with active theme
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', effectiveThemeId);
+      document.body.setAttribute('data-theme', effectiveThemeId);
+    }
+  }, [effectiveThemeId]);
 
   // Flavors cart: { [productId]: quantity } with localStorage persistence
   const [quantities, setQuantities] = useState(() => {
@@ -460,8 +484,25 @@ export default function App() {
 
     // 6. Synchronize Seasonal Theme
     if (settings.theme && VALID_THEME_IDS.includes(settings.theme)) {
-      setCurrentThemeId(settings.theme);
-      localStorage.setItem('mani_active_theme', settings.theme);
+      let localThemeSaved = null;
+      try {
+        localThemeSaved = JSON.parse(localStorage.getItem('mani_theme_settings') || 'null');
+      } catch (e) {}
+
+      const localThemeUpdatedAt = Number(localThemeSaved?.updatedAt || lastLocalThemeSaveRef.current || 0);
+      const cloudThemeUpdatedAt = Number(settings.themeUpdatedAt || settings.updatedAt || 0);
+
+      // Guard: do NOT let stale cloud data overwrite newer local admin theme edits
+      const isLocalNewer = localThemeSaved && localThemeUpdatedAt > 0 && (cloudThemeUpdatedAt === 0 || localThemeUpdatedAt > cloudThemeUpdatedAt);
+
+      if (!isLocalNewer) {
+        setCurrentThemeId(settings.theme);
+        localStorage.setItem('mani_active_theme', settings.theme);
+        localStorage.setItem('mani_theme_settings', JSON.stringify({
+          theme: settings.theme,
+          updatedAt: cloudThemeUpdatedAt || Date.now()
+        }));
+      }
     }
   };
 
@@ -531,8 +572,22 @@ export default function App() {
             localStorage.setItem('mani_payment_methods', JSON.stringify(data.paymentMethods));
           }
           if (data.theme && VALID_THEME_IDS.includes(data.theme)) {
-            setCurrentThemeId(data.theme);
-            localStorage.setItem('mani_active_theme', data.theme);
+            let localThemeSaved = null;
+            try {
+              localThemeSaved = JSON.parse(localStorage.getItem('mani_theme_settings') || 'null');
+            } catch (e) {}
+            const localThemeUpdatedAt = Number(localThemeSaved?.updatedAt || lastLocalThemeSaveRef.current || 0);
+            const serverThemeUpdatedAt = Number(data.themeUpdatedAt || data.updatedAt || 0);
+            const isLocalNewer = localThemeSaved && localThemeUpdatedAt > 0 && (serverThemeUpdatedAt === 0 || localThemeUpdatedAt > serverThemeUpdatedAt);
+
+            if (!isLocalNewer) {
+              setCurrentThemeId(data.theme);
+              localStorage.setItem('mani_active_theme', data.theme);
+              localStorage.setItem('mani_theme_settings', JSON.stringify({
+                theme: data.theme,
+                updatedAt: serverThemeUpdatedAt || Date.now()
+              }));
+            }
           }
           return;
         }
@@ -620,8 +675,22 @@ export default function App() {
       })
       .then((data) => {
         if (data && data.theme && VALID_THEME_IDS.includes(data.theme)) {
-          setCurrentThemeId(data.theme);
-          localStorage.setItem('mani_active_theme', data.theme);
+          let localThemeSaved = null;
+          try {
+            localThemeSaved = JSON.parse(localStorage.getItem('mani_theme_settings') || 'null');
+          } catch (e) {}
+          const localThemeUpdatedAt = Number(localThemeSaved?.updatedAt || lastLocalThemeSaveRef.current || 0);
+          const serverThemeUpdatedAt = Number(data.themeUpdatedAt || 0);
+          const isLocalNewer = localThemeSaved && localThemeUpdatedAt > 0 && (serverThemeUpdatedAt === 0 || localThemeUpdatedAt > serverThemeUpdatedAt);
+
+          if (!isLocalNewer) {
+            setCurrentThemeId(data.theme);
+            localStorage.setItem('mani_active_theme', data.theme);
+            localStorage.setItem('mani_theme_settings', JSON.stringify({
+              theme: data.theme,
+              updatedAt: serverThemeUpdatedAt || Date.now()
+            }));
+          }
         }
       })
       .catch(() => {});
@@ -845,9 +914,15 @@ export default function App() {
 
   const handlePublishTheme = async (themeId) => {
     if (!VALID_THEME_IDS.includes(themeId)) return;
+    const nowTs = Date.now();
+    lastLocalThemeSaveRef.current = nowTs;
     setCurrentThemeId(themeId);
     setAdminPreviewThemeId(null);
     localStorage.setItem('mani_active_theme', themeId);
+    localStorage.setItem('mani_theme_settings', JSON.stringify({
+      theme: themeId,
+      updatedAt: nowTs
+    }));
 
     // 1. Sync to local backend if running
     try {
@@ -858,28 +933,34 @@ export default function App() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${adminToken}`
           },
-          body: JSON.stringify({ theme: themeId })
+          body: JSON.stringify({ theme: themeId, updatedAt: nowTs })
         });
       }
     } catch (err) {}
 
-    // 2. Sync to Google Apps Script Cloud so mobile immediately receives updated theme
+    // 2. Sync to Google Apps Script Cloud so all visitors & mobile immediately receive updated theme
     const appsUrl = (localStorage.getItem('mani_apps_script_url') || DEFAULT_APPS_SCRIPT_URL || '').trim();
     if (appsUrl) {
+      // POST sync
       fetch(appsUrl, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'saveSettings',
-          settings: { theme: themeId }
+          settings: { theme: themeId, themeUpdatedAt: nowTs, updatedAt: nowTs }
         })
+      }).catch(() => {});
+
+      // GET fast-path sync
+      fetch(`${appsUrl}?action=saveTheme&theme=${encodeURIComponent(themeId)}&updatedAt=${nowTs}`, {
+        mode: 'no-cors'
       }).catch(() => {});
     }
 
     setToast({
       show: true,
-      message: `Theme updated to ${getTheme(themeId).name}! Live across the store.`,
+      message: `Theme updated to ${getTheme(themeId).name}! Live across the entire website.`,
       icon: '🎨'
     });
   };
@@ -1217,7 +1298,7 @@ export default function App() {
   };
 
   return (
-    <div data-theme={effectiveThemeId} className="relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 selection:bg-[#FF6B00] selection:text-white">
+    <div data-theme={effectiveThemeId} className={`relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 ${effectiveThemeId === 'christmas' ? 'selection:bg-[#DC2626]' : 'selection:bg-[#FF6B00]'} selection:text-white`}>
       {/* 🌟 Seasonal Atmosphere Particles & Ambient Visuals (Halloween bats/ghosts/skeletons, Christmas snow, etc.) */}
       {currentView === 'order' && <SeasonalAtmosphere themeId={effectiveThemeId} />}
 
@@ -1226,9 +1307,9 @@ export default function App() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed top-20 right-4 sm:right-6 z-50 flex items-center gap-3 bg-[#1F1025] text-white px-4 py-3 rounded-2xl shadow-pumpkin-card border-2 border-[#FF6B00] animate-fade-in transition-all max-w-sm"
+          className={`fixed top-20 right-4 sm:right-6 z-50 flex items-center gap-3 ${currentTheme?.toastBg || 'bg-[#1F1025] text-white border-2 border-[#FF6B00]'} px-4 py-3 rounded-2xl shadow-snack-card animate-fade-in transition-all max-w-sm`}
         >
-          <div className="w-9 h-9 rounded-xl bg-[#FF6B00] text-white flex items-center justify-center text-lg font-bold shrink-0 border border-amber-300">
+          <div className={`w-9 h-9 rounded-xl ${currentTheme?.toastIconBg || 'bg-[#FF6B00] text-white border border-amber-300'} flex items-center justify-center text-lg font-bold shrink-0`}>
             {toast.icon}
           </div>
           <div className="font-display text-xs sm:text-sm font-bold pr-1 text-amber-100">
@@ -1313,28 +1394,40 @@ export default function App() {
           </div>
         ) : (
           <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6 sm:space-y-8">
-            {/* 🎃 HERO SECTION: Spooky Halloween Special ("Trick or Treat Crunch!") */}
-            <section className="relative rounded-[2rem] bg-hero-snack border-2 border-[#FF6B00] shadow-pumpkin-card overflow-hidden p-5 sm:p-8 lg:p-10">
-              {/* Anchored Corner Cobweb & Hanging Spider inside Hero Section */}
-              <CornerWebWithSpider position="right" size="sm" showSpider={true} />
-
-              {/* Decorative Sharp Angular Bats inside Hero Upper Background */}
-              <div className="pointer-events-none select-none absolute top-3 right-28 sm:right-36 opacity-80 animate-float-slow">
-                <SharpBatSvg className="w-14 sm:w-20 h-auto drop-shadow-[0_2px_8px_rgba(255,107,0,0.45)] -rotate-12" />
-              </div>
-              <div className="pointer-events-none select-none hidden sm:block absolute top-6 left-[44%] opacity-70 animate-float-reverse">
-                <SharpBatSvg className="w-12 h-auto drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)] rotate-6" />
-              </div>
+            {/* 🌟 HERO SECTION: Dynamic Seasonal Hero */}
+            <section className={`relative rounded-[2rem] ${currentTheme?.heroBg || 'bg-hero-snack border-2 border-[#FF6B00] shadow-pumpkin-card'} overflow-hidden p-5 sm:p-8 lg:p-10`}>
+              {/* Corner & Atmospheric Theme Decorations */}
+              {effectiveThemeId === 'halloween' && (
+                <>
+                  <CornerWebWithSpider position="right" size="sm" showSpider={true} />
+                  <div className="pointer-events-none select-none absolute top-3 right-28 sm:right-36 opacity-80 animate-float-slow">
+                    <SharpBatSvg className="w-14 sm:w-20 h-auto drop-shadow-[0_2px_8px_rgba(255,107,0,0.45)] -rotate-12" />
+                  </div>
+                  <div className="pointer-events-none select-none hidden sm:block absolute top-6 left-[44%] opacity-70 animate-float-reverse">
+                    <SharpBatSvg className="w-12 h-auto drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)] rotate-6" />
+                  </div>
+                </>
+              )}
+              {effectiveThemeId === 'christmas' && (
+                <>
+                  <ChristmasCornerGarland position="left" />
+                  <ChristmasCornerGarland position="right" />
+                  <div className="pointer-events-none select-none absolute top-3 right-28 sm:right-36 opacity-90 animate-float-slow">
+                    <ChristmasStarOrnament className="w-10 sm:w-14 h-auto drop-shadow-[0_2px_12px_rgba(251,191,36,0.6)]" />
+                  </div>
+                  <div className="pointer-events-none select-none hidden sm:block absolute top-6 left-[44%] opacity-80 animate-float-reverse">
+                    <ChristmasStarOrnament className="w-8 sm:w-10 h-auto drop-shadow-[0_2px_10px_rgba(251,191,36,0.5)]" />
+                  </div>
+                </>
+              )}
 
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-6 items-center">
-                {/* Left Column: Halloween Headline, Sub-headline & Appetizing CTAs */}
+                {/* Left Column: Headline, Sub-headline & Appetizing CTAs */}
                 <div className="lg:col-span-5 text-center lg:text-left space-y-4">
-                  {/* Top Halloween Special Pill Badge */}
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-[#FF6B00] text-white border-2 border-amber-300 shadow-snack-sm -rotate-1">
+                  {/* Top Pill Badge */}
+                  <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider ${currentTheme?.badgeClass || 'bg-[#FF6B00] text-white border-2 border-amber-300 shadow-snack-sm'} -rotate-1`}>
                     <span>
-                      {effectiveThemeId === 'halloween'
-                        ? '🎃 Trick or Treat Crunch! • Spooky Halloween Special'
-                        : `${currentTheme.badge} • ${currentTheme.name} Special`}
+                      {currentTheme?.heroPill || `${currentTheme.badge} • ${currentTheme.name} Special`}
                     </span>
                   </div>
 
@@ -1343,99 +1436,87 @@ export default function App() {
                     <div className="flex items-center justify-center lg:justify-start gap-2.5 flex-wrap">
                       <h1
                         data-testid="hero-headline"
-                        className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.05] drop-shadow-[0_4px_16px_rgba(255,107,0,0.45)]"
+                        className={`font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] ${currentTheme?.heroHeadlineColor || 'text-white drop-shadow-[0_4px_16px_rgba(255,107,0,0.45)]'}`}
                       >
-                        {effectiveThemeId === 'halloween' ? 'ANONG FEAR MO TODAY?' : currentTheme.heroHeadline}
+                        {currentTheme?.heroHeadline || 'ANONG FEAR MO TODAY?'}
                       </h1>
                     </div>
                     <p
                       data-testid="hero-subheadline"
-                      className="font-display text-lg sm:text-2xl font-bold text-amber-300 leading-snug drop-shadow-xs"
+                      className={`font-display text-lg sm:text-2xl font-bold leading-snug drop-shadow-xs ${currentTheme?.heroSubheadlineColor || 'text-amber-300'}`}
                     >
-                      {effectiveThemeId === 'halloween'
-                        ? "Mani so good, it's scary. No tricks, just pure crunch!"
-                        : currentTheme.heroSubheadline}
+                      {currentTheme?.heroSubheadline || "Mani so good, it's scary. No tricks, just pure crunch!"}
                     </p>
                   </div>
 
                   {/* Clear Value Proposition */}
                   <p className="text-xs sm:text-base text-amber-100/90 max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed">
-                    Freshly roasted, ultra-crunchy Filipino peanuts &amp; golden crispy <strong className="text-amber-300 font-extrabold">bawang chips</strong> packed in resealable tubs. Made for movie nights, merienda, office desk fuel, and barkada hangouts — only <strong className="text-white font-extrabold bg-[#FF6B00] px-1.5 py-0.5 rounded border border-amber-300">₱50–₱65 per tub</strong>!
+                    {currentTheme?.heroDescription || 'Freshly roasted, ultra-crunchy Filipino peanuts & golden crispy bawang chips packed in resealable tubs. Made for movie nights, merienda, office desk fuel, and barkada hangouts — only ₱50–₱65 per tub!'}
                   </p>
 
                   {/* Primary & Secondary Hero CTAs */}
                   <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3">
                     <a
                       href="#flavors-menu"
-                      className="px-6 py-3.5 rounded-2xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-display font-bold text-base sm:text-lg border-2 border-amber-300 shadow-pumpkin-tub active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className={`px-6 py-3.5 rounded-2xl ${currentTheme?.primaryBtn || 'bg-[#FF6B00] hover:bg-amber-400 text-white border-2 border-amber-300 shadow-pumpkin-tub'} font-display font-bold text-base sm:text-lg active:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer`}
                     >
-                      <span>Order Now 🎃🥜</span>
+                      <span>{currentTheme?.heroOrderBtnText || 'Order Now 🎃🥜'}</span>
                       <ArrowDown className="w-4 h-4 stroke-[2.5]" />
                     </a>
 
                     <a
                       href="#suki-favorites"
-                      className="px-5 py-3.5 rounded-2xl bg-[#1F1025]/90 hover:bg-[#2B1B30] text-amber-300 font-display font-bold text-sm sm:text-base border-2 border-[#FF6B00] hover:border-amber-300 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className={`px-5 py-3.5 rounded-2xl ${currentTheme?.secondaryBtn || 'bg-[#1F1025]/90 hover:bg-[#2B1B30] text-amber-300 border-2 border-[#FF6B00]'} font-display font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-2 cursor-pointer`}
                     >
-                      <Flame className="w-4 h-4 text-[#FF6B00] fill-[#FF6B00]" />
+                      <Flame style={{ color: currentTheme?.accentColor || '#FF6B00', fill: currentTheme?.accentColor || '#FF6B00' }} className="w-4 h-4" />
                       <span>Try Suki Combos</span>
                     </a>
                   </div>
 
                   {/* Quick 3-Step Ordering Guide Pills */}
                   <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-2 text-[11px] sm:text-xs font-extrabold text-amber-100">
-                    <span className="inline-flex items-center gap-1.5 bg-[#1F1025]/85 px-3 py-1.5 rounded-xl border border-[#FF6B00]/60 shadow-2xs">
-                      <span className="w-4 h-4 rounded-full bg-[#FF6B00] text-white text-[10px] flex items-center justify-center font-black">1</span>
+                    <span className={`inline-flex items-center gap-1.5 ${currentTheme?.stepPillBg || 'bg-[#1F1025]/85 text-amber-300 border-[#FF6B00]/60'} px-3 py-1.5 rounded-xl border shadow-2xs`}>
+                      <span className={`w-4 h-4 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white'} text-[10px] flex items-center justify-center font-black`}>1</span>
                       Pick Your Tubs
                     </span>
                     <span className="text-amber-400 font-black">→</span>
-                    <span className="inline-flex items-center gap-1.5 bg-[#1F1025]/85 px-3 py-1.5 rounded-xl border border-[#FF6B00]/60 shadow-2xs">
-                      <span className="w-4 h-4 rounded-full bg-[#FF6B00] text-white text-[10px] flex items-center justify-center font-black">2</span>
+                    <span className={`inline-flex items-center gap-1.5 ${currentTheme?.stepPillBg || 'bg-[#1F1025]/85 text-amber-300 border-[#FF6B00]/60'} px-3 py-1.5 rounded-xl border shadow-2xs`}>
+                      <span className={`w-4 h-4 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white'} text-[10px] flex items-center justify-center font-black`}>2</span>
                       Enter Delivery Address
                     </span>
                     <span className="text-amber-400 font-black">→</span>
-                    <span className="inline-flex items-center gap-1.5 bg-[#1F1025]/85 px-3 py-1.5 rounded-xl border border-[#FF6B00]/60 shadow-2xs">
-                      <span className="w-4 h-4 rounded-full bg-[#FF6B00] text-white text-[10px] flex items-center justify-center font-black">3</span>
+                    <span className={`inline-flex items-center gap-1.5 ${currentTheme?.stepPillBg || 'bg-[#1F1025]/85 text-amber-300 border-[#FF6B00]/60'} px-3 py-1.5 rounded-xl border shadow-2xs`}>
+                      <span className={`w-4 h-4 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white'} text-[10px] flex items-center justify-center font-black`}>3</span>
                       COD, GCash or Maribank
                     </span>
                   </div>
                 </div>
 
-                {/* Right Column: Large, Unobstructed Natural Rectangular Hero Video */}
+                {/* Right Column: Dynamic Seasonal Hero Visual (Mascot Video for Halloween, Christmas Composition for Christmas, etc.) */}
                 <div className="lg:col-span-7 relative flex items-center justify-center">
-                  <div className="relative w-full max-w-[680px] sm:max-w-[760px] lg:max-w-none mx-auto flex items-center justify-center">
-                    {/* Direct Rectangular Hero Video (No Circular Frame, No Badge, Significantly Larger Focal Point) */}
-                    <HalloweenMascotVideo
-                      variant="hero"
-                      ariaLabel="Mani Wandering Peanut Mascot"
-                      className="w-full aspect-video lg:scale-105 xl:scale-110 origin-center"
-                    />
-                  </div>
+                  <SeasonalHeroVisual themeId={effectiveThemeId} />
                 </div>
               </div>
 
-              {/* High-Energy Halloween Snack Ticker Strip Inside Bottom of Hero */}
-              <div className="mt-6 -mx-5 sm:-mx-8 lg:-mx-10 -mb-5 sm:-mb-8 lg:-mb-10 bg-[#1F1025] text-amber-300 py-2.5 border-t-2 border-[#FF6B00] overflow-hidden select-none">
+              {/* Dynamic Snack Ticker Strip Inside Bottom of Hero */}
+              <div className={`mt-6 -mx-5 sm:-mx-8 lg:-mx-10 -mb-5 sm:-mb-8 lg:-mb-10 ${currentTheme?.tickerBg || 'bg-[#1F1025] text-amber-300 border-t-2 border-[#FF6B00]'} py-2.5 overflow-hidden select-none`}>
                 <div className="animate-marquee flex items-center gap-6 text-xs font-display font-bold tracking-wide uppercase whitespace-nowrap">
-                  <span>🎃 TRICK OR TREAT CRUNCH!</span>
-                  <span>•</span>
-                  <span>👻 ANONG FEAR MO TODAY? MANI SO GOOD, IT&apos;S SCARY!</span>
-                  <span>•</span>
-                  <span>🧛 VAMPIRE&apos;S BANE (SALTED) • 👻 GHOSTLY PURE (UNSALTED) • 🎃 HELLFIRE CRUNCH (SPICY) • 🦇 MIDNIGHT BBQ • 🕸️ PHANTOM CREAM • 🌕 FULL MOON CHEDDAR • 🥚 GOLDEN GHOUL (SALTED EGG) • 🔥 FIERY GHOUL (SPICY SALTED EGG) • 🧟 MONSTER BAWANG</span>
-                  <span>•</span>
-                  <span>🫙 SEALED IN REUSABLE CRUNCH-LOCK TUBS</span>
-                  <span>•</span>
-                  <span>💵 COD, GCASH &amp; MARIBANK ACCEPTED</span>
-                  <span>•</span>
-                  <span>🎃 TRICK OR TREAT CRUNCH!</span>
-                  <span>•</span>
-                  <span>👻 ANONG FEAR MO TODAY? MANI SO GOOD, IT&apos;S SCARY!</span>
-                  <span>•</span>
-                  <span>🧛 VAMPIRE&apos;S BANE (SALTED) • 👻 GHOSTLY PURE (UNSALTED) • 🎃 HELLFIRE CRUNCH (SPICY) • 🦇 MIDNIGHT BBQ • 🕸️ PHANTOM CREAM • 🌕 FULL MOON CHEDDAR • 🥚 GOLDEN GHOUL (SALTED EGG) • 🔥 FIERY GHOUL (SPICY SALTED EGG) • 🧟 MONSTER BAWANG</span>
-                  <span>•</span>
-                  <span>🫙 SEALED IN REUSABLE CRUNCH-LOCK TUBS</span>
-                  <span>•</span>
-                  <span>💵 COD, GCASH &amp; MARIBANK ACCEPTED</span>
+                  {(currentTheme?.heroMarqueeItems || [
+                    '🥜 CRISPY NA, CRUNCHY PA!',
+                    '✨ HANDCRAFTED GARLIC PEANUTS COOKED FRESH IN SMALL BATCHES',
+                    '🫙 SEALED IN REUSABLE CRUNCH-LOCK TUBS',
+                    '💵 COD, GCASH & MARIBANK ACCEPTED'
+                  ]).concat(currentTheme?.heroMarqueeItems || [
+                    '🥜 CRISPY NA, CRUNCHY PA!',
+                    '✨ HANDCRAFTED GARLIC PEANUTS COOKED FRESH IN SMALL BATCHES',
+                    '🫙 SEALED IN REUSABLE CRUNCH-LOCK TUBS',
+                    '💵 COD, GCASH & MARIBANK ACCEPTED'
+                  ]).map((item, idx) => (
+                    <React.Fragment key={idx}>
+                      <span>{item}</span>
+                      <span>•</span>
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
             </section>
@@ -1444,6 +1525,7 @@ export default function App() {
             <OrderCutoffBanner 
               cutoffInfo={cutoffInfo} 
               onRefreshCutoff={fetchCutoff} 
+              themeId={effectiveThemeId}
             />
 
             {/* Error Banner */}
@@ -1459,20 +1541,26 @@ export default function App() {
               {/* Left Column (Desktop 7 cols): Flavors Catalog */}
               <div id="flavors-menu" className="lg:col-span-7 space-y-5 scroll-mt-24">
                 <section className="space-y-4">
-                  {/* Section Title, Supporting Skeleton Character & Barkada Sampler Quick Action */}
-                  <div className="relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#2B1B30]/95 p-4 sm:p-5 rounded-3xl border-2 border-[#FF6B00] shadow-pumpkin-card">
+                  {/* Section Title, Seasonal Mascot Character & Quick Action */}
+                  <div className={`relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${currentTheme?.sectionHeaderBg || 'bg-[#2B1B30]/95 text-white border-2 border-[#FF6B00]'} p-4 sm:p-5 rounded-3xl shadow-snack-card`}>
                     <div className="flex items-center gap-3.5">
-                      {/* Supporting Skeleton Character Waving & Holding a Golden Peanut */}
-                      <div className="shrink-0 bg-[#1F1025]/90 p-1.5 rounded-2xl border border-[#FF6B00]/60 shadow-inner">
-                        <PlayfulSkeletonSvg className="w-14 h-16 sm:w-16 sm:h-20 drop-shadow-[0_2px_10px_rgba(255,107,0,0.35)]" />
+                      {/* Supporting Seasonal Character */}
+                      <div className={`shrink-0 ${effectiveThemeId === 'christmas' ? 'bg-[#0D2418]/90 border border-emerald-600/60' : 'bg-[#1F1025]/90 border border-[#FF6B00]/60'} p-1.5 rounded-2xl shadow-inner`}>
+                        {effectiveThemeId === 'christmas' ? (
+                          <SantaPeanutSvg className="w-14 h-16 sm:w-16 sm:h-20 drop-shadow-[0_2px_10px_rgba(220,38,38,0.5)]" />
+                        ) : effectiveThemeId === 'halloween' ? (
+                          <PlayfulSkeletonSvg className="w-14 h-16 sm:w-16 sm:h-20 drop-shadow-[0_2px_10px_rgba(255,107,0,0.35)]" />
+                        ) : (
+                          <div className="w-14 h-16 sm:w-16 sm:h-20 flex items-center justify-center text-3xl">🥜</div>
+                        )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FF6B00] text-white border border-amber-300">
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white border border-amber-300'}`}>
                             Step 1
                           </span>
                           <span className="text-xs font-extrabold text-amber-300">
-                            Choose Your Spooky Tubs 🎃
+                            {currentTheme?.flavorSectionTitle || 'Choose Your Spooky Tubs 🎃'}
                           </span>
                         </div>
                         <h2 className="font-display text-2xl sm:text-3xl font-bold text-white flex items-center gap-2 tracking-tight">
@@ -1489,7 +1577,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={handleAddAllSampler}
-                          className="px-3.5 py-2 rounded-2xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-display font-bold text-xs border-2 border-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                          className={`px-3.5 py-2 rounded-2xl ${currentTheme?.primaryBtn || 'bg-[#FF6B00] hover:bg-amber-400 text-white border-2 border-amber-300'} font-display font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95`}
                           title="Add 1 tub of every available flavor"
                         >
                           <Sparkles className="w-3.5 h-3.5 text-amber-200" />
@@ -1497,7 +1585,7 @@ export default function App() {
                         </button>
                       )}
                       {totalPacks > 0 && (
-                        <span className="font-display text-xs font-bold text-[#1F1025] bg-amber-400 px-3 py-1.5 rounded-2xl border-2 border-[#FF6B00] shadow-snack-sm">
+                        <span className={`font-display text-xs font-bold ${currentTheme?.stepPillBg || 'text-[#1F1025] bg-amber-400 border-2 border-[#FF6B00]'} px-3 py-1.5 rounded-2xl shadow-snack-sm`}>
                           {totalPacks} tub{totalPacks > 1 ? 's' : ''} in basket
                         </span>
                       )}
@@ -1507,7 +1595,7 @@ export default function App() {
                   {/* Interactive Flavor Filter Pills */}
                   <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
                     {[
-                      { id: 'all', label: '🎃 All Flavors', count: products.length },
+                      { id: 'all', label: currentTheme?.filterAllLabel || '🎃 All Flavors', count: products.length },
                       { id: 'bestsellers', label: '🔥 Crowd Favorites' },
                       { id: 'savory', label: '🌶️ Bold & Savory' },
                       { id: 'classic', label: '🧄 Classic & Garlic' }
@@ -1520,14 +1608,16 @@ export default function App() {
                           onClick={() => setActiveFlavorFilter(tab.id)}
                           className={`px-3.5 py-2 rounded-2xl font-display font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                             isActive
-                              ? 'bg-[#FF6B00] text-white border-2 border-amber-300 shadow-pumpkin-tub'
-                              : 'bg-[#2B1B30] text-amber-200 border-2 border-[#FF6B00]/45 hover:border-amber-300 hover:bg-[#382240]'
+                              ? (currentTheme?.filterActive || 'bg-[#FF6B00] text-white border-2 border-amber-300 shadow-pumpkin-tub')
+                              : (currentTheme?.filterInactive || 'bg-[#2B1B30] text-amber-200 border-2 border-[#FF6B00]/45 hover:border-amber-300 hover:bg-[#382240]')
                           }`}
                         >
                           <span>{tab.label}</span>
                           {tab.count !== undefined && (
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                              isActive ? 'bg-[#1F1025] text-amber-300' : 'bg-[#1F1025]/80 text-amber-300'
+                              isActive 
+                                ? (effectiveThemeId === 'christmas' ? 'bg-[#0D2418] text-amber-300' : 'bg-[#1F1025] text-amber-300')
+                                : 'bg-black/30 text-amber-300'
                             }`}>
                               {tab.count}
                             </span>
@@ -1565,6 +1655,7 @@ export default function App() {
                     onClearOrder={handleClearOrder}
                     recentlyAddedId={recentlyAddedId}
                     cartBounce={cartBounce}
+                    themeId={effectiveThemeId}
                     onProceedToDetails={() => {
                       const el = document.getElementById('customer-info-section');
                       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1585,6 +1676,7 @@ export default function App() {
                     isOrdersClosed={isOrdersClosed}
                     totalPacks={totalPacks}
                     subtotal={subtotal}
+                    themeId={effectiveThemeId}
                   />
                 </section>
               </div>
@@ -1595,6 +1687,7 @@ export default function App() {
               products={products}
               onAddCombo={handleAddCombo}
               isOrdersClosed={isOrdersClosed}
+              themeId={effectiveThemeId}
             />
           </div>
         )}
@@ -1602,7 +1695,7 @@ export default function App() {
 
       {/* Mobile Sticky Quick-Action Bar */}
       {currentView === 'order' && totalPacks > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#1F1025]/95 backdrop-blur-md border-t-2 border-[#FF6B00] px-4 py-3 shadow-2xl lg:hidden animate-fade-in flex items-center justify-between gap-3">
+        <div className={`fixed bottom-0 left-0 right-0 z-30 ${currentTheme?.stickyBarBg || 'bg-[#1F1025]/95 border-t-2 border-[#FF6B00]'} backdrop-blur-md px-4 py-3 shadow-2xl lg:hidden animate-fade-in flex items-center justify-between gap-3`}>
           <button
             type="button"
             onClick={() => setIsDrawerOpen(true)}
@@ -1610,11 +1703,11 @@ export default function App() {
             title="View Order Summary"
           >
             <div className="text-[11px] font-extrabold text-amber-200 flex items-center gap-1.5 flex-wrap">
-              <span className="bg-[#FF6B00] text-white px-2 py-0.5 rounded-full border border-amber-300">
-                🎃 {totalPacks} tub{totalPacks > 1 ? 's' : ''}
+              <span className={`px-2 py-0.5 rounded-full ${currentTheme?.cartPillBg || 'bg-[#FF6B00] text-white border border-amber-300'}`}>
+                {effectiveThemeId === 'christmas' ? '🎄' : '🎃'} {totalPacks} tub{totalPacks > 1 ? 's' : ''}
               </span>
               {cutoffInfo?.isOpen && cutoffInfo?.enabled && (
-                <span className="text-[10px] font-bold text-amber-300 bg-[#2B1B30] px-1.5 py-0.5 rounded border border-[#FF6B00]/60">
+                <span className={`text-[10px] font-bold text-amber-300 ${currentTheme?.headerNavBg || 'bg-[#2B1B30] border border-[#FF6B00]/60'} px-1.5 py-0.5 rounded`}>
                   ⏰ {cutoffInfo.cutoffTime || '23:59'}
                 </span>
               )}
@@ -1635,9 +1728,9 @@ export default function App() {
                 const el = document.getElementById('customer-info-section');
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
-              className="px-4 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-display font-bold text-xs sm:text-sm border-2 border-amber-300 shadow-snack-sm active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer shrink-0"
+              className={`px-4 py-2.5 rounded-2xl ${currentTheme?.primaryBtn || 'bg-[#FF6B00] hover:bg-amber-400 text-white border-2 border-amber-300 shadow-snack-sm'} font-display font-bold text-xs sm:text-sm active:translate-y-0.5 flex items-center gap-1.5 cursor-pointer shrink-0`}
             >
-              <span>Checkout Now 🎃</span>
+              <span>{currentTheme?.mobileCheckoutText || 'Checkout Now 🎃'}</span>
               <ChevronRight className="w-4 h-4 stroke-[2.5]" />
             </button>
           )}
@@ -1660,6 +1753,7 @@ export default function App() {
         isOrdersClosed={isOrdersClosed}
         cutoffInfo={cutoffInfo}
         paymentMethods={paymentMethods}
+        themeId={effectiveThemeId}
       />
 
       {/* Order Confirmation Modal */}
@@ -1668,6 +1762,7 @@ export default function App() {
           order={confirmedOrder}
           onReset={handleResetForNewOrder}
           customQrs={customQrs}
+          themeId={effectiveThemeId}
         />
       )}
 

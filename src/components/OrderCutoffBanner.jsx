@@ -5,8 +5,10 @@ import {
   formatManilaDateNice,
   formatManilaTime12
 } from '../utils/phtTime';
+import { getTheme } from '../config/themes';
 
-export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
+export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff, themeId = 'halloween' }) {
+  const currentTheme = getTheme(themeId);
   const [remainingSec, setRemainingSec] = useState(() => {
     if (!cutoffInfo || !cutoffInfo.cutoffDate) return 0;
     const targetMs = getManilaCutoffTimestampMs(cutoffInfo.cutoffDate, cutoffInfo.cutoffTime);
@@ -119,21 +121,21 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
   return (
     <div 
       id="order-cutoff-section"
-      className="w-full rounded-3xl bg-white border-2 border-[#FF6B00] shadow-pumpkin-card overflow-hidden animate-fade-in transition-all"
+      className={`w-full rounded-3xl bg-white border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-card overflow-hidden animate-fade-in transition-all`}
     >
       {/* 1. TOP: Status Indicator & Header */}
-      <div className="px-5 sm:px-6 py-3 bg-gradient-to-r from-[#1F1025] via-[#2B1B30] to-[#1F1025] border-b-2 border-[#FF6B00]/50 flex items-center justify-between gap-3 flex-wrap">
+      <div className={`px-5 sm:px-6 py-3 bg-gradient-to-r ${currentTheme?.cutoffHeaderBg || 'from-[#1F1025] via-[#2B1B30] to-[#1F1025] border-b-2 border-[#FF6B00]/50'} flex items-center justify-between gap-3 flex-wrap`}>
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500 text-white border border-amber-300/40 shadow-2xs">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
             Accepting Orders Now
           </span>
           <span className="text-xs font-extrabold text-amber-300 hidden sm:inline">
-            🎃 Spooky Small-Batch Roast
+            {currentTheme?.cutoffStatusText || '🎃 Spooky Small-Batch Roast'}
           </span>
         </div>
 
-        <span className="text-[11px] text-amber-200 font-bold tracking-wide bg-[#1F1025]/90 px-2.5 py-0.5 rounded-full border border-[#FF6B00]/60">
+        <span className={`text-[11px] text-amber-200 font-bold tracking-wide ${currentTheme?.headerNavBg || 'bg-[#1F1025]/90 border border-[#FF6B00]/60'} px-2.5 py-0.5 rounded-full`}>
           🇵🇭 PH Time (Asia/Manila)
         </span>
       </div>
@@ -154,8 +156,8 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0.5">
             {/* Cutoff Deadline */}
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-amber-50/80 border border-[#FF6B00]/40">
-              <div className="w-10 h-10 rounded-xl bg-[#FF6B00] text-white flex items-center justify-center shrink-0 border-2 border-amber-300 shadow-snack-sm">
+            <div className={`flex items-center gap-3 p-3 rounded-2xl bg-amber-50/80 border ${currentTheme?.cardBorder || 'border-[#FF6B00]/40'}`}>
+              <div className={`w-10 h-10 rounded-xl ${currentTheme?.cutoffIconBoxBg || 'bg-[#FF6B00] text-white border-2 border-amber-300'} flex items-center justify-center shrink-0 shadow-snack-sm`}>
                 <Clock className="w-4 h-4 stroke-[2.5]" />
               </div>
               <div className="min-w-0">
@@ -169,8 +171,8 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
             </div>
 
             {/* Delivery Day */}
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-amber-50/80 border border-[#FF6B00]/40">
-              <div className="w-10 h-10 rounded-xl bg-amber-400 text-[#1F1025] flex items-center justify-center shrink-0 border-2 border-[#FF6B00] shadow-snack-sm">
+            <div className={`flex items-center gap-3 p-3 rounded-2xl bg-amber-50/80 border ${currentTheme?.cardBorder || 'border-[#FF6B00]/40'}`}>
+              <div className={`w-10 h-10 rounded-xl bg-amber-400 text-stone-900 flex items-center justify-center shrink-0 border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-sm`}>
                 <Truck className="w-4 h-4 stroke-[2.5]" />
               </div>
               <div className="min-w-0">
@@ -186,9 +188,12 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
         </div>
 
         {/* 3. BOTTOM / RIGHT: Primary Urgency Countdown Timer */}
-        <div className="lg:border-l-2 lg:border-dashed lg:border-[#FF6B00]/40 lg:pl-7 flex flex-col items-center lg:items-end justify-center shrink-0 pt-4 lg:pt-0 border-t border-mani-100 lg:border-t-0">
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#FF6B00] mb-2 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#FF6B00] animate-ping" />
+        <div className={`lg:border-l-2 lg:border-dashed ${currentTheme?.cardBorder || 'lg:border-[#FF6B00]/40'} lg:pl-7 flex flex-col items-center lg:items-end justify-center shrink-0 pt-4 lg:pt-0 border-t border-mani-100 lg:border-t-0`}>
+          <span className={`text-[11px] font-extrabold uppercase tracking-wider ${currentTheme?.cutoffHighlightText || 'text-[#FF6B00]'} mb-2 flex items-center gap-1.5`}>
+            <span 
+              style={{ backgroundColor: currentTheme?.accentColor || '#FF6B00' }}
+              className="w-2 h-2 rounded-full animate-ping" 
+            />
             Time Left to Order
           </span>
 
@@ -196,7 +201,7 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
           <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Hours */}
             <div className="flex flex-col items-center">
-              <div className="w-13 sm:w-15 h-13 sm:h-15 px-3 rounded-2xl bg-[#1F1025] text-amber-300 font-display font-bold text-2xl sm:text-3xl flex items-center justify-center border-2 border-[#FF6B00] shadow-snack-sm">
+              <div className={`w-13 sm:w-15 h-13 sm:h-15 px-3 rounded-2xl ${currentTheme?.cutoffDigitsBg || 'bg-[#1F1025] text-amber-300 border-2 border-[#FF6B00]'} font-display font-bold text-2xl sm:text-3xl flex items-center justify-center shadow-snack-sm`}>
                 {pad(hours)}
               </div>
               <span className="text-[10px] font-extrabold text-mani-600 uppercase tracking-widest mt-1">
@@ -204,11 +209,11 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
               </span>
             </div>
 
-            <span className="text-xl font-black text-[#FF6B00] pb-4">:</span>
+            <span className={`text-xl font-black ${currentTheme?.cutoffHighlightText || 'text-[#FF6B00]'} pb-4`}>:</span>
 
             {/* Minutes */}
             <div className="flex flex-col items-center">
-              <div className="w-13 sm:w-15 h-13 sm:h-15 px-3 rounded-2xl bg-[#1F1025] text-amber-300 font-display font-bold text-2xl sm:text-3xl flex items-center justify-center border-2 border-[#FF6B00] shadow-snack-sm">
+              <div className={`w-13 sm:w-15 h-13 sm:h-15 px-3 rounded-2xl ${currentTheme?.cutoffDigitsBg || 'bg-[#1F1025] text-amber-300 border-2 border-[#FF6B00]'} font-display font-bold text-2xl sm:text-3xl flex items-center justify-center shadow-snack-sm`}>
                 {pad(minutes)}
               </div>
               <span className="text-[10px] font-extrabold text-mani-600 uppercase tracking-widest mt-1">
@@ -216,14 +221,14 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff }) {
               </span>
             </div>
 
-            <span className="text-xl font-black text-[#FF6B00] pb-4">:</span>
+            <span className={`text-xl font-black ${currentTheme?.cutoffHighlightText || 'text-[#FF6B00]'} pb-4`}>:</span>
 
             {/* Seconds */}
             <div className="flex flex-col items-center">
-              <div className="w-13 sm:w-15 h-13 sm:h-15 px-3 rounded-2xl bg-[#FF6B00] text-white font-display font-bold text-2xl sm:text-3xl flex items-center justify-center border-2 border-amber-300 shadow-snack-sm">
+              <div className={`w-13 sm:w-15 h-13 sm:h-15 px-3 rounded-2xl ${currentTheme?.cutoffSecondsBg || 'bg-[#FF6B00] text-white border-2 border-amber-300'} font-display font-bold text-2xl sm:text-3xl flex items-center justify-center shadow-snack-sm`}>
                 {pad(seconds)}
               </div>
-              <span className="text-[10px] font-extrabold text-[#FF6B00] uppercase tracking-widest mt-1">
+              <span className={`text-[10px] font-extrabold ${currentTheme?.cutoffHighlightText || 'text-[#FF6B00]'} uppercase tracking-widest mt-1`}>
                 Secs
               </span>
             </div>

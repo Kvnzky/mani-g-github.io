@@ -89,7 +89,8 @@ let settings = {
   spreadsheetId: process.env.GOOGLE_SHEET_ID || '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI',
   appsScriptUrl: process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec',
   timezone: TIMEZONE,
-  theme: 'halloween',
+  theme: 'christmas',
+  themeUpdatedAt: 1729300000000,
   manualFormOpen: true,
   paymentMethods: {
     cod: true,
@@ -111,7 +112,8 @@ if (fs.existsSync(SETTINGS_FILE)) {
     settings = {
       ...settings,
       ...loaded,
-      theme: (loaded.theme && VALID_THEMES.includes(loaded.theme)) ? loaded.theme : 'halloween',
+      theme: (loaded.theme && VALID_THEMES.includes(loaded.theme)) ? loaded.theme : 'christmas',
+      themeUpdatedAt: loaded.themeUpdatedAt || 1729300000000,
       manualFormOpen: loaded.manualFormOpen !== undefined ? Boolean(loaded.manualFormOpen) : true,
       paymentMethods: {
         cod: true,
@@ -304,7 +306,8 @@ const evaluateCutoff = () => {
       deliveryDay,
       flavorAvailability,
       paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
-      theme: settings.theme || 'halloween',
+      theme: settings.theme || 'christmas',
+      themeUpdatedAt: settings.themeUpdatedAt || 0,
       timezone: TIMEZONE,
       serverTime: now.toISOString(),
       currentPhilippineDate: dateStr,
@@ -339,7 +342,8 @@ const evaluateCutoff = () => {
     deliveryDay,
     flavorAvailability,
     paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
-    theme: settings.theme || 'halloween',
+    theme: settings.theme || 'christmas',
+    themeUpdatedAt: settings.themeUpdatedAt || 0,
     timezone: TIMEZONE,
     serverTime: now.toISOString(),
     currentPhilippineDate: dateStr,
@@ -1417,7 +1421,8 @@ app.get('/api/settings', requireAdminAuth, (req, res) => {
     spreadsheetId: settings.spreadsheetId,
     appsScriptUrl: settings.appsScriptUrl,
     timezone: settings.timezone,
-    theme: settings.theme || 'halloween',
+    theme: settings.theme || 'christmas',
+    themeUpdatedAt: settings.themeUpdatedAt || 0,
     manualFormOpen: settings.manualFormOpen !== false,
     paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
     cutoff: evaluateCutoff()
@@ -1426,12 +1431,13 @@ app.get('/api/settings', requireAdminAuth, (req, res) => {
 
 // API: Update Settings (Protected)
 app.post('/api/settings', requireAdminAuth, (req, res) => {
-  const { appsScriptUrl, spreadsheetId, paymentMethods, manualFormOpen, theme } = req.body || {};
+  const { appsScriptUrl, spreadsheetId, paymentMethods, manualFormOpen, theme, updatedAt } = req.body || {};
   if (appsScriptUrl !== undefined) settings.appsScriptUrl = appsScriptUrl.trim();
   if (spreadsheetId !== undefined) settings.spreadsheetId = spreadsheetId.trim();
   if (manualFormOpen !== undefined) settings.manualFormOpen = Boolean(manualFormOpen);
   if (theme && VALID_THEMES.includes(theme)) {
     settings.theme = theme;
+    settings.themeUpdatedAt = updatedAt || Date.now();
   }
   if (paymentMethods && typeof paymentMethods === 'object') {
     settings.paymentMethods = {
@@ -1447,22 +1453,24 @@ app.post('/api/settings', requireAdminAuth, (req, res) => {
 // Public Theme Endpoint (used on initial client load and polling)
 app.get('/api/theme', (req, res) => {
   res.json({
-    theme: settings.theme || 'halloween',
+    theme: settings.theme || 'christmas',
+    themeUpdatedAt: settings.themeUpdatedAt || 0,
     availableThemes: VALID_THEMES
   });
 });
 
 // Admin Theme Update Endpoint (Protected)
 app.post('/api/admin/theme', requireAdminAuth, (req, res) => {
-  const { theme } = req.body || {};
+  const { theme, updatedAt } = req.body || {};
   if (!theme || !VALID_THEMES.includes(theme)) {
     return res.status(400).json({
       error: `Invalid theme. Must be one of: ${VALID_THEMES.join(', ')}`
     });
   }
   settings.theme = theme;
+  settings.themeUpdatedAt = updatedAt || Date.now();
   saveSettings();
-  res.json({ success: true, theme: settings.theme });
+  res.json({ success: true, theme: settings.theme, themeUpdatedAt: settings.themeUpdatedAt });
 });
 
 // Products API

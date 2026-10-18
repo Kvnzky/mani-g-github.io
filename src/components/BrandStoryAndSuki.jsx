@@ -2,6 +2,8 @@ import React from 'react';
 import { Sparkles, Flame, HeartHandshake, Plus, ArrowUpRight } from 'lucide-react';
 import { formatPHP } from '../config/products';
 import { PlayfulSkeletonSvg, PlayfulMummySvg, CornerWebWithSpider } from './HalloweenAtmosphere';
+import { SantaPeanutSvg, ChristmasCornerGarland } from './ChristmasDecorations';
+import { getTheme } from '../config/themes';
 
 const SUKI_COMBOS = [
   {
@@ -138,7 +140,11 @@ const CRAVING_OCCASIONS = [
 // Ready-to-populate array for verified customer reviews (kept authentic — no fake testimonials)
 export const VERIFIED_SUKI_REVIEWS = [];
 
-export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersClosed }) {
+export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersClosed, themeId = 'halloween' }) {
+  const currentTheme = getTheme(themeId);
+  const isHalloween = themeId === 'halloween';
+  const isChristmas = themeId === 'christmas';
+
   const getProductMap = () => {
     const map = {};
     products.forEach((p) => {
@@ -166,17 +172,23 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
 
   return (
     <div className="space-y-12 sm:space-y-16 pt-6">
-      {/* SECTION 1: MGA SUKI FAVORITES & CURATED COMBOS (with Supporting Skeleton Character) */}
+      {/* SECTION 1: MGA SUKI FAVORITES & CURATED COMBOS */}
       <section id="suki-favorites" className="space-y-6 scroll-mt-24">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex shrink-0 bg-[#2B1B30] p-2 rounded-3xl border-2 border-[#FF6B00] shadow-pumpkin-tub">
-              <PlayfulSkeletonSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(255,107,0,0.4)]" />
+            <div className={`hidden sm:flex shrink-0 ${isChristmas ? 'bg-[#0D2418] border-2 border-[#DC2626]' : 'bg-[#2B1B30] border-2 border-[#FF6B00]'} p-2 rounded-3xl shadow-snack-sm`}>
+              {isChristmas ? (
+                <SantaPeanutSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(220,38,38,0.5)]" />
+              ) : isHalloween ? (
+                <PlayfulSkeletonSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(255,107,0,0.4)]" />
+              ) : (
+                <div className="w-16 h-20 flex items-center justify-center text-3xl">🥜</div>
+              )}
             </div>
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#FF6B00] text-white border border-amber-300 -rotate-1 mb-2 shadow-2xs">
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${currentTheme?.badgeClass || 'bg-[#FF6B00] text-white border border-amber-300'} -rotate-1 mb-2 shadow-2xs`}>
                 <Flame className="w-3.5 h-3.5 text-amber-200 fill-amber-200" />
-                <span>🎃 Mga Suki Crowd Favorites</span>
+                <span>{currentTheme?.sukiBadge || 'Mga Suki Crowd Favorites'}</span>
               </div>
               <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-xs">
                 Need Help Choosing? Try a Suki Combo! 🥜
@@ -188,7 +200,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
           </div>
           <a
             href="#flavors-menu"
-            className="inline-flex items-center gap-1 text-xs font-extrabold text-amber-300 hover:text-white bg-[#2B1B30] hover:bg-[#FF6B00] px-3.5 py-2 rounded-xl border-2 border-[#FF6B00] transition-all self-start sm:self-auto shrink-0"
+            className={`inline-flex items-center gap-1 text-xs font-extrabold ${currentTheme?.secondaryBtn || 'text-amber-300 bg-[#2B1B30] border-2 border-[#FF6B00]'} px-3.5 py-2 rounded-xl transition-all self-start sm:self-auto shrink-0`}
           >
             <span>Browse Individual Tubs</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
@@ -205,14 +217,14 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             return (
               <div
                 key={combo.id}
-                className="rounded-3xl p-5 sm:p-6 bg-gradient-to-b from-amber-50/95 via-white to-orange-50/60 border-2 border-[#FF6B00]/60 hover:border-amber-400 shadow-pumpkin-card hover:shadow-pumpkin-card-hover hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between"
+                className={`rounded-3xl p-5 sm:p-6 bg-gradient-to-b from-amber-50/95 via-white to-orange-50/60 border-2 ${currentTheme?.cardBorder || 'border-[#FF6B00]/60'} hover:border-amber-400 shadow-snack-card hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between`}
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${combo.badgeClass}`}>
                       {combo.badge}
                     </span>
-                    <span className="font-display text-lg font-bold text-amber-300 bg-[#1F1025] px-3.5 py-0.5 rounded-xl border border-[#FF6B00] shadow-2xs">
+                    <span className={`font-display text-lg font-bold ${currentTheme?.stepPillBg || 'text-amber-300 bg-[#1F1025] border border-[#FF6B00]'} px-3.5 py-0.5 rounded-xl shadow-2xs`}>
                       {formatPHP(comboPrice)}
                     </span>
                   </div>
@@ -221,7 +233,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                     <h3 className="font-display text-xl font-bold text-mani-950 leading-snug">
                       {combo.title}
                     </h3>
-                    <p className="text-xs font-extrabold text-[#FF6B00] mt-0.5">
+                    <p className={`text-xs font-extrabold ${currentTheme?.cutoffHighlightText || 'text-[#FF6B00]'} mt-0.5`}>
                       {combo.subtitle} ({totalTubs} tubs)
                     </p>
                   </div>
@@ -237,7 +249,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                     {combo.items.map((item) => (
                       <span
                         key={item.id}
-                        className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100/80 text-mani-950 border border-[#FF6B00]/40 shadow-2xs"
+                        className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100/80 text-mani-950 border ${currentTheme?.cardBorder || 'border-[#FF6B00]/40'} shadow-2xs`}
                       >
                         {item.label}
                       </span>
@@ -252,7 +264,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                       className={`w-full py-2.5 px-4 rounded-xl font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
                         !available || isOrdersClosed
                           ? 'bg-mani-100 text-mani-400 border border-mani-200 cursor-not-allowed'
-                          : 'bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] border-2 border-amber-300 shadow-snack-sm active:translate-y-0.5 cursor-pointer'
+                          : `${currentTheme?.primaryBtn || 'bg-[#FF6B00] hover:bg-amber-400 text-white border-2 border-amber-300 shadow-snack-sm'} cursor-pointer`
                       }`}
                     >
                       <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -272,50 +284,75 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
         </div>
       </section>
 
-      {/* SECTION 2: BRAND STORY ("KWENTO NG MANI WANDERING") with Featured Mummy Character Focal Point */}
+      {/* SECTION 2: BRAND STORY ("KWENTO NG MANI WANDERING") with Featured Focal Point */}
       <section
         id="brand-story"
-        className="rounded-3xl bg-gradient-to-br from-[#2B1B30] via-[#1F1025] to-[#2B1B30] text-cream p-6 sm:p-8 lg:p-10 border-2 border-[#FF6B00] shadow-pumpkin-card relative overflow-hidden scroll-mt-24"
+        className={`rounded-3xl ${
+          isChristmas
+            ? 'bg-gradient-to-br from-[#123322] via-[#0E281B] to-[#1C422C] text-emerald-50 border-2 border-[#DC2626] shadow-warm-lg'
+            : isHalloween
+            ? 'bg-gradient-to-br from-[#2B1B30] via-[#1F1025] to-[#2B1B30] text-cream border-2 border-[#FF6B00] shadow-pumpkin-card'
+            : 'bg-gradient-to-br from-[#38200D] via-[#2A170B] to-[#38200D] text-cream border-2 border-amber-500 shadow-snack-card'
+        } p-6 sm:p-8 lg:p-10 relative overflow-hidden scroll-mt-24`}
       >
-        {/* Anchored Corner Cobweb & Spider inside Brand Story Section */}
-        <CornerWebWithSpider position="left" size="sm" showSpider={false} />
-        <CornerWebWithSpider position="right" size="sm" showSpider={true} />
+        {/* Anchored Corner Decorations */}
+        {isHalloween && (
+          <>
+            <CornerWebWithSpider position="left" size="sm" showSpider={false} />
+            <CornerWebWithSpider position="right" size="sm" showSpider={true} />
+          </>
+        )}
+        {isChristmas && (
+          <>
+            <ChristmasCornerGarland position="left" />
+            <ChristmasCornerGarland position="right" />
+          </>
+        )}
 
-        {/* Subtle decorative pumpkin & golden glow */}
-        <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#FF6B00]/20 blur-3xl pointer-events-none" />
+        {/* Subtle decorative glow */}
+        <div 
+          style={{ backgroundColor: currentTheme?.accentColor || '#FF6B00' }}
+          className="absolute -top-24 -right-24 w-72 h-72 rounded-full opacity-20 blur-3xl pointer-events-none" 
+        />
         <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 space-y-7">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-[#FF6B00] text-white border border-amber-300">
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider ${currentTheme?.badgeClass || 'bg-[#FF6B00] text-white border border-amber-300'}`}>
                 <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-                <span>Our Snack Story • Kwento ng Mani Wandering</span>
+                <span>{currentTheme?.brandStoryPill || 'Our Snack Story • Kwento ng Mani Wandering'}</span>
               </div>
               <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
-                Street Snack Nostalgia, Upgraded for Everyday Cravings 🎃🥜
+                {currentTheme?.brandStoryHeadline || 'Street Snack Nostalgia, Upgraded for Everyday Cravings 🎃🥜'}
               </h2>
               <p className="text-xs sm:text-sm text-amber-100/90 font-medium leading-relaxed">
                 Every Filipino knows that irresistible smell of freshly cooked kanto mani—warm, savory, and loaded with toasted garlic. We started <strong className="text-amber-300">Mani Wandering</strong> to capture that honest, home-cooked street snack feeling in convenient, resealable tubs you can enjoy anywhere. Small-batch cooking, bold seasonings, and purong crispy bawang chips in every bite.
               </p>
             </div>
 
-            {/* Featured Mummy Character Focal Point Card */}
-            <div className="flex items-center gap-4 bg-[#1F1025]/95 backdrop-blur-xs p-4 sm:p-5 rounded-3xl border-2 border-[#FF6B00] shadow-pumpkin-tub shrink-0 self-start lg:self-center">
-              <PlayfulMummySvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(245,158,11,0.45)]" />
+            {/* Featured Character Focal Point Card */}
+            <div className={`flex items-center gap-4 ${isChristmas ? 'bg-[#0D2418]/95 border-2 border-[#DC2626]' : 'bg-[#1F1025]/95 border-2 border-[#FF6B00]'} backdrop-blur-xs p-4 sm:p-5 rounded-3xl shadow-snack-sm shrink-0 self-start lg:self-center`}>
+              {isChristmas ? (
+                <SantaPeanutSvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(220,38,38,0.5)]" />
+              ) : isHalloween ? (
+                <PlayfulMummySvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(245,158,11,0.45)]" />
+              ) : (
+                <div className="w-20 h-24 sm:w-24 sm:h-28 flex items-center justify-center text-5xl">🥜</div>
+              )}
               <div className="space-y-1">
-                <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FF6B00] text-white border border-amber-300">
-                  Mummy’s Favorite Stash
+                <span className={`inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${currentTheme?.badgeClass || 'bg-[#FF6B00] text-white border border-amber-300'}`}>
+                  {currentTheme?.focalCardBadge || 'Mummy’s Favorite Stash'}
                 </span>
                 <div className="font-display text-base sm:text-lg font-bold text-amber-300">
-                  “Trick or Treat Crunch!”
+                  {currentTheme?.focalCardTitle || '“Trick or Treat Crunch!”'}
                 </div>
                 <p className="text-xs text-amber-100/85 font-medium max-w-[210px] leading-snug">
-                  9 signature flavors cooked fresh for horror movie nights, merienda, pulutan, and road trips.
+                  {currentTheme?.focalCardText || '9 signature flavors cooked fresh for horror movie nights, merienda, pulutan, and road trips.'}
                 </p>
               </div>
               <img
-                src="./images/mani-halloween-logo.png"
+                src={isChristmas ? './logo.png' : isHalloween ? './images/mani-halloween-logo.png' : './logo.png'}
                 alt="Mani Wandering Mascot"
                 className="w-14 h-14 sm:w-16 sm:h-16 hidden sm:block object-contain drop-shadow-[0_2px_10px_rgba(255,107,0,0.45)] shrink-0 select-none"
               />
@@ -325,13 +362,17 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
           {/* Relatable Filipino Craving Occasions Pills */}
           <div className="space-y-2">
             <p className="text-[11px] font-black uppercase tracking-wider text-amber-300">
-              Made for Every Spooky &amp; Everyday Pinoy Craving Moment:
+              Made for Every Pinoy Craving Moment:
             </p>
             <div className="flex flex-wrap gap-2">
-              {CRAVING_OCCASIONS.map((occ) => (
+              {(currentTheme?.cravingOccasions || CRAVING_OCCASIONS).map((occ) => (
                 <span
                   key={occ.label}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#1F1025]/85 hover:bg-[#FF6B00]/30 text-amber-100 border border-[#FF6B00]/50 text-xs font-display font-bold transition-colors select-none"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl ${
+                    isChristmas 
+                      ? 'bg-[#0D2418]/85 hover:bg-[#DC2626]/30 text-emerald-100 border border-emerald-600/50' 
+                      : 'bg-[#1F1025]/85 hover:bg-[#FF6B00]/30 text-amber-100 border border-[#FF6B00]/50'
+                  } text-xs font-display font-bold transition-colors select-none`}
                 >
                   <span>{occ.emoji}</span>
                   <span>{occ.label}</span>
@@ -345,7 +386,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             {CRAVING_MOMENTS.map((moment) => (
               <div
                 key={moment.title}
-                className="rounded-2xl bg-white/95 text-mani-950 p-5 border-2 border-[#FF6B00]/60 shadow-pumpkin-card flex flex-col justify-between space-y-3"
+                className={`rounded-2xl bg-white/95 text-mani-950 p-5 border-2 ${currentTheme?.cardBorder || 'border-[#FF6B00]/60'} shadow-snack-card flex flex-col justify-between space-y-3`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full border ${moment.bgClass}`}>
@@ -366,16 +407,16 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
           </div>
 
           {/* Bottom Callout Strip */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#FF6B00]/40 text-xs sm:text-sm">
+          <div className={`pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t ${currentTheme?.cardBorder || 'border-[#FF6B00]/40'} text-xs sm:text-sm`}>
             <div className="flex items-center gap-2 text-amber-200 font-bold text-center sm:text-left">
-              <HeartHandshake className="w-5 h-5 text-[#FF6B00] shrink-0" />
+              <HeartHandshake style={{ color: currentTheme?.accentColor || '#FF6B00' }} className="w-5 h-5 shrink-0" />
               <span>Ready to taste why our mga suki can’t stop at just one tub?</span>
             </div>
             <a
               href="#flavors-menu"
-              className="px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-amber-400 text-white hover:text-[#1F1025] font-display font-bold text-xs sm:text-sm border-2 border-amber-300 shadow-pumpkin-tub active:translate-y-0.5 transition-all shrink-0"
+              className={`px-5 py-2.5 rounded-2xl ${currentTheme?.primaryBtn || 'bg-[#FF6B00] hover:bg-amber-400 text-white border-2 border-amber-300 shadow-snack-sm'} font-display font-bold text-xs sm:text-sm active:translate-y-0.5 transition-all shrink-0`}
             >
-              Build Your Tub Order Now 🎃🥜
+              {currentTheme?.heroOrderBtnText || 'Build Your Tub Order Now 🎃🥜'}
             </a>
           </div>
         </div>

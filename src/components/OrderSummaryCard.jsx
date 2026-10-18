@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShoppingBag, Plus, Minus, ArrowDown } from 'lucide-react';
 import { formatPHP, getFlavorPersonality } from '../config/products';
+import { getTheme } from '../config/themes';
 
 export default function OrderSummaryCard({
   items = [],
@@ -9,8 +10,10 @@ export default function OrderSummaryCard({
   onClearOrder,
   recentlyAddedId = null,
   cartBounce = false,
-  onProceedToDetails
+  onProceedToDetails,
+  themeId = 'halloween'
 }) {
+  const currentTheme = getTheme(themeId);
   const selectedItems = items.filter((p) => (quantities[p.id] || 0) > 0);
   const totalPacks = Object.values(quantities).reduce((a, b) => a + (Number(b) || 0), 0);
   const subtotal = items.reduce((sum, p) => sum + ((quantities[p.id] || 0) * (p.price || 50)), 0);
@@ -18,23 +21,23 @@ export default function OrderSummaryCard({
   return (
     <div 
       id="order-summary-section"
-      className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-[#FF6B00] shadow-pumpkin-card space-y-4 transition-all"
+      className={`bg-white rounded-3xl p-5 sm:p-6 border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-card space-y-4 transition-all`}
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b-2 border-dashed border-amber-300/70 pb-3.5 flex-wrap gap-2">
         <div className="flex items-center gap-2.5">
-          <div className={`w-10 h-10 rounded-2xl bg-[#FF6B00] text-white border-2 border-amber-300 flex items-center justify-center font-bold text-lg shadow-snack-sm transition-transform duration-200 ${
+          <div className={`w-10 h-10 rounded-2xl ${currentTheme?.primaryBtn || 'bg-[#FF6B00] text-white border-2 border-amber-300'} flex items-center justify-center font-bold text-lg shadow-snack-sm transition-transform duration-200 ${
             cartBounce ? 'scale-125 rotate-6' : ''
           }`}>
             <ShoppingBag className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#1F1025] text-amber-300 border border-[#FF6B00]">
+              <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${currentTheme?.stepPillBg || 'bg-[#1F1025] text-amber-300 border border-[#FF6B00]'}`}>
                 Step 2
               </span>
               <h3 className="font-display text-lg sm:text-xl font-bold text-mani-950 tracking-tight">
-                Your Tub Basket 🎃
+                {currentTheme?.basketTitle || 'Your Tub Basket 🎃'}
               </h3>
             </div>
             <p className="text-xs text-mani-600 font-medium mt-0.5">
@@ -182,7 +185,7 @@ export default function OrderSummaryCard({
               <button
                 type="button"
                 onClick={onProceedToDetails}
-                className="w-full mt-2 py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-xs sm:text-sm border-2 border-mani-900 shadow-snack-sm active:translate-y-0.5 flex items-center justify-center gap-1.5 transition-all cursor-pointer lg:hidden"
+                className={`w-full mt-2 py-2.5 px-3 rounded-xl ${currentTheme?.primaryBtn || 'bg-amber-400 hover:bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack-sm'} font-display font-bold text-xs sm:text-sm active:translate-y-0.5 flex items-center justify-center gap-1.5 transition-all cursor-pointer lg:hidden`}
               >
                 <span>Continue to Delivery Details</span>
                 <ArrowDown className="w-4 h-4 stroke-[2.5]" />

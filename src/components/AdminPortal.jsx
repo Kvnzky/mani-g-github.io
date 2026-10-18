@@ -231,15 +231,20 @@ export default function AdminPortal({
     }
   };
 
-  const handleApplyTheme = async () => {
+  const handleApplyTheme = async (overrideThemeId) => {
+    const targetThemeId = (typeof overrideThemeId === 'string' && overrideThemeId) ? overrideThemeId : selectedThemeId;
+    setSelectedThemeId(targetThemeId);
+    if (onPreviewTheme) {
+      onPreviewTheme(targetThemeId);
+    }
     setIsPublishingTheme(true);
     setThemeStatusMessage({ text: '', type: '' });
     try {
       if (onPublishTheme) {
-        await onPublishTheme(selectedThemeId);
+        await onPublishTheme(targetThemeId);
       }
       setThemeStatusMessage({
-        text: `Theme successfully updated to "${getTheme(selectedThemeId).name}"! Live on the store.`,
+        text: `Theme successfully updated to "${getTheme(targetThemeId).name}"! Live across the entire website.`,
         type: 'success'
       });
     } catch (err) {
@@ -2364,10 +2369,11 @@ export default function AdminPortal({
               </div>
               <button
                 type="button"
-                onClick={handleApplyTheme}
-                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 cursor-pointer shadow-xs self-start sm:self-center"
+                disabled={isPublishingTheme}
+                onClick={() => handleApplyTheme(selectedThemeId)}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 cursor-pointer shadow-xs self-start sm:self-center"
               >
-                Publish Now
+                {isPublishingTheme ? 'Activating...' : `Activate ${getTheme(selectedThemeId).name} Live Now`}
               </button>
             </div>
           )}
@@ -2449,6 +2455,28 @@ export default function AdminPortal({
                         <span className="truncate mr-1">{theme.seasonalTag || theme.name}</span>
                         <span className={`px-2 py-0.5 rounded-lg text-[10px] ${theme.primaryBtn}`}>Sample</span>
                       </div>
+
+                      {/* Card Action Button */}
+                      <div className="mt-3 pt-3 border-t border-mani-100">
+                        {isLive ? (
+                          <div className="w-full py-2 px-3 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center gap-1.5 shadow-2xs">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>Active on Website</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isPublishingTheme}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleApplyTheme(theme.id);
+                            }}
+                            className="w-full py-2 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                          >
+                            <span>{isPublishingTheme && selectedThemeId === theme.id ? 'Activating...' : `Activate ${theme.name}`}</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -2470,14 +2498,15 @@ export default function AdminPortal({
               </div>
               <button
                 type="button"
-                onClick={handleApplyTheme}
+                disabled={selectedThemeId === currentThemeId || isPublishingTheme}
+                onClick={() => handleApplyTheme(selectedThemeId)}
                 className={`px-4 py-2 rounded-xl font-display font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs self-start sm:self-center ${
                   selectedThemeId === currentThemeId
                     ? 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'
                     : 'bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-400'
                 }`}
               >
-                <span>{selectedThemeId === currentThemeId ? 'Currently Active' : 'Apply This Theme'}</span>
+                <span>{selectedThemeId === currentThemeId ? 'Currently Active' : (isPublishingTheme ? 'Activating...' : `Apply ${getTheme(selectedThemeId).name} Theme`)}</span>
               </button>
             </div>
 

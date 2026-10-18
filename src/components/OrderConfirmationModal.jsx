@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Share2, Copy, Check, ShoppingBag } from 'lucide-react';
 import { formatPHP } from '../config/products';
 import { GCASH_NUMBER } from '../config/qrConfig';
+import { getTheme } from '../config/themes';
 
-export default function OrderConfirmationModal({ order, onReset, customQrs }) {
+export default function OrderConfirmationModal({ order, onReset, customQrs, themeId = 'halloween' }) {
+  const currentTheme = getTheme(themeId);
   const [copied, setCopied] = useState(false);
   const [copiedGcash, setCopiedGcash] = useState(false);
 
@@ -207,7 +209,7 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
           <button
             type="button"
             onClick={onReset}
-            className="w-full py-3.5 px-5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-mani-950 font-display font-bold text-sm sm:text-base border-2 border-mani-900 shadow-snack active:translate-y-0.5 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            className={`w-full py-3.5 px-5 rounded-2xl ${currentTheme?.primaryBtn || 'bg-amber-400 hover:bg-amber-300 text-mani-950 border-2 border-mani-900 shadow-snack'} font-display font-bold text-sm sm:text-base active:translate-y-0.5 flex items-center justify-center gap-2 transition-all cursor-pointer`}
           >
             <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
             <span>Order More Tubs 🥜</span>
