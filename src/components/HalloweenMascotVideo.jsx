@@ -294,6 +294,7 @@ export default function HalloweenMascotVideo({
       <video
         ref={videoRef}
         src={src}
+        poster={poster}
         autoPlay
         loop
         muted
@@ -305,6 +306,15 @@ export default function HalloweenMascotVideo({
           e.currentTarget.volume = 0;
         }}
         className="opacity-0 pointer-events-none absolute inset-0 w-full h-full object-contain"
+      />
+
+      {/* High-res static fallback logo rendered immediately while canvas initializes or if video autoplay is blocked (e.g., iOS Low Power Mode) */}
+      <img
+        src={poster}
+        alt={ariaLabel}
+        className={`absolute inset-0 w-full h-full object-contain pointer-events-none transition-opacity duration-300 ${
+          canvasReady ? 'opacity-0' : 'opacity-100'
+        }`}
       />
 
       {/* Transparent background-removed canvas integrated directly into the website background */}

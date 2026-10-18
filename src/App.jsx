@@ -12,8 +12,7 @@ import BrandStoryAndSuki from './components/BrandStoryAndSuki';
 import HalloweenAtmosphere, { PlayfulSkeletonSvg, SharpBatSvg, CornerWebWithSpider } from './components/HalloweenAtmosphere';
 import HalloweenMascotVideo from './components/HalloweenMascotVideo';
 import SeasonalAtmosphere from './components/SeasonalAtmosphere';
-import HowToOrderSection from './components/HowToOrderSection';
-import { DeliveryInfoSection, FooterSection } from './components/DeliveryAndFooter';
+import { FooterSection } from './components/DeliveryAndFooter';
 import { THEMES, getTheme, VALID_THEME_IDS, DEFAULT_THEME } from './config/themes';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
@@ -598,7 +597,13 @@ export default function App() {
     window.addEventListener('focus', fetchCutoff);
 
     fetch('/api/products')
-      .then((res) => res.json())
+      .then((res) => {
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          return res.json();
+        }
+        return null;
+      })
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setProducts((prev) => mergeProductsWithDefaults(data));
@@ -607,7 +612,13 @@ export default function App() {
       .catch(() => {});
 
     fetch('/api/theme')
-      .then((res) => res.json())
+      .then((res) => {
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          return res.json();
+        }
+        return null;
+      })
       .then((data) => {
         if (data && data.theme && VALID_THEME_IDS.includes(data.theme)) {
           setCurrentThemeId(data.theme);
@@ -1585,18 +1596,6 @@ export default function App() {
               products={products}
               onAddCombo={handleAddCombo}
               isOrdersClosed={isOrdersClosed}
-            />
-
-            {/* 📋 Step-by-Step How to Order Section */}
-            <HowToOrderSection
-              themeId={effectiveThemeId}
-              cutoffInfo={cutoffInfo}
-            />
-
-            {/* 🚚 Schedule, Cutoff & Delivery Policies Section */}
-            <DeliveryInfoSection
-              themeId={effectiveThemeId}
-              cutoffInfo={cutoffInfo}
             />
           </div>
         )}

@@ -714,24 +714,20 @@ async function runVerification() {
 
     // Check frontend component implementations
     const headerSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'Header.jsx'), 'utf8');
-    assert(headerSrc.includes('how-to-order') && headerSrc.includes('delivery-info'), 'Step 23: Header must include links to how-to-order and delivery-info');
     assert(headerSrc.includes('contact-footer') && headerSrc.includes('Order Now'), 'Step 23: Header must include contact link and Order Now CTA');
 
-    const howToOrderSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'HowToOrderSection.jsx'), 'utf8');
-    assert(howToOrderSrc.includes('Pick Your Flavors') && howToOrderSrc.includes('Enter Delivery Address'), 'Step 23: HowToOrderSection must explain ordering steps');
-
     const deliverySrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'DeliveryAndFooter.jsx'), 'utf8');
-    assert(deliverySrc.includes('DeliveryInfoSection') && deliverySrc.includes('FooterSection'), 'Step 23: DeliveryAndFooter must export DeliveryInfoSection and FooterSection');
+    assert(deliverySrc.includes('FooterSection'), 'Step 23: DeliveryAndFooter must export FooterSection');
 
     const adminSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'components', 'AdminPortal.jsx'), 'utf8');
     assert(adminSrc.includes("id: 'theme'") && adminSrc.includes('Seasonal Theme Manager'), 'Step 23: AdminPortal must contain Seasonal Theme Manager tab');
 
     const finalAppSrc = fs.readFileSync(path.join(ROOT_DIR, 'src', 'App.jsx'), 'utf8');
-    assert(finalAppSrc.includes('HowToOrderSection') && finalAppSrc.includes('DeliveryInfoSection'), 'Step 23: App.jsx must render HowToOrderSection and DeliveryInfoSection');
+    assert(!finalAppSrc.includes('<HowToOrderSection') && !finalAppSrc.includes('<DeliveryInfoSection'), 'Step 23: App.jsx must not render HowToOrderSection or DeliveryInfoSection');
     assert(finalAppSrc.includes('FooterSection') && finalAppSrc.includes('SeasonalAtmosphere'), 'Step 23: App.jsx must render FooterSection and SeasonalAtmosphere');
     assert(finalAppSrc.includes('mani_cart_quantities') && finalAppSrc.includes('mani_customer_data'), 'Step 23: App.jsx must persist cart and customer form in localStorage');
 
-    console.log('✓ Step 23 passed: Seasonal Theme Manager and shopping UX optimizations fully verified across backend, frontend, and cloud sync!\n');
+    console.log('✓ Step 23 passed: Streamlined storefront without HowToOrderSection/DeliveryInfoSection and with Seasonal Theme Manager verified!\n');
 
     console.log('================================================================');
     console.log('✅ ALL VERIFICATION STEPS PASSED WITH ZERO ERRORS!');

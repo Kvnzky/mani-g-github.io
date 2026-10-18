@@ -127,17 +127,17 @@ export default function Header({
               </button>
               <button
                 type="button"
-                onClick={() => scrollToSection('how-to-order')}
+                onClick={() => scrollToSection('suki-favorites')}
                 className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${currentTheme.headerNavText || 'text-amber-200 hover:bg-[#FF6B00] hover:text-white'}`}
               >
-                How to Order
+                Suki Combos
               </button>
               <button
                 type="button"
-                onClick={() => scrollToSection('delivery-info')}
+                onClick={() => scrollToSection('brand-story')}
                 className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${currentTheme.headerNavText || 'text-amber-200 hover:bg-[#FF6B00] hover:text-white'}`}
               >
-                Delivery Info
+                Our Story
               </button>
               <button
                 type="button"
@@ -295,17 +295,10 @@ export default function Header({
             </button>
             <button
               type="button"
-              onClick={() => scrollToSection('how-to-order')}
+              onClick={() => scrollToSection('brand-story')}
               className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-left text-amber-200 hover:bg-white/10 flex items-center justify-between"
             >
-              <span>📋 How to Order</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToSection('delivery-info')}
-              className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-left text-amber-200 hover:bg-white/10 flex items-center justify-between"
-            >
-              <span>🚚 Delivery &amp; Schedule</span>
+              <span>📖 Our Snack Story</span>
             </button>
             <button
               type="button"

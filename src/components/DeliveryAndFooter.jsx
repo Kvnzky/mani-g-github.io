@@ -1,96 +1,6 @@
 import React from 'react';
-import { Truck, Calendar, ShieldCheck, CreditCard, Lock, Mail, Heart, Sparkles, ExternalLink } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, Heart, Sparkles, ExternalLink } from 'lucide-react';
 import { getTheme } from '../config/themes';
-
-export function DeliveryInfoSection({ themeId = 'halloween', cutoffInfo }) {
-  const currentTheme = getTheme(themeId);
-  const deliveryDay = cutoffInfo?.deliveryDay || 'Wednesday';
-  const cutoffDate = cutoffInfo?.cutoffDate || 'Scheduled weekly';
-  const cutoffTime = cutoffInfo?.cutoffTime || '23:59';
-
-  const details = [
-    {
-      icon: Calendar,
-      title: 'Batch Delivery Day',
-      value: `Every ${deliveryDay}`,
-      desc: 'All tubs are roasted and cooked in small batches just before dispatch to ensure peak crunch.'
-    },
-    {
-      icon: Truck,
-      title: 'Weekly Cutoff Time',
-      value: `${cutoffDate} @ ${cutoffTime} PHT`,
-      desc: 'Submit your orders before the countdown expires so your tubs are included in the upcoming roast batch.'
-    },
-    {
-      icon: CreditCard,
-      title: 'Flexible Payment',
-      value: 'COD, GCash, Maribank',
-      desc: 'Pay safely upon doorstep delivery or via instant QR transfer during checkout.'
-    },
-    {
-      icon: ShieldCheck,
-      title: 'Freshness Guarantee',
-      value: 'Crunch-Lock Tubs',
-      desc: 'Sealed in airtight, reusable, food-grade containers to keep the rock salt and crispy garlic chips crunchy.'
-    }
-  ];
-
-  return (
-    <section id="delivery-info" className="scroll-mt-24 space-y-4">
-      <div className={`p-5 sm:p-6 rounded-3xl border-2 transition-all ${
-        themeId === 'default'
-          ? 'bg-white border-[#D97706]/70 shadow-warm-md text-mani-950'
-          : `${currentTheme.cardBg} ${currentTheme.cardBorder} shadow-warm-lg`
-      }`}>
-        <div className="border-b-2 border-dashed border-amber-300/40 pb-3.5 mb-5">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${currentTheme.badgeClass}`}>
-              Delivery &amp; Schedule
-            </span>
-            <span className="text-xs font-bold text-amber-300">
-              Dispatched Direct from our Roaster
-            </span>
-          </div>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
-            Schedule, Cutoff &amp; Delivery Policies
-          </h2>
-          <p className="text-xs sm:text-sm opacity-85 mt-0.5">
-            Transparent and reliable scheduling so you know exactly when your Mani arrives.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {details.map((d, idx) => {
-            const Icon = d.icon;
-            return (
-              <div
-                key={idx}
-                className="rounded-2xl p-4 bg-black/20 border border-amber-300/25 flex flex-col justify-between space-y-2"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-amber-400/20 text-amber-300 border border-amber-300/40">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider opacity-75 block">
-                      {d.title}
-                    </span>
-                    <span className="font-display font-bold text-sm text-amber-200">
-                      {d.value}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-xs opacity-80 leading-relaxed mt-1">
-                  {d.desc}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export function FooterSection({ themeId = 'halloween', onOpenAdminLogin, isAdminAuthenticated, onNavigateToAdmin }) {
   const currentTheme = getTheme(themeId);
@@ -148,13 +58,13 @@ export function FooterSection({ themeId = 'halloween', onOpenAdminLogin, isAdmin
                 </a>
               </li>
               <li>
-                <a href="#how-to-order" className="hover:text-amber-300 transition-colors flex items-center gap-1.5">
-                  <span>📋</span> How to Order
+                <a href="#brand-story" className="hover:text-amber-300 transition-colors flex items-center gap-1.5">
+                  <span>📖</span> Our Snack Story
                 </a>
               </li>
               <li>
-                <a href="#delivery-info" className="hover:text-amber-300 transition-colors flex items-center gap-1.5">
-                  <span>🚚</span> Delivery Schedule
+                <a href="#contact-footer" className="hover:text-amber-300 transition-colors flex items-center gap-1.5">
+                  <span>✉️</span> Contact &amp; Inquiries
                 </a>
               </li>
             </ul>

@@ -1022,6 +1022,10 @@ export default function AdminPortal({
         onLogout();
         return;
       }
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok || !contentType.includes('application/json')) {
+        throw new Error('Settings API response is not JSON');
+      }
       const data = await res.json();
       if (data) {
         const sid = data.spreadsheetId || localStorage.getItem('mani_spreadsheet_id') || DEFAULT_SPREADSHEET_ID || '';

@@ -8,6 +8,8 @@
     "dev:backend": "node server/index.js",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build": "vite build",
+    "build:portable": "node scripts/build-portable.js",
+    "test": "node scripts/verify-fixes.js",
     "preview": "vite preview",
     "server": "node server/index.js"
   },
