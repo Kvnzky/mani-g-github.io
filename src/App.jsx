@@ -1843,22 +1843,6 @@ export default function App() {
         onClose={handleCloseLoginModal}
         onLoginSuccess={handleLoginSuccess}
       />
-
-      {/* Footer */}
-      <footer className={`relative z-10 py-8 px-4 text-center text-xs font-medium border-t ${currentTheme?.footerBg || 'bg-[#1F1025] text-amber-200 border-[#FF6B00]/40'}`}>
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🥜</span>
-            <span className="font-display font-bold text-sm">Mani Wandering</span>
-            <span className="opacity-75">• Freshly Roasted Filipino Garlic Peanuts</span>
-          </div>
-          <div className="flex items-center gap-4 text-xs opacity-80">
-            <span>Fresh Batches Weekly</span>
-            <span>•</span>
-            <span>Handcrafted in the Philippines</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

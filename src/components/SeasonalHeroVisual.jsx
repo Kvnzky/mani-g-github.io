@@ -203,8 +203,8 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
                     <img src="./images/products/salted.jpg" alt="Harvest Salted Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🍂 Classic Salted</span>
-                    <span className="text-[9px] text-amber-200/80 font-medium">Suki Favorite</span>
+                    <span className="text-[10px] font-black text-amber-200 block leading-tight">🍂 Classic Salted</span>
+                    <span className="text-[9px] text-amber-100 font-medium">Suki Favorite</span>
                   </div>
                 </div>
 
@@ -214,8 +214,8 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
                     <img src="./images/products/spicy.jpg" alt="Campfire Spicy Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-rose-300 block leading-tight">🔥 Campfire Spice</span>
-                    <span className="text-[9px] text-amber-200 font-bold">#1 Pulutan</span>
+                    <span className="text-[10px] font-black text-rose-200 block leading-tight">🔥 Campfire Spice</span>
+                    <span className="text-[9px] text-amber-100 font-bold">#1 Pulutan</span>
                   </div>
                 </div>
 
@@ -225,8 +225,8 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
                     <img src="./images/products/salted-egg.jpg" alt="Golden Feast Salted Egg Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🥚 Golden Feast</span>
-                    <span className="text-[9px] text-amber-200/80 font-medium">Rich Butter Yolk</span>
+                    <span className="text-[10px] font-black text-amber-200 block leading-tight">🥚 Golden Feast</span>
+                    <span className="text-[9px] text-amber-100 font-medium">Rich Butter Yolk</span>
                   </div>
                 </div>
               </div>
