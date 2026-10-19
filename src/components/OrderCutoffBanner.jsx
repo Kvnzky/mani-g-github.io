@@ -121,7 +121,7 @@ export default function OrderCutoffBanner({ cutoffInfo, onRefreshCutoff, themeId
   return (
     <div 
       id="order-cutoff-section"
-      className={`w-full rounded-3xl bg-white border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-card overflow-hidden animate-fade-in transition-all`}
+      className={`card w-full rounded-3xl bg-white border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-card overflow-hidden animate-fade-in transition-all`}
     >
       {/* 1. TOP: Status Indicator & Header */}
       <div className={`px-5 sm:px-6 py-3 bg-gradient-to-r ${currentTheme?.cutoffHeaderBg || 'from-[#1F1025] via-[#2B1B30] to-[#1F1025] border-b-2 border-[#FF6B00]/50'} flex items-center justify-between gap-3 flex-wrap`}>

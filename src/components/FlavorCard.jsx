@@ -81,7 +81,7 @@ export default function FlavorCard({
 
   return (
     <article
-      className={`relative rounded-3xl p-3.5 sm:p-4 transition-all duration-200 flex flex-col justify-between overflow-hidden group bg-gradient-to-b ${personality.cardBg} ${
+      className={`card product-card relative rounded-3xl p-3.5 sm:p-4 transition-all duration-200 flex flex-col justify-between overflow-hidden group bg-gradient-to-b ${personality.cardBg} ${
         isSelected
           ? `border-2 ${currentTheme.cardBorderActive || 'border-[#DC2626]'} shadow-warm-lg ring-4 ring-amber-400/60 -translate-y-0.5`
           : `border-2 ${currentTheme.cardBorder || 'border-[#15803D]/60'} ${currentTheme.cardShadow || 'shadow-warm-md hover:shadow-warm-xl'} hover:border-amber-400 hover:-translate-y-1 ${personality.tiltClass}`
@@ -119,7 +119,7 @@ export default function FlavorCard({
           )}
 
           {/* Bottom-Right Obvious Price Tag */}
-          <div className={`absolute bottom-2.5 right-2.5 px-3 py-1 rounded-xl font-display font-bold text-sm sm:text-base border shadow-md flex items-baseline gap-1 z-10 ${priceBadgeClass}`}>
+          <div className={`price absolute bottom-2.5 right-2.5 px-3 py-1 rounded-xl font-display font-bold text-sm sm:text-base border shadow-md flex items-baseline gap-1 z-10 ${priceBadgeClass}`}>
             <span>{formatPHP(product.price || 50)}</span>
             <span className="text-[10px] font-sans font-bold opacity-85">/ tub</span>
           </div>
@@ -205,7 +205,7 @@ export default function FlavorCard({
                   onClick={handleMinusStaged}
                   disabled={stagedQty <= 1}
                   aria-label={`Decrease ${product.name} quantity to add`}
-                  className={`w-6 h-7 rounded-lg flex items-center justify-center font-bold transition-all ${
+                  className={`stepper-btn w-6 h-7 rounded-lg flex items-center justify-center font-bold transition-all ${
                     stagedQty <= 1 
                       ? 'text-mani-300 cursor-not-allowed' 
                       : 'bg-white text-mani-900 hover:bg-amber-100 shadow-2xs active:scale-90 cursor-pointer'
@@ -225,7 +225,7 @@ export default function FlavorCard({
                   type="button"
                   onClick={handlePlusStaged}
                   aria-label={`Increase ${product.name} quantity to add`}
-                  className="w-6 h-7 rounded-lg bg-white text-mani-900 hover:bg-amber-100 active:scale-90 flex items-center justify-center shadow-2xs font-bold transition-all cursor-pointer"
+                  className="stepper-btn w-6 h-7 rounded-lg bg-white text-mani-900 hover:bg-amber-100 active:scale-90 flex items-center justify-center shadow-2xs font-bold transition-all cursor-pointer"
                 >
                   <Plus className="w-3 h-3 stroke-[2.5]" />
                 </button>
@@ -249,7 +249,7 @@ export default function FlavorCard({
                   type="button"
                   onClick={handleMinusInCart}
                   aria-label={`Decrease ${product.name} quantity`}
-                  className="w-7 h-7 rounded-lg bg-white text-mani-950 hover:bg-red-50 hover:text-red-600 active:scale-90 flex items-center justify-center border border-mani-900/20 shadow-2xs font-bold transition-all cursor-pointer"
+                  className="stepper-btn w-7 h-7 rounded-lg bg-white text-mani-950 hover:bg-red-50 hover:text-red-600 active:scale-90 flex items-center justify-center border border-mani-900/20 shadow-2xs font-bold transition-all cursor-pointer"
                 >
                   <Minus className="w-3 h-3 stroke-[2.5]" />
                 </button>
@@ -268,7 +268,7 @@ export default function FlavorCard({
                   type="button"
                   onClick={handlePlusInCart}
                   aria-label={`Increase ${product.name} quantity`}
-                  className={`w-7 h-7 rounded-lg ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white border border-amber-300'} active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer`}
+                  className={`stepper-btn w-7 h-7 rounded-lg ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white border border-amber-300'} active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer`}
                 >
                   <Plus className="w-3 h-3 stroke-[2.5]" />
                 </button>

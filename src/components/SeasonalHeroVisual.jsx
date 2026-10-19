@@ -132,7 +132,7 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
         <div className="absolute -bottom-6 -left-6 w-44 h-44 bg-[#881337]/25 rounded-full blur-2xl pointer-events-none" />
 
         {/* Main Harvest Composition Card */}
-        <div className="relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#381B09]/95 via-[#2A170B]/95 to-[#231206] border-2 border-[#EA580C] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
+        <div className="card relative z-10 w-full rounded-3xl bg-white/95 border-2 border-[#FDE68A] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
           {/* Decorative Corner Foliage & Harvest Accents */}
           <div className="absolute -top-2 -right-2 text-2xl rotate-12 drop-shadow-md select-none pointer-events-none">
             🍂🌾
@@ -153,72 +153,72 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
               </div>
 
               {/* Glowing Warm Harvest Ring Wreath behind logo */}
-              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#451F0A] via-[#2A170B] to-[#381B09] border-4 border-[#F59E0B] p-3 shadow-warm-lg flex items-center justify-center mx-auto">
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#FEFCE8] via-[#FEF3C7] to-[#FDE68A] border-4 border-[#D97706] p-3 shadow-warm-lg flex items-center justify-center mx-auto">
                 <img
                   src="./logo.png"
                   alt="Mani Wandering Thanksgiving Harvest Logo"
-                  className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(234,88,12,0.5)]"
+                  className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(217,119,6,0.35)]"
                 />
               </div>
 
               {/* Autumn Harvest Ribbon Tag */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#881337] to-[#EA580C] text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-amber-300 shadow-snack-sm flex items-center gap-1">
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#D97706] to-[#C2410C] text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-amber-300 shadow-snack-sm flex items-center gap-1">
                 <span>🌾 Season of Gratitude</span>
               </div>
             </div>
 
             {/* Featured Autumn Harvest Tubs Mini Showcase */}
             <div className="pt-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#FDE047] mb-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#92400E] mb-3">
                 🍂 Pinakamasarap na Pang-Salo-Salo at Pasasalamat
               </p>
 
               <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
                 {/* Tub 1: Classic Harvest Salted */}
-                <div className="rounded-2xl p-2 bg-[#231206]/90 border border-[#EA580C]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#F59E0B] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-500/40">
+                <div className="rounded-2xl p-2 bg-[#FEFCE8] border border-[#FDE68A] flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#D97706] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-400/40">
                     <img src="./images/products/salted.jpg" alt="Harvest Salted Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🍂 Salted</span>
-                    <span className="text-[9px] text-amber-200/90 font-medium">Classic Crunch</span>
+                    <span className="text-[10px] font-black text-[#291E18] block leading-tight">🍂 Salted</span>
+                    <span className="text-[9px] text-[#78350F] font-medium">Classic Crunch</span>
                   </div>
                 </div>
 
                 {/* Tub 2: Campfire Heat Spicy */}
-                <div className="rounded-2xl p-2 bg-[#231206]/90 border border-[#881337]/70 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-amber-300 transition-all scale-105 bg-gradient-to-b from-[#381B09] to-[#231206]">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#EA580C]">
+                <div className="rounded-2xl p-2 bg-[#FEFCE8] border border-[#C2410C]/60 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-amber-400 transition-all scale-105 bg-gradient-to-b from-white to-[#FEF3C7]">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#C2410C]">
                     <img src="./images/products/spicy.jpg" alt="Campfire Spicy Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-rose-300 block leading-tight">🔥 Campfire</span>
-                    <span className="text-[9px] text-amber-200/90 font-bold">Chili Garlic</span>
+                    <span className="text-[10px] font-black text-[#881337] block leading-tight">🔥 Campfire</span>
+                    <span className="text-[9px] text-[#C2410C] font-bold">Chili Garlic</span>
                   </div>
                 </div>
 
                 {/* Tub 3: Golden Yolk Feast Salted Egg */}
-                <div className="rounded-2xl p-2 bg-[#231206]/90 border border-[#EA580C]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#F59E0B] transition-all">
+                <div className="rounded-2xl p-2 bg-[#FEFCE8] border border-[#FDE68A] flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#D97706] transition-all">
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-400/40">
                     <img src="./images/products/salted-egg.jpg" alt="Golden Feast Salted Egg Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🌾 Golden Feast</span>
-                    <span className="text-[9px] text-amber-200/90 font-medium">Rich Butter Yolk</span>
+                    <span className="text-[10px] font-black text-[#291E18] block leading-tight">🌾 Golden Feast</span>
+                    <span className="text-[9px] text-[#78350F] font-medium">Rich Butter Yolk</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 3 Value Pillars */}
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-amber-100">
-              <span className="inline-flex items-center gap-1 bg-[#1C0E05]/90 px-2.5 py-1 rounded-xl border border-[#EA580C]/40">
-                <Heart className="w-3 h-3 text-[#EA580C]" /> Salo-Salo Ready
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-[#78350F]">
+              <span className="inline-flex items-center gap-1 bg-[#FEFCE8] px-2.5 py-1 rounded-xl border border-[#FDE68A]">
+                <Heart className="w-3 h-3 text-[#C2410C]" /> Salo-Salo Ready
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#1C0E05]/90 px-2.5 py-1 rounded-xl border border-[#EA580C]/40">
-                <Award className="w-3 h-3 text-[#F59E0B]" /> Purong Crispy Bawang
+              <span className="inline-flex items-center gap-1 bg-[#FEFCE8] px-2.5 py-1 rounded-xl border border-[#FDE68A]">
+                <Award className="w-3 h-3 text-[#D97706]" /> Purong Crispy Bawang
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#1C0E05]/90 px-2.5 py-1 rounded-xl border border-[#EA580C]/40">
-                <Sparkles className="w-3 h-3 text-amber-300" /> Fresh Small Batches
+              <span className="inline-flex items-center gap-1 bg-[#FEFCE8] px-2.5 py-1 rounded-xl border border-[#FDE68A]">
+                <Sparkles className="w-3 h-3 text-[#D97706]" /> Fresh Small Batches
               </span>
             </div>
           </div>

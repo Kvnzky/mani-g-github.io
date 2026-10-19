@@ -93,7 +93,7 @@ export default function OrderSummaryDrawer({
               type="button"
               onClick={onClose}
               aria-label="Close Order Summary"
-              className="w-9 h-9 rounded-xl bg-white text-mani-900 border-2 border-mani-900/20 hover:border-mani-900 flex items-center justify-center transition-colors cursor-pointer"
+              className="stepper-btn w-9 h-9 rounded-xl bg-white text-mani-900 border-2 border-mani-900/20 hover:border-mani-900 flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4 stroke-[2.5]" />
             </button>
@@ -170,7 +170,7 @@ export default function OrderSummaryDrawer({
                           type="button"
                           onClick={() => onQuantityChange(item.id, item.quantity - 1)}
                           aria-label={`Decrease quantity of ${item.name}`}
-                          className="w-7 h-7 rounded-lg bg-white border border-mani-200 hover:bg-red-50 hover:text-red-600 flex items-center justify-center text-mani-800 cursor-pointer"
+                          className="stepper-btn w-7 h-7 rounded-lg bg-white border border-mani-200 hover:bg-red-50 hover:text-red-600 flex items-center justify-center text-mani-800 cursor-pointer"
                         >
                           <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
                         </button>
@@ -181,7 +181,7 @@ export default function OrderSummaryDrawer({
                           type="button"
                           onClick={() => onQuantityChange(item.id, item.quantity + 1)}
                           aria-label={`Increase quantity of ${item.name}`}
-                          className="w-7 h-7 rounded-lg bg-mani-900 text-amber-300 hover:bg-mani-800 flex items-center justify-center cursor-pointer"
+                          className="stepper-btn w-7 h-7 rounded-lg bg-mani-900 text-amber-300 hover:bg-mani-800 flex items-center justify-center cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                         </button>

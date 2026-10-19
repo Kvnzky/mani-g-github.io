@@ -307,7 +307,8 @@ export default function SeasonalAtmosphere({ themeId = 'halloween' }) {
     return <HalloweenAtmosphere />;
   }
   if (themeId === 'thanksgiving') {
-    return <ThanksgivingLeaves />;
+    // Thanksgiving leaves are handled by the Animated Falling Leaves FX Script (#thanksgiving-leaves-container)
+    return null;
   }
   if (themeId === 'christmas') {
     return <ChristmasSnow />;

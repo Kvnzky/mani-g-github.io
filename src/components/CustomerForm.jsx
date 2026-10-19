@@ -63,7 +63,7 @@ export default function CustomerForm({
       {/* 3. Customer & Shipping Information */}
       <div 
         id="customer-info-section"
-        className={`bg-white rounded-3xl p-5 sm:p-6 border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-card space-y-4 transition-all`}
+        className={`card bg-white rounded-3xl p-5 sm:p-6 border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-card space-y-4 transition-all`}
       >
         <div className="border-b-2 border-dashed border-amber-300/70 pb-3.5">
           <div className="flex items-center gap-2">

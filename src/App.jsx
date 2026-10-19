@@ -19,6 +19,7 @@ import { NewYearPeanutSvg, NewYearCornerGarland, NewYearSparkleOrnament } from '
 import { ChineseNewYearPeanutSvg, ChineseNewYearCornerGarland, ChineseNewYearLanternOrnament } from './components/ChineseNewYearDecorations';
 import { ValentinesPeanutSvg, ValentinesCornerGarland, ValentinesHeartOrnament } from './components/ValentinesDecorations';
 import { THEMES, getTheme, VALID_THEME_IDS, DEFAULT_THEME } from './config/themes';
+import { initThanksgivingLeaves } from './utils/thanksgivingLeaves';
 import { DEFAULT_PRODUCTS, formatPHP } from './config/products';
 import { DEFAULT_GCASH_QR, DEFAULT_MARIBANK_QR, GCASH_NUMBER } from './config/qrConfig';
 import { DEFAULT_APPS_SCRIPT_URL, DEFAULT_SPREADSHEET_ID } from './config/sheetsConfig';
@@ -214,6 +215,9 @@ export default function App() {
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', effectiveThemeId);
       document.body.setAttribute('data-theme', effectiveThemeId);
+      document.documentElement.classList.toggle('thanksgiving-theme', effectiveThemeId === 'thanksgiving');
+      document.body.classList.toggle('thanksgiving-theme', effectiveThemeId === 'thanksgiving');
+      initThanksgivingLeaves();
     }
   }, [effectiveThemeId]);
 
@@ -1302,7 +1306,7 @@ export default function App() {
   };
 
   return (
-    <div data-theme={effectiveThemeId} className={`relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 ${effectiveThemeId === 'christmas' ? 'selection:bg-[#DC2626] selection:text-white' : effectiveThemeId === 'thanksgiving' ? 'selection:bg-[#EA580C] selection:text-white' : effectiveThemeId === 'new-year' ? 'selection:bg-[#EAB308] selection:text-slate-950' : effectiveThemeId === 'chinese-new-year' ? 'selection:bg-[#DC2626] selection:text-amber-200' : effectiveThemeId === 'valentines-day' ? 'selection:bg-[#E11D48] selection:text-white' : 'selection:bg-[#FF6B00] selection:text-white'}`}>
+    <div data-theme={effectiveThemeId} className={`relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 ${effectiveThemeId === 'thanksgiving' ? 'thanksgiving-theme' : ''} ${effectiveThemeId === 'christmas' ? 'selection:bg-[#DC2626] selection:text-white' : effectiveThemeId === 'thanksgiving' ? 'selection:bg-[#EA580C] selection:text-white' : effectiveThemeId === 'new-year' ? 'selection:bg-[#EAB308] selection:text-slate-950' : effectiveThemeId === 'chinese-new-year' ? 'selection:bg-[#DC2626] selection:text-amber-200' : effectiveThemeId === 'valentines-day' ? 'selection:bg-[#E11D48] selection:text-white' : 'selection:bg-[#FF6B00] selection:text-white'}`}>
       {/* 🌟 Seasonal Atmosphere Particles & Ambient Visuals (Halloween bats/ghosts/skeletons, Christmas snow, etc.) */}
       {currentView === 'order' && <SeasonalAtmosphere themeId={effectiveThemeId} />}
 
@@ -1399,7 +1403,7 @@ export default function App() {
         ) : (
           <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6 sm:space-y-8">
             {/* 🌟 HERO SECTION: Dynamic Seasonal Hero */}
-            <section className={`relative rounded-[2rem] ${currentTheme?.heroBg || 'bg-hero-snack border-2 border-[#FF6B00] shadow-pumpkin-card'} overflow-hidden p-5 sm:p-8 lg:p-10`}>
+            <section className={`hero relative rounded-[2rem] ${currentTheme?.heroBg || 'bg-hero-snack border-2 border-[#FF6B00] shadow-pumpkin-card'} overflow-hidden p-5 sm:p-8 lg:p-10`}>
               {/* Corner & Atmospheric Theme Decorations */}
               {effectiveThemeId === 'halloween' && (
                 <>
@@ -1488,7 +1492,7 @@ export default function App() {
                     <div className="flex items-center justify-center lg:justify-start gap-2.5 flex-wrap">
                       <h1
                         data-testid="hero-headline"
-                        className={`font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] ${currentTheme?.heroHeadlineColor || 'text-white drop-shadow-[0_4px_16px_rgba(255,107,0,0.45)]'}`}
+                        className={`hero-title font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] ${currentTheme?.heroHeadlineColor || 'text-white drop-shadow-[0_4px_16px_rgba(255,107,0,0.45)]'}`}
                       >
                         {currentTheme?.heroHeadline || 'ANONG FEAR MO TODAY?'}
                       </h1>
@@ -1839,6 +1843,22 @@ export default function App() {
         onClose={handleCloseLoginModal}
         onLoginSuccess={handleLoginSuccess}
       />
+
+      {/* Footer */}
+      <footer className={`relative z-10 py-8 px-4 text-center text-xs font-medium border-t ${currentTheme?.footerBg || 'bg-[#1F1025] text-amber-200 border-[#FF6B00]/40'}`}>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🥜</span>
+            <span className="font-display font-bold text-sm">Mani Wandering</span>
+            <span className="opacity-75">• Freshly Roasted Filipino Garlic Peanuts</span>
+          </div>
+          <div className="flex items-center gap-4 text-xs opacity-80">
+            <span>Fresh Batches Weekly</span>
+            <span>•</span>
+            <span>Handcrafted in the Philippines</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

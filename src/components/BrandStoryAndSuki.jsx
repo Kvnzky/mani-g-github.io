@@ -240,7 +240,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             return (
               <div
                 key={combo.id}
-                className={`rounded-3xl p-5 sm:p-6 bg-gradient-to-b from-amber-50/95 via-white to-orange-50/60 border-2 ${currentTheme?.cardBorder || 'border-[#FF6B00]/60'} hover:border-amber-400 shadow-snack-card hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between`}
+                className={`card rounded-3xl p-5 sm:p-6 bg-gradient-to-b from-amber-50/95 via-white to-orange-50/60 border-2 ${currentTheme?.cardBorder || 'border-[#FF6B00]/60'} hover:border-amber-400 shadow-snack-card hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between`}
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
@@ -314,7 +314,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
           isChristmas
             ? 'bg-gradient-to-br from-[#123322] via-[#0E281B] to-[#1C422C] text-emerald-50 border-2 border-[#DC2626] shadow-warm-lg'
             : isThanksgiving
-            ? 'bg-gradient-to-br from-[#381B09] via-[#2A170B] to-[#451F0A] text-amber-50 border-2 border-[#EA580C] shadow-warm-lg'
+            ? 'bg-gradient-to-br from-[#FEFCE8] via-[#FEF3C7] to-[#FDE68A] text-[#291E18] border-2 border-[#FDE68A] shadow-warm-lg'
             : isNewYear
             ? 'bg-gradient-to-br from-[#10172A] via-[#0B1120] to-[#1E243B] text-slate-100 border-2 border-[#EAB308] shadow-warm-lg'
             : isChineseNewYear
@@ -378,18 +378,18 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                 <Sparkles className="w-3.5 h-3.5 text-amber-200" />
                 <span>{currentTheme?.brandStoryPill || 'Our Snack Story • Kwento ng Mani Wandering'}</span>
               </div>
-              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
+              <h2 className={`font-display text-2xl sm:text-3xl md:text-4xl font-bold ${isThanksgiving ? 'text-[#291E18]' : 'text-white'} tracking-tight leading-tight`}>
                 {currentTheme?.brandStoryHeadline || 'Street Snack Nostalgia, Upgraded for Everyday Cravings 🎃🥜'}
               </h2>
-              <p className="text-xs sm:text-sm text-amber-100/90 font-medium leading-relaxed">
-                Every Filipino knows that irresistible smell of freshly cooked kanto mani—warm, savory, and loaded with toasted garlic. We started <strong className="text-amber-300">Mani Wandering</strong> to capture that honest, home-cooked street snack feeling in convenient, resealable tubs you can enjoy anywhere. Small-batch cooking, bold seasonings, and purong crispy bawang chips in every bite.
+              <p className={`text-xs sm:text-sm ${isThanksgiving ? 'text-[#78350F]' : 'text-amber-100/90'} font-medium leading-relaxed`}>
+                Every Filipino knows that irresistible smell of freshly cooked kanto mani—warm, savory, and loaded with toasted garlic. We started <strong className={isThanksgiving ? 'text-[#C2410C]' : 'text-amber-300'}>Mani Wandering</strong> to capture that honest, home-cooked street snack feeling in convenient, resealable tubs you can enjoy anywhere. Small-batch cooking, bold seasonings, and purong crispy bawang chips in every bite.
               </p>
             </div>
 
             {/* Featured Character Focal Point Card */}
-            <div className={`flex items-center gap-4 ${
+            <div className={`card flex items-center gap-4 ${
               isChristmas ? 'bg-[#0D2418]/95 border-2 border-[#DC2626]' 
-              : isThanksgiving ? 'bg-[#2A170B]/95 border-2 border-[#EA580C]'
+              : isThanksgiving ? 'bg-white/95 border-2 border-[#FDE68A]'
               : isNewYear ? 'bg-[#0B1120]/95 border-2 border-[#EAB308]'
               : isChineseNewYear ? 'bg-[#260707]/95 border-2 border-[#DC2626]'
               : isValentines ? 'bg-[#240815]/95 border-2 border-[#E11D48]'
