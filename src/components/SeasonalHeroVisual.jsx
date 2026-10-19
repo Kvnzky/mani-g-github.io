@@ -334,6 +334,115 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
     );
   }
 
+  if (themeId === 'chinese-new-year') {
+    return (
+      <div className="relative w-full max-w-[620px] mx-auto flex items-center justify-center p-3 select-none">
+        {/* Ambient Auspicious Glow Backdrops in Imperial Red, Rich Gold & Deep Burgundy */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#DC2626]/25 via-[#F59E0B]/20 to-[#7F1D1D]/35 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-6 -right-6 w-40 h-40 bg-[#F59E0B]/20 rounded-full blur-2xl pointer-events-none animate-pulse" />
+        <div className="absolute -bottom-6 -left-6 w-44 h-44 bg-[#DC2626]/25 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Main Lunar New Year Composition Card */}
+        <div className="relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#3B0C0C]/95 via-[#260707]/95 to-[#1F0606] border-2 border-[#DC2626] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
+          {/* Decorative Corner Lanterns & Gold Coins */}
+          <div className="absolute -top-2 -right-2 text-2xl rotate-12 drop-shadow-md select-none pointer-events-none">
+            🧧🏮
+          </div>
+          <div className="absolute -bottom-2 -left-2 text-2xl -rotate-12 drop-shadow-md select-none pointer-events-none">
+            🪙✨
+          </div>
+
+          {/* Central Logo & Auspicious Gold Cloud Ring */}
+          <div className="text-center space-y-4">
+            <div className="relative inline-block animate-float-slow">
+              {/* Auspicious Cloud flourish above logo */}
+              <div className="absolute -top-4 -right-2 z-20 pointer-events-none transform rotate-12 drop-shadow-md">
+                <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none">
+                  <path
+                    d="M10 28 C4 28 2 20 8 16 C10 8 22 6 26 14 C32 10 42 12 42 20 C48 20 50 28 44 30 Z"
+                    fill="#FDE047"
+                    stroke="#D97706"
+                    strokeWidth="1.2"
+                  />
+                  <circle cx="26" cy="22" r="3" fill="#DC2626" />
+                </svg>
+              </div>
+
+              {/* Glowing Imperial Red & Gold Ring Wreath behind logo */}
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#450F0F] via-[#260707] to-[#3B0C0C] border-4 border-[#F59E0B] p-3 shadow-warm-lg flex items-center justify-center mx-auto">
+                <img
+                  src="./logo.png"
+                  alt="Mani Wandering Chinese New Year Logo"
+                  className="w-full h-full object-contain drop-shadow-[0_4px_14px_rgba(220,38,38,0.55)]"
+                />
+              </div>
+
+              {/* Auspicious Ribbon Tag */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#B91C1C] via-[#DC2626] to-[#F59E0B] text-amber-100 text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-amber-300 shadow-snack-sm flex items-center gap-1">
+                <span>🧧 Gong Xi Fa Cai</span>
+              </div>
+            </div>
+
+            {/* Featured Lunar New Year Tubs Mini Showcase */}
+            <div className="pt-2">
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#FDE047] mb-3">
+                🏮 Pinakamasarap na Pang-Salo-Salo at Pampaswerte
+              </p>
+
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                {/* Tub 1: Lucky Salted */}
+                <div className="rounded-2xl p-2 bg-[#1F0606]/90 border border-amber-600/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#F59E0B] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-500/40">
+                    <img src="./images/products/salted.jpg" alt="Lucky Salted Mani" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🧧 Lucky</span>
+                    <span className="text-[9px] text-amber-200/90 font-medium">Prosperity Fave</span>
+                  </div>
+                </div>
+
+                {/* Tub 2: Dragon Chili Kick Spicy */}
+                <div className="rounded-2xl p-2 bg-[#1F0606]/90 border border-[#DC2626]/70 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-amber-300 transition-all scale-105 bg-gradient-to-b from-[#3B0C0C] to-[#1F0606]">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#DC2626]">
+                    <img src="./images/products/spicy.jpg" alt="Dragon Chili Spicy Mani" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-rose-300 block leading-tight">🐉 Dragon Kick</span>
+                    <span className="text-[9px] text-amber-200/90 font-bold">#1 Pulutan</span>
+                  </div>
+                </div>
+
+                {/* Tub 3: Golden Treasure Egg Salted Egg */}
+                <div className="rounded-2xl p-2 bg-[#1F0606]/90 border border-amber-600/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#F59E0B] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-400/40">
+                    <img src="./images/products/salted-egg.jpg" alt="Golden Treasure Egg Mani" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🪙 Treasure</span>
+                    <span className="text-[9px] text-amber-200/90 font-medium">Fortune Umami</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3 Value Pillars */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-amber-100">
+              <span className="inline-flex items-center gap-1 bg-[#1A0404]/90 px-2.5 py-1 rounded-xl border border-amber-600/40">
+                <Gift className="w-3 h-3 text-[#DC2626]" /> Angpao &amp; Feasts Ready
+              </span>
+              <span className="inline-flex items-center gap-1 bg-[#1A0404]/90 px-2.5 py-1 rounded-xl border border-amber-600/40">
+                <Star className="w-3 h-3 text-[#F59E0B]" /> Purong Crispy Bawang
+              </span>
+              <span className="inline-flex items-center gap-1 bg-[#1A0404]/90 px-2.5 py-1 rounded-xl border border-amber-600/40">
+                <Sparkles className="w-3 h-3 text-amber-300" /> Bagong Luto for Good Luck
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Default / Other Themes Fallback: Classic Brand Showcase
   return (
     <div className="relative w-full max-w-[580px] mx-auto flex items-center justify-center p-3 select-none">

@@ -143,8 +143,8 @@ function ChineseNewYearLanterns() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
       {/* Decorative Hanging Lantern Accents in Top Corners */}
-      <div className="absolute top-0 left-6 sm:left-14 opacity-75">
-        <svg className="w-10 sm:w-12 h-auto" viewBox="0 0 40 70" fill="none">
+      <div className="absolute top-0 left-6 sm:left-14 opacity-80">
+        <svg className="w-10 sm:w-12 h-auto drop-shadow-[0_2px_8px_rgba(220,38,38,0.5)]" viewBox="0 0 40 70" fill="none">
           <line x1="20" y1="0" x2="20" y2="15" stroke="#F59E0B" strokeWidth="2" />
           <ellipse cx="20" cy="35" rx="16" ry="20" fill="#DC2626" stroke="#F59E0B" strokeWidth="2" />
           <line x1="20" y1="15" x2="20" y2="55" stroke="#F59E0B" strokeWidth="1.5" />
@@ -153,8 +153,8 @@ function ChineseNewYearLanterns() {
           <line x1="20" y1="55" x2="20" y2="68" stroke="#DC2626" strokeWidth="3" />
         </svg>
       </div>
-      <div className="absolute top-0 right-6 sm:right-14 opacity-75">
-        <svg className="w-10 sm:w-12 h-auto" viewBox="0 0 40 70" fill="none">
+      <div className="absolute top-0 right-6 sm:right-14 opacity-80">
+        <svg className="w-10 sm:w-12 h-auto drop-shadow-[0_2px_8px_rgba(220,38,38,0.5)]" viewBox="0 0 40 70" fill="none">
           <line x1="20" y1="0" x2="20" y2="15" stroke="#F59E0B" strokeWidth="2" />
           <ellipse cx="20" cy="35" rx="16" ry="20" fill="#DC2626" stroke="#F59E0B" strokeWidth="2" />
           <line x1="20" y1="15" x2="20" y2="55" stroke="#F59E0B" strokeWidth="1.5" />
@@ -163,6 +163,42 @@ function ChineseNewYearLanterns() {
           <line x1="20" y1="55" x2="20" y2="68" stroke="#DC2626" strokeWidth="3" />
         </svg>
       </div>
+
+      {/* Floating Auspicious Gold Coins, Angpao & Plum Blossom Petals */}
+      {[
+        { left: '9%', delay: '0s', duration: '15s', size: 'w-4 h-4', type: 'coin' },
+        { left: '26%', delay: '3.5s', duration: '18s', size: 'w-3.5 h-3.5', type: 'petal' },
+        { left: '44%', delay: '1s', duration: '16s', size: 'w-4 h-5', type: 'angpao' },
+        { left: '62%', delay: '5s', duration: '20s', size: 'w-4 h-4', type: 'coin' },
+        { left: '78%', delay: '2s', duration: '17s', size: 'w-3.5 h-3.5', type: 'petal' },
+        { left: '91%', delay: '4s', duration: '19s', size: 'w-4 h-5', type: 'angpao' }
+      ].map((item, i) => (
+        <div
+          key={i}
+          className="absolute -top-10 opacity-75 animate-fall"
+          style={{
+            left: item.left,
+            animationDelay: item.delay,
+            animationDuration: item.duration
+          }}
+        >
+          {item.type === 'coin' ? (
+            <svg className={item.size} viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" fill="#F59E0B" stroke="#B45309" strokeWidth="1.5" />
+              <rect x="9.5" y="9.5" width="5" height="5" fill="#7F1D1D" stroke="#B45309" strokeWidth="1" />
+            </svg>
+          ) : item.type === 'petal' ? (
+            <svg className={item.size} viewBox="0 0 24 24" fill="#FDA4AF">
+              <path d="M12 2C8 6 6 10 7 14c1 4 5 7 5 7s4-3 5-7c1-4-1-8-5-12z" />
+            </svg>
+          ) : (
+            <svg className={item.size} viewBox="0 0 20 26" fill="none">
+              <rect x="2" y="2" width="16" height="22" rx="2" fill="#DC2626" stroke="#B91C1C" strokeWidth="1" />
+              <circle cx="10" cy="11" r="3" fill="#FDE047" />
+            </svg>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
