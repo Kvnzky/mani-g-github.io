@@ -4,6 +4,7 @@ import { formatPHP } from '../config/products';
 import { PlayfulSkeletonSvg, PlayfulMummySvg, CornerWebWithSpider } from './HalloweenAtmosphere';
 import { SantaPeanutSvg, ChristmasCornerGarland } from './ChristmasDecorations';
 import { HarvestPeanutSvg, ThanksgivingCornerGarland } from './ThanksgivingDecorations';
+import { NewYearPeanutSvg, NewYearCornerGarland } from './NewYearDecorations';
 import { getTheme } from '../config/themes';
 
 const SUKI_COMBOS = [
@@ -146,6 +147,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
   const isHalloween = themeId === 'halloween';
   const isChristmas = themeId === 'christmas';
   const isThanksgiving = themeId === 'thanksgiving';
+  const isNewYear = themeId === 'new-year';
 
   const getProductMap = () => {
     const map = {};
@@ -181,12 +183,15 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             <div className={`hidden sm:flex shrink-0 ${
               isChristmas ? 'bg-[#0D2418] border-2 border-[#DC2626]' 
               : isThanksgiving ? 'bg-[#2A170B] border-2 border-[#EA580C]'
+              : isNewYear ? 'bg-[#0B1120] border-2 border-[#EAB308]'
               : 'bg-[#2B1B30] border-2 border-[#FF6B00]'
             } p-2 rounded-3xl shadow-snack-sm`}>
               {isChristmas ? (
                 <SantaPeanutSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(220,38,38,0.5)]" />
               ) : isThanksgiving ? (
                 <HarvestPeanutSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(234,88,12,0.5)]" />
+              ) : isNewYear ? (
+                <NewYearPeanutSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(234,179,8,0.5)]" />
               ) : isHalloween ? (
                 <PlayfulSkeletonSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(255,107,0,0.4)]" />
               ) : (
@@ -300,6 +305,8 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             ? 'bg-gradient-to-br from-[#123322] via-[#0E281B] to-[#1C422C] text-emerald-50 border-2 border-[#DC2626] shadow-warm-lg'
             : isThanksgiving
             ? 'bg-gradient-to-br from-[#381B09] via-[#2A170B] to-[#451F0A] text-amber-50 border-2 border-[#EA580C] shadow-warm-lg'
+            : isNewYear
+            ? 'bg-gradient-to-br from-[#10172A] via-[#0B1120] to-[#1E243B] text-slate-100 border-2 border-[#EAB308] shadow-warm-lg'
             : isHalloween
             ? 'bg-gradient-to-br from-[#2B1B30] via-[#1F1025] to-[#2B1B30] text-cream border-2 border-[#FF6B00] shadow-pumpkin-card'
             : 'bg-gradient-to-br from-[#38200D] via-[#2A170B] to-[#38200D] text-cream border-2 border-amber-500 shadow-snack-card'
@@ -322,6 +329,12 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
           <>
             <ThanksgivingCornerGarland position="left" />
             <ThanksgivingCornerGarland position="right" />
+          </>
+        )}
+        {isNewYear && (
+          <>
+            <NewYearCornerGarland position="left" />
+            <NewYearCornerGarland position="right" />
           </>
         )}
 
@@ -351,12 +364,15 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             <div className={`flex items-center gap-4 ${
               isChristmas ? 'bg-[#0D2418]/95 border-2 border-[#DC2626]' 
               : isThanksgiving ? 'bg-[#2A170B]/95 border-2 border-[#EA580C]'
+              : isNewYear ? 'bg-[#0B1120]/95 border-2 border-[#EAB308]'
               : 'bg-[#1F1025]/95 border-2 border-[#FF6B00]'
             } backdrop-blur-xs p-4 sm:p-5 rounded-3xl shadow-snack-sm shrink-0 self-start lg:self-center`}>
               {isChristmas ? (
                 <SantaPeanutSvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(220,38,38,0.5)]" />
               ) : isThanksgiving ? (
                 <HarvestPeanutSvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(234,88,12,0.5)]" />
+              ) : isNewYear ? (
+                <NewYearPeanutSvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(234,179,8,0.5)]" />
               ) : isHalloween ? (
                 <PlayfulMummySvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(245,158,11,0.45)]" />
               ) : (
@@ -395,6 +411,8 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                       ? 'bg-[#0D2418]/85 hover:bg-[#DC2626]/30 text-emerald-100 border border-emerald-600/50' 
                       : isThanksgiving
                       ? 'bg-[#2A170B]/85 hover:bg-[#EA580C]/30 text-amber-100 border border-[#EA580C]/50'
+                      : isNewYear
+                      ? 'bg-[#0B1120]/85 hover:bg-[#EAB308]/30 text-amber-200 border border-[#EAB308]/50'
                       : 'bg-[#1F1025]/85 hover:bg-[#FF6B00]/30 text-amber-100 border border-[#FF6B00]/50'
                   } text-xs font-display font-bold transition-colors select-none`}
                 >

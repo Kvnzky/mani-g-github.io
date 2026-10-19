@@ -76,26 +76,61 @@ function ChristmasSnow() {
 function NewYearSparkles() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
-      {/* Golden Celebration Stars & Confetti */}
+      {/* Drifting Champagne Gold Stars, Silver Diamonds & Firework Sparkles */}
       {[
-        { left: '10%', top: '15%', delay: '0s', size: 'w-4 h-4', color: '#FACC15' },
-        { left: '25%', top: '45%', delay: '1s', size: 'w-3 h-3', color: '#E2E8F0' },
-        { left: '42%', top: '20%', delay: '2s', size: 'w-5 h-5', color: '#FBBF24' },
-        { left: '68%', top: '35%', delay: '0.5s', size: 'w-4 h-4', color: '#E2E8F0' },
-        { left: '85%', top: '18%', delay: '1.5s', size: 'w-5 h-5', color: '#FACC15' },
-        { left: '90%', top: '60%', delay: '2.5s', size: 'w-3.5 h-3.5', color: '#FBBF24' }
-      ].map((star, i) => (
+        { left: '8%', delay: '0s', duration: '14s', size: 'w-4 h-4', color: '#FACC15', type: 'star' },
+        { left: '22%', delay: '3s', duration: '17s', size: 'w-3 h-3', color: '#E2E8F0', type: 'diamond' },
+        { left: '38%', delay: '1s', duration: '15s', size: 'w-5 h-5', color: '#FDE047', type: 'burst' },
+        { left: '55%', delay: '5s', duration: '19s', size: 'w-3.5 h-3.5', color: '#FACC15', type: 'star' },
+        { left: '72%', delay: '2s', duration: '16s', size: 'w-4 h-4', color: '#CBD5E1', type: 'diamond' },
+        { left: '88%', delay: '4s', duration: '18s', size: 'w-5 h-5', color: '#FDE047', type: 'burst' }
+      ].map((item, i) => (
         <div
           key={i}
+          className="absolute -top-10 opacity-75 animate-fall"
+          style={{
+            left: item.left,
+            animationDelay: item.delay,
+            animationDuration: item.duration
+          }}
+        >
+          {item.type === 'star' ? (
+            <svg className={item.size} viewBox="0 0 24 24" fill={item.color}>
+              <polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9" />
+            </svg>
+          ) : item.type === 'diamond' ? (
+            <svg className={item.size} viewBox="0 0 24 24" fill={item.color}>
+              <polygon points="12,2 22,12 12,22 2,12" />
+            </svg>
+          ) : (
+            <svg className={item.size} viewBox="0 0 24 24" fill="none">
+              <line x1="12" y1="2" x2="12" y2="22" stroke={item.color} strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="2" y1="12" x2="22" y2="12" stroke={item.color} strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="5" y1="5" x2="19" y2="19" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" />
+              <line x1="19" y1="5" x2="5" y2="19" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" />
+              <circle cx="12" cy="12" r="2" fill="#FFFFFF" />
+            </svg>
+          )}
+        </div>
+      ))}
+
+      {/* Subtle Ambient Twinkling Celebration Stars */}
+      {[
+        { left: '15%', top: '25%', delay: '0s', size: 'w-3 h-3', color: '#FACC15' },
+        { left: '80%', top: '35%', delay: '1.2s', size: 'w-3.5 h-3.5', color: '#E2E8F0' },
+        { left: '50%', top: '65%', delay: '2.4s', size: 'w-3 h-3', color: '#FDE047' }
+      ].map((star, i) => (
+        <div
+          key={`twinkle-${i}`}
           className="absolute animate-pulse"
           style={{
             left: star.left,
             top: star.top,
             animationDelay: star.delay,
-            animationDuration: '3s'
+            animationDuration: '3.5s'
           }}
         >
-          <svg className={star.size} viewBox="0 0 24 24" fill={star.color} opacity="0.65">
+          <svg className={star.size} viewBox="0 0 24 24" fill={star.color} opacity="0.6">
             <polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9" />
           </svg>
         </div>
