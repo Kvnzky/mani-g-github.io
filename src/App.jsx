@@ -1483,7 +1483,7 @@ export default function App() {
                   {/* Top Pill Badge */}
                   <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider ${currentTheme?.badgeClass || 'bg-[#FF6B00] text-white border-2 border-amber-300 shadow-snack-sm'} -rotate-1`}>
                     <span>
-                      {currentTheme?.heroPill || `${currentTheme.badge} • ${currentTheme.name} Special`}
+                      {currentTheme?.heroPill || `${currentTheme?.badge || '🎃 Trick or Treat Crunch!'} • ${currentTheme?.name || 'Spooky'} Special`}
                     </span>
                   </div>
 

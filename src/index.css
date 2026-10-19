@@ -126,15 +126,10 @@
   html[data-theme="thanksgiving"] body,
   body[data-theme="thanksgiving"],
   body.thanksgiving-theme {
-    background-color: var(--bg-main, #fefce8) !important;
-    color: var(--text-primary, #291e18) !important;
-    background-image: 
-      radial-gradient(var(--border-warm, #fde68a) 1.2px, transparent 1.2px),
-      radial-gradient(var(--border-warm, #fde68a) 1.2px, var(--bg-main, #fefce8) 1.2px) !important;
-    background-size: 32px 32px !important;
-    background-position: 0 0, 16px 16px !important;
-    transition: background-color 0.4s ease, color 0.4s ease;
-    accent-color: #d97706;
+    background: linear-gradient(180deg, #1B0C06 0%, #281309 55%, #1B0C06 100%);
+    background-color: #1B0C06;
+    color: #FFFBEB;
+    accent-color: #EA580C;
   }
 
   html[data-theme="new-year"] body,
@@ -256,12 +251,13 @@
 [data-theme="thanksgiving"].bg-peanut-pattern,
 .thanksgiving-theme .bg-peanut-pattern,
 .thanksgiving-theme.bg-peanut-pattern {
-  background-color: #fefce8;
+  background-color: #1B0C06;
   background-image:
-    radial-gradient(#fde68a 1.2px, transparent 1.2px),
-    radial-gradient(#fde68a 1.2px, #fefce8 1.2px);
-  background-size: 32px 32px;
-  background-position: 0 0, 16px 16px;
+    radial-gradient(rgba(234, 88, 12, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(245, 158, 11, 0.16) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #1B0C06 0%, #2A140A 50%, #1B0C06 100%);
+  background-size: 36px 36px, 36px 36px, 100% 100%;
+  background-position: 0 0, 18px 18px, 0 0;
 }
 
 [data-theme="new-year"] .bg-peanut-pattern,
@@ -327,11 +323,13 @@
 }
 
 [data-theme="thanksgiving"] .bg-hero-snack,
-.thanksgiving-theme .bg-hero-snack,
-.thanksgiving-theme .hero {
-  background: rgba(254, 252, 232, 0.85) !important;
-  backdrop-filter: blur(12px) !important;
-  border-bottom: 2px solid var(--border-warm, #fde68a) !important;
+.thanksgiving-theme .bg-hero-snack {
+  background:
+    radial-gradient(circle at 18% 22%, rgba(234, 88, 12, 0.38) 0%, transparent 48%),
+    radial-gradient(circle at 84% 25%, rgba(245, 158, 11, 0.28) 0%, transparent 45%),
+    radial-gradient(circle at 50% 92%, rgba(136, 19, 55, 0.32) 0%, transparent 55%),
+    linear-gradient(160deg, #2D150B 0%, #1B0C06 55%, #381A0D 100%);
+  border-color: #EA580C !important;
 }
 
 [data-theme="new-year"] .bg-hero-snack {
@@ -428,8 +426,9 @@
 [data-theme="thanksgiving"] .shadow-pumpkin-card,
 .thanksgiving-theme .shadow-pumpkin-card {
   box-shadow:
-    0 6px 20px var(--glow-harvest, rgba(217, 119, 6, 0.18)),
-    0 4px 0 0 #fde68a;
+    0 8px 30px -4px rgba(234, 88, 12, 0.38),
+    0 0 20px rgba(245, 158, 11, 0.22),
+    0 4px 0 0 #EA580C;
 }
 
 [data-theme="new-year"] .shadow-pumpkin-card {
@@ -942,6 +941,197 @@ html[data-theme="valentines-day"] ::-webkit-scrollbar-thumb:hover,
   animation: skeletonWave 3.2s ease-in-out infinite;
 }
 
+/* ============================================================
+   THANKSGIVING MASCOT & ATMOSPHERE KEYFRAMES
+   ============================================================ */
+
+/* Wandering Turkey Mascot Path & Waddle */
+@keyframes turkeyRoam {
+  0% {
+    transform: translate3d(5vw, 14vh, 0) scale(1);
+  }
+  25% {
+    transform: translate3d(72vw, 26vh, 0) scale(1.04);
+  }
+  50% {
+    transform: translate3d(60vw, 64vh, 0) scale(0.96);
+  }
+  75% {
+    transform: translate3d(12vw, 74vh, 0) scale(1.03);
+  }
+  100% {
+    transform: translate3d(5vw, 14vh, 0) scale(1);
+  }
+}
+
+@keyframes turkeyRoamSecondary {
+  0% {
+    transform: translate3d(85vw, 65vh, 0) scale(0.95);
+  }
+  33% {
+    transform: translate3d(15vw, 35vh, 0) scale(1);
+  }
+  66% {
+    transform: translate3d(65vw, 15vh, 0) scale(0.92);
+  }
+  100% {
+    transform: translate3d(85vw, 65vh, 0) scale(0.95);
+  }
+}
+
+@keyframes turkeyWaddle {
+  0%, 100% {
+    transform: rotate(-3deg) translateY(0px);
+  }
+  50% {
+    transform: rotate(3.5deg) translateY(-4px);
+  }
+}
+
+/* Secondary Roaming Chipmunk */
+@keyframes chipmunkRoam {
+  0% {
+    transform: translate3d(2vw, 68vh, 0) rotate(-2deg);
+  }
+  50% {
+    transform: translate3d(78vw, 45vh, 0) rotate(4deg);
+  }
+  100% {
+    transform: translate3d(2vw, 68vh, 0) rotate(-2deg);
+  }
+}
+
+/* Migrating Wild Geese Formations in Autumn Sky */
+@keyframes geeseFlyLtr {
+  0% {
+    transform: translate3d(-18vw, 0vh, 0) rotate(2deg);
+    opacity: 0;
+  }
+  6% {
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(48vw, -2vh, 0) rotate(-2deg);
+    opacity: 0.95;
+  }
+  94% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(118vw, 3vh, 0) rotate(3deg);
+    opacity: 0;
+  }
+}
+
+@keyframes geeseFlyRtl {
+  0% {
+    transform: translate3d(118vw, 1vh, 0) scaleX(-1) rotate(2deg);
+    opacity: 0;
+  }
+  6% {
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(45vw, 3vh, 0) scaleX(-1) rotate(-3deg);
+    opacity: 0.95;
+  }
+  94% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(-18vw, -1vh, 0) scaleX(-1) rotate(2deg);
+    opacity: 0;
+  }
+}
+
+@keyframes geeseFlap {
+  0%, 100% {
+    transform: scaleY(1) translateY(0px);
+  }
+  50% {
+    transform: scaleY(0.68) translateY(-3px);
+  }
+}
+
+/* Monarch Butterfly Wing Flutter */
+@keyframes butterflyFlutter {
+  0%, 100% {
+    transform: scaleX(1) rotate(0deg);
+  }
+  50% {
+    transform: scaleX(0.25) rotate(-6deg);
+  }
+}
+
+/* Spinning Maple Whirlybird (Helicopter Seed) */
+@keyframes whirlybirdSpin {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(15px, 0, 0) rotate(360deg);
+  }
+}
+
+/* Harvest Sunburst Slow Mandala Rotation */
+@keyframes harvestSunburstSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-turkey-roam {
+  animation: turkeyRoam 28s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-turkey-roam-secondary {
+  animation: turkeyRoamSecondary 36s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-turkey-waddle {
+  animation: turkeyWaddle 1.4s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.animate-chipmunk-roam {
+  animation: chipmunkRoam 32s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-geese-fly-ltr {
+  animation: geeseFlyLtr 24s linear infinite;
+  will-change: transform, opacity;
+}
+
+.animate-geese-fly-rtl {
+  animation: geeseFlyRtl 28s linear infinite;
+  will-change: transform, opacity;
+}
+
+.animate-geese-flap {
+  animation: geeseFlap 0.48s ease-in-out infinite;
+}
+
+.animate-butterfly-flutter {
+  animation: butterflyFlutter 0.35s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.animate-whirlybird-spin {
+  animation: whirlybirdSpin 1.8s linear infinite;
+  transform-origin: center center;
+}
+
+.animate-sunburst-spin {
+  animation: harvestSunburstSpin 40s linear infinite;
+  transform-origin: center center;
+}
+
 /* Respect user reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -960,6 +1150,16 @@ html[data-theme="valentines-day"] ::-webkit-scrollbar-thumb:hover,
   .animate-bat-fly-ltr,
   .animate-bat-fly-rtl,
   .animate-bat-flap,
+  .animate-turkey-roam,
+  .animate-turkey-roam-secondary,
+  .animate-turkey-waddle,
+  .animate-chipmunk-roam,
+  .animate-geese-fly-ltr,
+  .animate-geese-fly-rtl,
+  .animate-geese-flap,
+  .animate-butterfly-flutter,
+  .animate-whirlybird-spin,
+  .animate-sunburst-spin,
   .animate-fall,
   .animate-leaf-fall,
   .animate-leaf-sway,
@@ -993,31 +1193,31 @@ input[type=number] {
 
 /* ============================================================
    MANI WONDERING - PREMIUM THANKSGIVING HARVEST THEME
+   Surpassing Halloween in theatrical warmth, feast radiance & Filipino snack allure
    ============================================================ */
 
 /* 1. Core Harvest Color Variables */
 .thanksgiving-theme {
-  --bg-main: #fefce8;                /* Warm buttery cream background */
-  --bg-card: #ffffff;                /* Crisp card interior */
-  --text-primary: #291e18;           /* Deep roasted cocoa text */
-  --text-secondary: #78350f;         /* Warm cinnamon secondary text */
-  --brand-harvest-gold: #d97706;     /* Golden roasted peanut / amber */
-  --brand-pumpkin: #c2410c;          /* Pumpkin spice accent */
-  --brand-cranberry: #881337;        /* Cranberry rich accent */
-  --border-warm: #fde68a;            /* Soft golden leaf border */
-  --glow-harvest: rgba(217, 119, 6, 0.18);
+  --bg-main: #1B0C06;                /* Rich roasted mahogany feast background */
+  --bg-card: #28140B;                /* Deep roasted chestnut card surface */
+  --text-primary: #FFFBEB;           /* Warm glowing ivory headlines */
+  --text-secondary: #FDE68A;         /* Golden maize secondary text */
+  --brand-harvest-gold: #F59E0B;     /* Golden roasted peanut amber */
+  --brand-pumpkin: #EA580C;          /* Fiery roasted pumpkin spice accent */
+  --brand-cranberry: #881337;        /* Deep ruby cranberry accent */
+  --border-warm: rgba(234, 88, 12, 0.65); /* Glowing pumpkin amber border */
+  --glow-harvest: rgba(234, 88, 12, 0.35); /* Warm luminous harvest glow */
 }
 
 /* 2. Page & Background Texture */
 body.thanksgiving-theme {
-  background-color: var(--bg-main) !important;
-  color: var(--text-primary) !important;
-  /* Subtle autumn cornucopia & fallen leaf background pattern */
+  background-color: #1B0C06 !important;
+  color: #FFFBEB !important;
   background-image: 
-    radial-gradient(var(--border-warm) 1.2px, transparent 1.2px),
-    radial-gradient(var(--border-warm) 1.2px, var(--bg-main) 1.2px) !important;
-  background-size: 32px 32px !important;
-  background-position: 0 0, 16px 16px !important;
+    radial-gradient(rgba(234, 88, 12, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(245, 158, 11, 0.16) 1.25px, #1B0C06 1.25px) !important;
+  background-size: 36px 36px !important;
+  background-position: 0 0, 18px 18px !important;
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
@@ -1025,25 +1225,27 @@ body.thanksgiving-theme {
 .thanksgiving-theme header,
 .thanksgiving-theme nav,
 .thanksgiving-theme .hero {
-  background: rgba(254, 252, 232, 0.85) !important;
-  backdrop-filter: blur(12px) !important;
-  border-bottom: 2px solid var(--border-warm) !important;
+  background: rgba(36, 17, 9, 0.94) !important;
+  backdrop-filter: blur(14px) !important;
+  border-bottom: 2px solid rgba(234, 88, 12, 0.75) !important;
+  box-shadow: 0 4px 24px rgba(234, 88, 12, 0.25) !important;
 }
 
 /* Autumn Banner Badge for Hero/Headline */
 .thanksgiving-theme .hero-title::after,
 .thanksgiving-theme .hero h1::after {
-  content: " 🍁 Harvest Edition";
+  content: " 🦃 Pasasalamat Edition";
   display: inline-block;
   font-size: 0.45em;
-  font-weight: 700;
+  font-weight: 800;
   vertical-align: middle;
-  background: linear-gradient(135deg, var(--brand-pumpkin), var(--brand-cranberry));
+  background: linear-gradient(135deg, #EA580C, #881337);
   color: #ffffff;
   padding: 4px 12px;
   border-radius: 999px;
   margin-left: 8px;
-  box-shadow: 0 2px 8px rgba(194, 65, 12, 0.25);
+  border: 1.5px solid #FDE047;
+  box-shadow: 0 2px 12px rgba(234, 88, 12, 0.4);
   letter-spacing: 0.5px;
 }
 
@@ -1051,11 +1253,14 @@ body.thanksgiving-theme {
 .thanksgiving-theme .card,
 .thanksgiving-theme .product-card,
 .thanksgiving-theme [class*="card"] {
-  background-color: var(--bg-card) !important;
-  border: 1.5px solid var(--border-warm) !important;
-  border-radius: 18px !important;
-  box-shadow: 0 6px 20px var(--glow-harvest) !important;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease !important;
+  background: linear-gradient(165deg, #2E160C 0%, #1F0D06 60%, #2A140B 100%) !important;
+  border: 1.5px solid rgba(234, 88, 12, 0.55) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 8px 30px -4px rgba(234, 88, 12, 0.35),
+    0 0 20px rgba(245, 158, 11, 0.2),
+    0 4px 0 0 #EA580C !important;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
   position: relative;
   overflow: hidden;
 }
@@ -1067,49 +1272,56 @@ body.thanksgiving-theme {
   position: absolute;
   top: 10px;
   right: 12px;
-  font-size: 1rem;
-  opacity: 0.6;
+  font-size: 1.1rem;
+  opacity: 0.75;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
   pointer-events: none;
 }
 
 .thanksgiving-theme .card:hover,
 .thanksgiving-theme .product-card:hover {
-  transform: translateY(-5px) scale(1.01) !important;
-  border-color: var(--brand-harvest-gold) !important;
-  box-shadow: 0 12px 28px rgba(217, 119, 6, 0.25) !important;
+  transform: translateY(-6px) scale(1.01) !important;
+  border-color: #FBBF24 !important;
+  box-shadow: 
+    0 14px 38px -4px rgba(234, 88, 12, 0.5),
+    0 0 28px rgba(251, 191, 36, 0.35),
+    0 6px 0 0 #FBBF24 !important;
 }
 
 /* 5. Buttons (CTAs & Order Buttons) */
 .thanksgiving-theme button,
 .thanksgiving-theme .btn,
 .thanksgiving-theme [class*="btn-primary"] {
-  background: linear-gradient(135deg, #d97706 0%, #c2410c 100%) !important;
+  background: linear-gradient(135deg, #EA580C 0%, #D97706 50%, #C2410C 100%) !important;
   color: #ffffff !important;
-  font-weight: 700 !important;
-  border: none !important;
+  font-weight: 800 !important;
+  border: 2px solid #FDE047 !important;
   border-radius: 12px !important;
-  box-shadow: 0 4px 14px rgba(194, 65, 12, 0.3) !important;
+  box-shadow: 0 4px 18px rgba(234, 88, 12, 0.45) !important;
   transition: all 0.25s ease !important;
 }
 
 .thanksgiving-theme button:hover,
 .thanksgiving-theme .btn:hover,
 .thanksgiving-theme [class*="btn-primary"]:hover {
-  background: linear-gradient(135deg, #c2410c 0%, #881337 100%) !important;
+  background: linear-gradient(135deg, #F59E0B 0%, #EA580C 50%, #881337 100%) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(136, 19, 55, 0.4) !important;
+  box-shadow: 0 6px 24px rgba(245, 158, 11, 0.55) !important;
 }
 
 /* Small quantity adjustment steppers & close controls */
 .thanksgiving-theme .stepper-btn,
 .thanksgiving-theme button.stepper-btn {
-  background: #ffffff !important;
-  color: #291e18 !important;
+  background: #2D150B !important;
+  color: #FDE047 !important;
+  border: 1px solid rgba(234, 88, 12, 0.5) !important;
   box-shadow: none !important;
   border-radius: 8px !important;
 }
 .thanksgiving-theme .stepper-btn:hover {
-  background: #fef3c7 !important;
+  background: #EA580C !important;
+  color: #ffffff !important;
+  border-color: #FDE047 !important;
 }
 .thanksgiving-theme .stepper-btn:disabled {
   opacity: 0.4 !important;
@@ -1120,30 +1332,32 @@ body.thanksgiving-theme {
 .thanksgiving-theme h1,
 .thanksgiving-theme h2,
 .thanksgiving-theme h3 {
-  color: var(--text-primary) !important;
+  color: #FFFBEB !important;
+  text-shadow: 0 2px 10px rgba(234, 88, 12, 0.35);
 }
 
 .thanksgiving-theme p,
 .thanksgiving-theme span,
 .thanksgiving-theme label {
-  color: var(--text-secondary);
+  color: #FDE68A;
 }
 
 /* Price Tags & Badges */
 .thanksgiving-theme .price,
 .thanksgiving-theme .badge,
 .thanksgiving-theme [class*="tag"] {
-  background-color: #fef3c7 !important;
-  color: #92400e !important;
-  font-weight: 700 !important;
-  border: 1px solid #fde68a !important;
+  background: linear-gradient(135deg, #EA580C, #C2410C) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: 1.5px solid #FDE047 !important;
   border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
 }
 
 /* 7. Footer Thanksgiving Touch */
 .thanksgiving-theme footer {
-  background: linear-gradient(180deg, var(--bg-main) 0%, #fef3c7 100%) !important;
-  border-top: 2px dashed var(--border-warm) !important;
+  background: linear-gradient(180deg, #1B0C06 0%, #120703 100%) !important;
+  border-top: 4px solid #EA580C !important;
 }
 
 /* 8. Falling and Swaying Leaves Animation */
@@ -1152,4 +1366,5 @@ body.thanksgiving-theme {
   50% { transform: translateY(50vh) rotate(180deg) translateX(25px); }
   100% { transform: translateY(115vh) rotate(360deg) translateX(-25px); }
 }
+
 

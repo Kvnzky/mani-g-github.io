@@ -1,5 +1,6 @@
 import React from 'react';
 import HalloweenAtmosphere from './HalloweenAtmosphere';
+import ThanksgivingAtmosphere from './ThanksgivingAtmosphere';
 
 // Ambient Decorative Particle Systems for Each Season
 // All atmospheres are strictly non-interactive (pointer-events-none), lightweight SVGs,
@@ -307,8 +308,7 @@ export default function SeasonalAtmosphere({ themeId = 'halloween' }) {
     return <HalloweenAtmosphere />;
   }
   if (themeId === 'thanksgiving') {
-    // Thanksgiving leaves are handled by the Animated Falling Leaves FX Script (#thanksgiving-leaves-container)
-    return null;
+    return <ThanksgivingAtmosphere />;
   }
   if (themeId === 'christmas') {
     return <ChristmasSnow />;
