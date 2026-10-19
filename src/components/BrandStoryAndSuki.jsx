@@ -6,6 +6,7 @@ import { SantaPeanutSvg, ChristmasCornerGarland } from './ChristmasDecorations';
 import { HarvestPeanutSvg, ThanksgivingCornerGarland } from './ThanksgivingDecorations';
 import { NewYearPeanutSvg, NewYearCornerGarland } from './NewYearDecorations';
 import { ChineseNewYearPeanutSvg, ChineseNewYearCornerGarland } from './ChineseNewYearDecorations';
+import { ValentinesPeanutSvg, ValentinesCornerGarland } from './ValentinesDecorations';
 import { getTheme } from '../config/themes';
 
 const SUKI_COMBOS = [
@@ -150,6 +151,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
   const isThanksgiving = themeId === 'thanksgiving';
   const isNewYear = themeId === 'new-year';
   const isChineseNewYear = themeId === 'chinese-new-year';
+  const isValentines = themeId === 'valentines-day';
 
   const getProductMap = () => {
     const map = {};
@@ -187,6 +189,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
               : isThanksgiving ? 'bg-[#2A170B] border-2 border-[#EA580C]'
               : isNewYear ? 'bg-[#0B1120] border-2 border-[#EAB308]'
               : isChineseNewYear ? 'bg-[#260707] border-2 border-[#DC2626]'
+              : isValentines ? 'bg-[#240815] border-2 border-[#E11D48]'
               : 'bg-[#2B1B30] border-2 border-[#FF6B00]'
             } p-2 rounded-3xl shadow-snack-sm`}>
               {isChristmas ? (
@@ -197,6 +200,8 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                 <NewYearPeanutSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(234,179,8,0.5)]" />
               ) : isChineseNewYear ? (
                 <ChineseNewYearPeanutSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(220,38,38,0.5)]" />
+              ) : isValentines ? (
+                <ValentinesPeanutSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(225,29,72,0.5)]" />
               ) : isHalloween ? (
                 <PlayfulSkeletonSvg className="w-16 h-20 drop-shadow-[0_2px_10px_rgba(255,107,0,0.4)]" />
               ) : (
@@ -314,6 +319,8 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             ? 'bg-gradient-to-br from-[#10172A] via-[#0B1120] to-[#1E243B] text-slate-100 border-2 border-[#EAB308] shadow-warm-lg'
             : isChineseNewYear
             ? 'bg-gradient-to-br from-[#3B0C0C] via-[#260707] to-[#450F0F] text-amber-50 border-2 border-[#DC2626] shadow-warm-lg'
+            : isValentines
+            ? 'bg-gradient-to-br from-[#360B21] via-[#1E0512] to-[#420E29] text-rose-50 border-2 border-[#E11D48] shadow-warm-lg'
             : isHalloween
             ? 'bg-gradient-to-br from-[#2B1B30] via-[#1F1025] to-[#2B1B30] text-cream border-2 border-[#FF6B00] shadow-pumpkin-card'
             : 'bg-gradient-to-br from-[#38200D] via-[#2A170B] to-[#38200D] text-cream border-2 border-amber-500 shadow-snack-card'
@@ -350,6 +357,12 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
             <ChineseNewYearCornerGarland position="right" />
           </>
         )}
+        {isValentines && (
+          <>
+            <ValentinesCornerGarland position="left" />
+            <ValentinesCornerGarland position="right" />
+          </>
+        )}
 
         {/* Subtle decorative glow */}
         <div 
@@ -379,6 +392,7 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
               : isThanksgiving ? 'bg-[#2A170B]/95 border-2 border-[#EA580C]'
               : isNewYear ? 'bg-[#0B1120]/95 border-2 border-[#EAB308]'
               : isChineseNewYear ? 'bg-[#260707]/95 border-2 border-[#DC2626]'
+              : isValentines ? 'bg-[#240815]/95 border-2 border-[#E11D48]'
               : 'bg-[#1F1025]/95 border-2 border-[#FF6B00]'
             } backdrop-blur-xs p-4 sm:p-5 rounded-3xl shadow-snack-sm shrink-0 self-start lg:self-center`}>
               {isChristmas ? (
@@ -389,6 +403,8 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                 <NewYearPeanutSvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(234,179,8,0.5)]" />
               ) : isChineseNewYear ? (
                 <ChineseNewYearPeanutSvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(220,38,38,0.5)]" />
+              ) : isValentines ? (
+                <ValentinesPeanutSvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(225,29,72,0.5)]" />
               ) : isHalloween ? (
                 <PlayfulMummySvg className="w-20 h-24 sm:w-24 sm:h-28 shrink-0 drop-shadow-[0_4px_14px_rgba(245,158,11,0.45)]" />
               ) : (
@@ -431,6 +447,8 @@ export default function BrandStoryAndSuki({ products = [], onAddCombo, isOrdersC
                       ? 'bg-[#0B1120]/85 hover:bg-[#EAB308]/30 text-amber-200 border border-[#EAB308]/50'
                       : isChineseNewYear
                       ? 'bg-[#260707]/85 hover:bg-[#DC2626]/30 text-amber-200 border border-amber-500/50'
+                      : isValentines
+                      ? 'bg-[#240815]/85 hover:bg-[#E11D48]/30 text-rose-200 border border-rose-500/50'
                       : 'bg-[#1F1025]/85 hover:bg-[#FF6B00]/30 text-amber-100 border border-[#FF6B00]/50'
                   } text-xs font-display font-bold transition-colors select-none`}
                 >

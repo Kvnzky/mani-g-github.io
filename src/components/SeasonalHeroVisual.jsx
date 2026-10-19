@@ -443,6 +443,109 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
     );
   }
 
+  if (themeId === 'valentines-day') {
+    return (
+      <div className="relative w-full max-w-[620px] mx-auto flex items-center justify-center p-3 select-none">
+        {/* Ambient Romantic Rose Glow Backdrops */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#E11D48]/25 via-[#FB7185]/20 to-[#BE123C]/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-6 -right-6 w-40 h-40 bg-[#FB7185]/25 rounded-full blur-2xl pointer-events-none animate-pulse" />
+        <div className="absolute -bottom-6 -left-6 w-44 h-44 bg-[#E11D48]/25 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Main Romantic Composition Card */}
+        <div className="relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#360B21]/90 via-[#1E0512]/95 to-[#240815] border-2 border-[#E11D48] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
+          {/* Decorative Corner Accents */}
+          <div className="absolute -top-3 -right-3 text-2xl rotate-12 drop-shadow-md select-none pointer-events-none">
+            💖🌹
+          </div>
+          <div className="absolute -bottom-2 -left-2 text-2xl -rotate-12 drop-shadow-md select-none pointer-events-none">
+            💌💝
+          </div>
+
+          {/* Central Logo & Heart Halo Feature */}
+          <div className="text-center space-y-4">
+            <div className="relative inline-block animate-float-slow">
+              {/* Sweet Heart Pin atop logo */}
+              <div className="absolute -top-4 -right-2 z-20 pointer-events-none transform rotate-12 drop-shadow-md">
+                <svg className="w-10 h-10" viewBox="0 0 24 24" fill="#E11D48">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="#FDA4AF" strokeWidth="1" />
+                </svg>
+              </div>
+
+              {/* Glowing Romantic Rose Ring Wreath behind logo */}
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#4A0E2E] via-[#240815] to-[#360B21] border-4 border-[#FB7185] p-3 shadow-warm-lg flex items-center justify-center mx-auto">
+                <img
+                  src="./logo.png"
+                  alt="Mani Wandering Valentine Logo"
+                  className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(225,29,72,0.5)]"
+                />
+              </div>
+
+              {/* Sweet Romantic Ribbon Tag */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#BE123C] via-[#E11D48] to-[#FB7185] text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-rose-300 shadow-snack-sm flex items-center gap-1">
+                <span>💖 Crush at First Crunch</span>
+              </div>
+            </div>
+
+            {/* Featured Valentine Tubs Mini Showcase */}
+            <div className="pt-2">
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#FDA4AF] mb-3">
+                🌹 Sweet, Salty &amp; Spicy • Perfect for Date Nights &amp; Salo-Salo
+              </p>
+
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                {/* Tub 1: Sweet & Salty Crush */}
+                <div className="rounded-2xl p-2 bg-[#1E0512]/90 border border-rose-900/60 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FB7185] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-rose-800/50">
+                    <img src="./images/products/salted.jpg" alt="Sweet & Salty Mani" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-rose-300 block leading-tight">💝 Sweet &amp; Salty</span>
+                    <span className="text-[9px] text-rose-200/90 font-medium">Date Night Fave</span>
+                  </div>
+                </div>
+
+                {/* Tub 2: Passionate Kick Spicy */}
+                <div className="rounded-2xl p-2 bg-[#1E0512]/90 border border-[#E11D48]/70 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-rose-300 transition-all scale-105 bg-gradient-to-b from-[#420E29] to-[#1E0512]">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#E11D48]">
+                    <img src="./images/products/spicy.jpg" alt="Passionate Kick Spicy Mani" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-rose-200 block leading-tight">🔥 Passionate</span>
+                    <span className="text-[9px] text-amber-200/90 font-bold">#1 Kilig Spice</span>
+                  </div>
+                </div>
+
+                {/* Tub 3: Golden Darling Salted Egg */}
+                <div className="rounded-2xl p-2 bg-[#1E0512]/90 border border-rose-900/60 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FB7185] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-400/40">
+                    <img src="./images/products/salted-egg.jpg" alt="Golden Darling Salted Egg Mani" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🥚 Darling Egg</span>
+                    <span className="text-[9px] text-rose-200/90 font-medium">Velvety Umami</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3 Value Pillars */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-rose-100">
+              <span className="inline-flex items-center gap-1 bg-[#18040F]/90 px-2.5 py-1 rounded-xl border border-rose-800/40">
+                <Heart className="w-3 h-3 text-[#FB7185] fill-[#FB7185]" /> Date Night &amp; Merienda Ready
+              </span>
+              <span className="inline-flex items-center gap-1 bg-[#18040F]/90 px-2.5 py-1 rounded-xl border border-rose-800/40">
+                <Star className="w-3 h-3 text-[#FDE047]" /> Purong Crispy Bawang
+              </span>
+              <span className="inline-flex items-center gap-1 bg-[#18040F]/90 px-2.5 py-1 rounded-xl border border-rose-800/40">
+                <Sparkles className="w-3 h-3 text-rose-300" /> Bagong Luto with Love
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Default / Other Themes Fallback: Classic Brand Showcase
   return (
     <div className="relative w-full max-w-[580px] mx-auto flex items-center justify-center p-3 select-none">

@@ -206,26 +206,67 @@ function ChineseNewYearLanterns() {
 function ValentinesHearts() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
-      {/* Gentle Floating Hearts */}
+      {/* Anchored Top Corner Hanging Hearts (Framing Viewport without blocking clicks) */}
+      <div className="absolute top-0 left-6 sm:left-14 opacity-85">
+        <svg className="w-8 sm:w-10 h-auto drop-shadow-[0_2px_8px_rgba(225,29,72,0.5)]" viewBox="0 0 36 60" fill="none">
+          <line x1="18" y1="0" x2="18" y2="18" stroke="#FB7185" strokeWidth="1.5" strokeDasharray="2,2" />
+          <ellipse cx="14" cy="18" rx="3.5" ry="2" fill="#FDE047" transform="rotate(-20 14 18)" />
+          <ellipse cx="22" cy="18" rx="3.5" ry="2" fill="#FDE047" transform="rotate(20 22 18)" />
+          <circle cx="18" cy="18" r="1.5" fill="#F59E0B" />
+          <path
+            d="M18 48 L16.55 46.68 C11.4 42.01 8 38.93 8 35.15 C8 32.07 10.42 29.65 13.5 29.65 C15.24 29.65 16.91 30.46 18 31.74 C19.09 30.46 20.76 29.65 22.5 29.65 C25.58 29.65 28 32.07 28 35.15 C28 38.93 24.6 42.01 19.45 46.69 L18 48 Z"
+            fill="#E11D48"
+            stroke="#BE123C"
+            strokeWidth="1.2"
+          />
+        </svg>
+      </div>
+      <div className="absolute top-0 right-6 sm:right-14 opacity-85">
+        <svg className="w-8 sm:w-10 h-auto drop-shadow-[0_2px_8px_rgba(225,29,72,0.5)]" viewBox="0 0 36 60" fill="none">
+          <line x1="18" y1="0" x2="18" y2="18" stroke="#FB7185" strokeWidth="1.5" strokeDasharray="2,2" />
+          <ellipse cx="14" cy="18" rx="3.5" ry="2" fill="#FDE047" transform="rotate(-20 14 18)" />
+          <ellipse cx="22" cy="18" rx="3.5" ry="2" fill="#FDE047" transform="rotate(20 22 18)" />
+          <circle cx="18" cy="18" r="1.5" fill="#F59E0B" />
+          <path
+            d="M18 48 L16.55 46.68 C11.4 42.01 8 38.93 8 35.15 C8 32.07 10.42 29.65 13.5 29.65 C15.24 29.65 16.91 30.46 18 31.74 C19.09 30.46 20.76 29.65 22.5 29.65 C25.58 29.65 28 32.07 28 35.15 C28 38.93 24.6 42.01 19.45 46.69 L18 48 Z"
+            fill="#E11D48"
+            stroke="#BE123C"
+            strokeWidth="1.2"
+          />
+        </svg>
+      </div>
+
+      {/* Gentle Floating Hearts, Rose Petals & Golden Sparkles */}
       {[
-        { left: '12%', delay: '0s', duration: '16s', size: 'w-5 h-5', color: '#FB7185' },
-        { left: '28%', delay: '4s', duration: '19s', size: 'w-4 h-4', color: '#FDA4AF' },
-        { left: '48%', delay: '1s', duration: '17s', size: 'w-6 h-6', color: '#E11D48' },
-        { left: '68%', delay: '5s', duration: '20s', size: 'w-4 h-4', color: '#FB7185' },
-        { left: '86%', delay: '2s', duration: '15s', size: 'w-5 h-5', color: '#FDA4AF' }
-      ].map((heart, i) => (
+        { left: '10%', delay: '0s', duration: '16s', size: 'w-4 h-4', type: 'heart', color: '#FB7185' },
+        { left: '26%', delay: '4s', duration: '19s', size: 'w-3.5 h-3.5', type: 'petal', color: '#FDA4AF' },
+        { left: '45%', delay: '1s', duration: '17s', size: 'w-5 h-5', type: 'heart', color: '#E11D48' },
+        { left: '62%', delay: '5s', duration: '20s', size: 'w-3.5 h-3.5', type: 'sparkle', color: '#FDE047' },
+        { left: '78%', delay: '2s', duration: '18s', size: 'w-4 h-4', type: 'heart', color: '#FB7185' },
+        { left: '92%', delay: '3.5s', duration: '16s', size: 'w-3.5 h-3.5', type: 'petal', color: '#FDA4AF' }
+      ].map((item, i) => (
         <div
           key={i}
-          className="absolute -top-8 opacity-50 animate-fall"
+          className="absolute -top-8 opacity-60 animate-fall"
           style={{
-            left: heart.left,
-            animationDelay: heart.delay,
-            animationDuration: heart.duration
+            left: item.left,
+            animationDelay: item.delay,
+            animationDuration: item.duration
           }}
         >
-          <svg className={heart.size} viewBox="0 0 24 24" fill={heart.color}>
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-          </svg>
+          {item.type === 'heart' ? (
+            <svg className={item.size} viewBox="0 0 24 24" fill={item.color}>
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+          ) : item.type === 'petal' ? (
+            <svg className={item.size} viewBox="0 0 24 24" fill={item.color}>
+              <path d="M12 2C8 6 6 10 7 14c1 4 5 7 5 7s4-3 5-7c1-4-1-8-5-12z" />
+            </svg>
+          ) : (
+            <svg className={item.size} viewBox="0 0 24 24" fill={item.color}>
+              <path d="M12 0 L15 9 L24 12 L15 15 L12 24 L9 15 L0 12 L9 9 Z" />
+            </svg>
+          )}
         </div>
       ))}
     </div>
