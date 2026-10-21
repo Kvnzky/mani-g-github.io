@@ -1106,6 +1106,10 @@ export default function App() {
       errors.customerName = 'Please enter your name.';
     }
 
+    if (!customerData.deliveryAddress || !customerData.deliveryAddress.trim()) {
+      errors.deliveryAddress = 'Please enter your delivery address.';
+    }
+
     const cleanMobile = (customerData.mobileNumber || '').replace(/[\s\-()]/g, '');
     const mobileRegex = /^(09|\+639|639)\d{9}$/;
     if (cleanMobile && !mobileRegex.test(cleanMobile)) {
@@ -1342,7 +1346,16 @@ export default function App() {
         totalItems={totalPacks}
         subtotal={subtotal}
         cartBounce={cartBounce}
-        onOpenCart={() => setIsDrawerOpen(true)}
+        onOpenCart={() => {
+          if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+            const el = document.getElementById('order-summary-section');
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              return;
+            }
+          }
+          setIsDrawerOpen(true);
+        }}
         isAdminAuthenticated={Boolean(adminToken)}
         adminUser={adminUser}
         onLogout={handleLogout}
@@ -1716,7 +1729,7 @@ export default function App() {
               </div>
 
               {/* Right Column (Desktop 5 cols, Sticky): 2. Order Summary, 3. Customer Info, 4. Shipping Info, 5. Payment & Checkout */}
-              <div id="checkout-section" className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
+              <div id="checkout-section" className="lg:col-span-5 space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1.5 scrollbar-thin">
                 {/* 2. Active Order Summary / Cart */}
                 <section>
                   <OrderSummaryCard

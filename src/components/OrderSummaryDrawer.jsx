@@ -25,6 +25,7 @@ export default function OrderSummaryDrawer({
   const hasAnyPaymentMethod = Object.values(paymentMethods).some(Boolean);
   const isFormIncomplete = Boolean(
     !customerData.customerName?.trim() ||
+    !customerData.deliveryAddress?.trim() ||
     !customerData.paymentMethod?.trim() ||
     !hasItems ||
     !hasAnyPaymentMethod

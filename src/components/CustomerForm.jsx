@@ -91,6 +91,9 @@ export default function CustomerForm({
               name="customerName"
               type="text"
               autoComplete="name"
+              aria-required="true"
+              aria-invalid={Boolean(errors.customerName)}
+              aria-describedby={errors.customerName ? "customer-name-error" : undefined}
               value={formData.customerName || ''}
               onChange={(e) => handleInputChange('customerName', e.target.value)}
               placeholder="e.g. Juan Dela Cruz"
@@ -99,7 +102,7 @@ export default function CustomerForm({
               } outline-none transition-all`}
             />
             {errors.customerName && (
-              <p className="text-xs text-red-600 font-bold mt-1 flex items-center gap-1">
+              <p id="customer-name-error" className="text-xs text-red-600 font-bold mt-1 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" /> {errors.customerName}
               </p>
             )}
@@ -128,7 +131,7 @@ export default function CustomerForm({
                 <AlertCircle className="w-3 h-3" /> {errors.mobileNumber}
               </p>
             ) : (
-              <p className="text-[11px] text-mani-500 font-medium mt-1">
+              <p className="text-[11px] text-mani-600 font-medium mt-1">
                 Optional: for delivery rider updates when your order arrives.
               </p>
             )}
@@ -138,13 +141,16 @@ export default function CustomerForm({
           <div id="shipping-info-section" className="sm:col-span-2 space-y-1.5">
             <label htmlFor="customer-address" className="block text-xs font-extrabold text-mani-900 mb-1.5 flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-amber-600" />
-              <span>Delivery Address</span>
+              <span>Delivery Address</span> <span className="text-red-500">*</span>
             </label>
             <textarea
               id="customer-address"
               name="deliveryAddress"
               rows="3"
               autoComplete="street-address"
+              aria-required="true"
+              aria-invalid={Boolean(errors.deliveryAddress)}
+              aria-describedby={errors.deliveryAddress ? "delivery-address-error" : undefined}
               value={formData.deliveryAddress || ''}
               onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
               placeholder="House/Unit No., Street, Barangay, City/Municipality, Province"
@@ -153,11 +159,11 @@ export default function CustomerForm({
               } outline-none transition-all resize-y`}
             />
             {errors.deliveryAddress && (
-              <p className="text-xs text-red-600 font-bold mt-1 flex items-center gap-1">
+              <p id="delivery-address-error" className="text-xs text-red-600 font-bold mt-1 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" /> {errors.deliveryAddress}
               </p>
             )}
-            <p className="text-[11px] text-mani-500 font-medium">
+            <p className="text-[11px] text-mani-600 font-medium">
               Complete street address, landmarks, or delivery instructions.
             </p>
           </div>
