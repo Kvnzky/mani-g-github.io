@@ -119,6 +119,8 @@ export default function CustomerForm({
               name="mobileNumber"
               type="tel"
               autoComplete="tel"
+              aria-invalid={Boolean(errors.mobileNumber)}
+              aria-describedby={errors.mobileNumber ? "customer-mobile-error" : undefined}
               value={formData.mobileNumber || ''}
               onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
               placeholder="0917 123 4567"
@@ -127,7 +129,7 @@ export default function CustomerForm({
               } outline-none transition-all`}
             />
             {errors.mobileNumber ? (
-              <p className="text-xs text-red-600 font-bold mt-1 flex items-center gap-1">
+              <p id="customer-mobile-error" className="text-xs text-red-600 font-bold mt-1 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" /> {errors.mobileNumber}
               </p>
             ) : (
@@ -208,14 +210,17 @@ export default function CustomerForm({
           </div>
         )}
 
-        {/* Payment Options Grid */}
+        {/* Payment Options Grid (Semantic Radiogroup with Accessible Roles) */}
         {hasAnyPaymentMethod && (
-          <div className={`grid ${gridColsClass} gap-3`}>
+          <div className={`grid ${gridColsClass} gap-3`} role="radiogroup" aria-label="Choose your preferred payment method">
             {/* Option 1: Cash on Delivery */}
             {isCodEnabled && (
               <button
                 type="button"
+                role="radio"
+                aria-checked={formData.paymentMethod === 'Cash on Delivery'}
                 aria-pressed={formData.paymentMethod === 'Cash on Delivery'}
+                tabIndex={formData.paymentMethod === 'Cash on Delivery' ? 0 : -1}
                 onClick={() => handleInputChange('paymentMethod', 'Cash on Delivery')}
                 className={`p-3.5 rounded-2xl border-2 text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
                   formData.paymentMethod === 'Cash on Delivery'
@@ -233,7 +238,7 @@ export default function CustomerForm({
                 </div>
                 <div>
                   <div className="font-display font-bold text-sm sm:text-base leading-tight">Cash on Delivery</div>
-                  <div className={`text-[11px] font-bold mt-0.5 ${formData.paymentMethod === 'Cash on Delivery' ? 'text-mani-800' : 'text-mani-500'}`}>
+                  <div className={`text-[11px] font-bold mt-0.5 ${formData.paymentMethod === 'Cash on Delivery' ? 'text-mani-950' : 'text-mani-700'}`}>
                     Pay upon delivery
                   </div>
                 </div>
@@ -244,7 +249,10 @@ export default function CustomerForm({
             {isMaribankEnabled && (
               <button
                 type="button"
+                role="radio"
+                aria-checked={formData.paymentMethod === 'Maribank'}
                 aria-pressed={formData.paymentMethod === 'Maribank'}
+                tabIndex={formData.paymentMethod === 'Maribank' ? 0 : -1}
                 onClick={() => handleInputChange('paymentMethod', 'Maribank')}
                 className={`p-3.5 rounded-2xl border-2 text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
                   formData.paymentMethod === 'Maribank'
@@ -262,7 +270,7 @@ export default function CustomerForm({
                 </div>
                 <div>
                   <div className="font-display font-bold text-sm sm:text-base leading-tight">Maribank</div>
-                  <div className={`text-[11px] font-bold mt-0.5 ${formData.paymentMethod === 'Maribank' ? 'text-orange-100' : 'text-mani-500'}`}>
+                  <div className={`text-[11px] font-bold mt-0.5 ${formData.paymentMethod === 'Maribank' ? 'text-white' : 'text-mani-700'}`}>
                     Scan InstaPay QR
                   </div>
                 </div>
@@ -273,7 +281,10 @@ export default function CustomerForm({
             {isGcashEnabled && (
               <button
                 type="button"
+                role="radio"
+                aria-checked={formData.paymentMethod === 'GCash'}
                 aria-pressed={formData.paymentMethod === 'GCash'}
+                tabIndex={formData.paymentMethod === 'GCash' ? 0 : -1}
                 onClick={() => handleInputChange('paymentMethod', 'GCash')}
                 className={`p-3.5 rounded-2xl border-2 text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
                   formData.paymentMethod === 'GCash'
@@ -291,7 +302,7 @@ export default function CustomerForm({
                 </div>
                 <div>
                   <div className="font-display font-bold text-sm sm:text-base leading-tight">GCash</div>
-                  <div className={`text-[11px] font-bold mt-0.5 ${formData.paymentMethod === 'GCash' ? 'text-blue-100' : 'text-mani-500'}`}>
+                  <div className={`text-[11px] font-bold mt-0.5 ${formData.paymentMethod === 'GCash' ? 'text-blue-100' : 'text-mani-700'}`}>
                     QR Code & Number
                   </div>
                 </div>

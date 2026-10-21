@@ -1311,6 +1311,14 @@ export default function App() {
 
   return (
     <div data-theme={effectiveThemeId} className={`relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 ${effectiveThemeId === 'thanksgiving' ? 'thanksgiving-theme' : ''} ${effectiveThemeId === 'christmas' ? 'selection:bg-[#DC2626] selection:text-white' : effectiveThemeId === 'thanksgiving' ? 'selection:bg-[#EA580C] selection:text-white' : effectiveThemeId === 'new-year' ? 'selection:bg-[#EAB308] selection:text-slate-950' : effectiveThemeId === 'chinese-new-year' ? 'selection:bg-[#DC2626] selection:text-amber-200' : effectiveThemeId === 'valentines-day' ? 'selection:bg-[#E11D48] selection:text-white' : 'selection:bg-[#FF6B00] selection:text-white'}`}>
+      {/* Skip to Content for Keyboard & Screen Reader Users */}
+      <a
+        href="#flavors-menu"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2.5 focus:rounded-xl focus:bg-amber-400 focus:text-stone-950 focus:font-extrabold focus:border-2 focus:border-stone-900 focus:shadow-xl focus:outline-none"
+      >
+        Skip to Flavors Menu
+      </a>
+
       {/* 🌟 Seasonal Atmosphere Particles & Ambient Visuals (Halloween bats/ghosts/skeletons, Christmas snow, etc.) */}
       {currentView === 'order' && <SeasonalAtmosphere themeId={effectiveThemeId} />}
 
