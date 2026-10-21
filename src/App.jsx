@@ -1553,18 +1553,18 @@ export default function App() {
                   {/* Quick 3-Step Ordering Guide Pills */}
                   <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-2 text-[11px] sm:text-xs font-extrabold text-amber-100">
                     <span className={`inline-flex items-center gap-1.5 ${currentTheme?.stepPillBg || 'bg-[#1F1025]/85 text-amber-300 border-[#FF6B00]/60'} px-3 py-1.5 rounded-xl border shadow-2xs`}>
-                      <span className={`w-4 h-4 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white'} text-[10px] flex items-center justify-center font-black`}>1</span>
-                      Pick Your Tubs
+                      <span className={`w-4 h-4 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-[#1F1025]'} text-[10px] flex items-center justify-center font-black`}>1</span>
+                      Pick Flavors
                     </span>
                     <span className="text-amber-400 font-black">→</span>
                     <span className={`inline-flex items-center gap-1.5 ${currentTheme?.stepPillBg || 'bg-[#1F1025]/85 text-amber-300 border-[#FF6B00]/60'} px-3 py-1.5 rounded-xl border shadow-2xs`}>
-                      <span className={`w-4 h-4 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white'} text-[10px] flex items-center justify-center font-black`}>2</span>
-                      Enter Delivery Address
+                      <span className={`w-4 h-4 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-[#1F1025]'} text-[10px] flex items-center justify-center font-black`}>2</span>
+                      Review Basket
                     </span>
                     <span className="text-amber-400 font-black">→</span>
                     <span className={`inline-flex items-center gap-1.5 ${currentTheme?.stepPillBg || 'bg-[#1F1025]/85 text-amber-300 border-[#FF6B00]/60'} px-3 py-1.5 rounded-xl border shadow-2xs`}>
-                      <span className={`w-4 h-4 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white'} text-[10px] flex items-center justify-center font-black`}>3</span>
-                      COD, GCash or Maribank
+                      <span className={`w-4 h-4 rounded-full ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-[#1F1025]'} text-[10px] flex items-center justify-center font-black`}>3</span>
+                      Delivery &amp; Checkout
                     </span>
                   </div>
                 </div>

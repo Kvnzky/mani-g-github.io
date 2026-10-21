@@ -180,7 +180,7 @@ export default function CustomerForm({
         <div className="border-b-2 border-dashed border-amber-300/70 pb-3.5">
           <div className="flex items-center gap-2">
             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${currentTheme?.stepPillBg || 'bg-[#1F1025] text-amber-300 border border-[#FF6B00]'}`}>
-              Step 4
+              Checkout
             </span>
             <h3 className="font-display text-lg sm:text-xl font-bold text-mani-950 flex items-center gap-1.5">
               <span>💳</span> Payment &amp; Checkout

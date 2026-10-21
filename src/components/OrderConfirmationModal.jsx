@@ -49,9 +49,20 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleWhatsApp = () => {
-    const encoded = encodeURIComponent(orderSummaryText);
-    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  const handleShareReceipt = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `Mani Wandering Order #${order.orderId}`,
+          text: orderSummaryText
+        });
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+      }
+    }
+    // Universal fallback: copy receipt to clipboard
+    handleCopy();
   };
 
   const handleCopyGcash = () => {
@@ -198,11 +209,11 @@ Salamat sa pag-order sa Mani Wandering! 🥜✨`;
 
             <button
               type="button"
-              onClick={handleWhatsApp}
+              onClick={handleShareReceipt}
               className="py-2.5 px-3 rounded-xl border-2 border-emerald-400 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-extrabold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <Share2 className="w-4 h-4" />
-              <span>Share Receipt</span>
+              <span>{copied ? 'Copied Receipt!' : 'Share Receipt'}</span>
             </button>
           </div>
 
