@@ -1722,6 +1722,7 @@ export default function App() {
                         quantity={quantities[product.id] || 0}
                         onQuantityChange={handleQuantityChange}
                         onAddToCart={handleAddToCartFeedback}
+                        isOrdersClosed={isOrdersClosed}
                       />
                     ))}
                   </div>

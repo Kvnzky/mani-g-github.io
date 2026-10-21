@@ -349,8 +349,8 @@ export default function CustomerForm({
                 </div>
               </div>
 
-              <p className="text-xs text-mani-600 font-medium">
-                💡 Tip: Brighten your screen for faster scanning!
+              <p className="text-xs text-mani-700 font-medium bg-white/70 p-2.5 rounded-xl border border-orange-200">
+                💡 <strong>Tip:</strong> You can send payment now or click <em>Place Order Now</em> first to lock in your tubs. You'll receive your official order receipt with instructions immediately!
               </p>
             </div>
           )}
@@ -408,8 +408,8 @@ export default function CustomerForm({
                 </div>
               </div>
 
-              <p className="text-xs text-mani-600 font-medium">
-                💡 Tip: Please save a screenshot of your payment confirmation!
+              <p className="text-xs text-mani-700 font-medium bg-white/70 p-2.5 rounded-xl border border-blue-200">
+                💡 <strong>Tip:</strong> Send payment now or tap <em>Place Order Now</em> first to secure your batch and get your tracking number. Please save a screenshot of your GCash reference!
               </p>
             </div>
           )}

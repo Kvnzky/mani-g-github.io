@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Minus, Check } from 'lucide-react';
+import { Plus, Minus, Check, Lock } from 'lucide-react';
 import { formatPHP, getFlavorPersonality } from '../config/products';
 import { getTheme } from '../config/themes';
 
@@ -9,9 +9,9 @@ export default function FlavorCard({
   onQuantityChange,
   onAddToCart,
   index,
-  themeId = 'halloween'
+  themeId = 'halloween',
+  isOrdersClosed = false
 }) {
-  const [stagedQty, setStagedQty] = useState(1);
   const [burstKey, setBurstKey] = useState(0);
   const isAvailable = product.available !== false;
   const isSelected = quantity > 0;
@@ -33,25 +33,13 @@ export default function FlavorCard({
     setBurstKey((prev) => prev + 1);
   };
 
-  const handleMinusStaged = (e) => {
-    e.stopPropagation();
-    setStagedQty((prev) => Math.max(1, prev - 1));
-  };
-
-  const handlePlusStaged = (e) => {
-    e.stopPropagation();
-    setStagedQty((prev) => Math.min(999, prev + 1));
-  };
-
   const handleAddClick = () => {
-    const qtyToAdd = stagedQty > 0 ? stagedQty : 1;
-    const newTotal = (quantity || 0) + qtyToAdd;
+    const newTotal = (quantity || 0) + 1;
     onQuantityChange(product.id, newTotal);
     triggerParticleBurst();
     if (onAddToCart) {
-      onAddToCart(product, qtyToAdd);
+      onAddToCart(product, 1);
     }
-    setStagedQty(1);
   };
 
   const handleMinusInCart = (e) => {
@@ -195,63 +183,32 @@ export default function FlavorCard({
             <div className="w-full py-2.5 rounded-2xl bg-mani-100/80 text-mani-400 font-extrabold text-xs text-center border border-mani-200">
               Temporarily Out of Stock
             </div>
-          ) : !isSelected ? (
-            /* Unselected State: Tactile Stepper + Prominent Add Button */
-            <div className="flex items-center gap-1.5 w-full">
-              {/* Staged Quantity Stepper */}
-              <div className={`flex items-center bg-amber-100/80 rounded-xl border ${currentTheme?.cardBorder || 'border-[#FF6B00]/35'} p-0.5 shrink-0`}>
-                <button
-                  type="button"
-                  onClick={handleMinusStaged}
-                  disabled={stagedQty <= 1}
-                  aria-label={`Decrease ${product.name} quantity to add`}
-                  className={`stepper-btn w-6 h-7 rounded-lg flex items-center justify-center font-bold transition-all ${
-                    stagedQty <= 1 
-                      ? 'text-mani-300 cursor-not-allowed' 
-                      : 'bg-white text-mani-900 hover:bg-amber-100 shadow-2xs active:scale-90 cursor-pointer'
-                  }`}
-                >
-                  <Minus className="w-3 h-3 stroke-[2.5]" />
-                </button>
-
-                <span 
-                  aria-label={`Quantity to add: ${stagedQty}`}
-                  className="w-5 text-center font-display text-xs font-bold text-mani-950 select-none"
-                >
-                  {stagedQty}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={handlePlusStaged}
-                  aria-label={`Increase ${product.name} quantity to add`}
-                  className="stepper-btn w-6 h-7 rounded-lg bg-white text-mani-900 hover:bg-amber-100 active:scale-90 flex items-center justify-center shadow-2xs font-bold transition-all cursor-pointer"
-                >
-                  <Plus className="w-3 h-3 stroke-[2.5]" />
-                </button>
-              </div>
-
-              {/* Primary Add to Order Button with Active Seasonal Theme Accent */}
-              <button
-                type="button"
-                onClick={handleAddClick}
-                className={`flex-1 min-h-[36px] py-2 px-2 rounded-xl ${currentTheme?.primaryBtn || 'bg-[#FF6B00] hover:bg-amber-400 text-white border-2 border-amber-300 shadow-snack-sm'} font-display font-bold text-[11px] sm:text-xs active:translate-y-0.5 flex items-center justify-center gap-1 whitespace-nowrap transition-all cursor-pointer`}
-              >
-                <Plus className="w-3 h-3 stroke-[3] shrink-0" />
-                <span>Add to Order</span>
-              </button>
+          ) : isOrdersClosed ? (
+            <div className="w-full py-2.5 px-3 rounded-2xl bg-amber-50/80 text-mani-800 font-extrabold text-xs text-center border border-amber-300/60 flex items-center justify-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-mani-700 shrink-0" />
+              <span>Batch Orders Closed</span>
             </div>
+          ) : !isSelected ? (
+            /* Unselected State: Direct 1-Tap Add to Order Button with Generous Hit Area */
+            <button
+              type="button"
+              onClick={handleAddClick}
+              className={`w-full min-h-[42px] py-2.5 px-4 rounded-2xl ${currentTheme?.primaryBtn || 'bg-[#FF6B00] hover:bg-amber-400 text-white border-2 border-amber-300 shadow-snack-sm'} font-display font-bold text-xs sm:text-sm active:translate-y-0.5 flex items-center justify-center gap-2 transition-all cursor-pointer`}
+            >
+              <Plus className="w-4 h-4 stroke-[3] shrink-0" />
+              <span>Add to Order</span>
+            </button>
           ) : (
-            /* Selected / In-Cart Live Controller */
-            <div className={`flex items-center justify-between gap-1.5 bg-amber-100/95 p-1.5 rounded-xl border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-sm w-full`}>
-              <div className="flex items-center gap-1 shrink-0">
+            /* Selected / In-Cart Live Controller with Accessible Touch Targets (32-36px) */
+            <div className={`flex items-center justify-between gap-2 bg-amber-100/95 p-1.5 rounded-2xl border-2 ${currentTheme?.cardBorderActive || 'border-[#FF6B00]'} shadow-snack-sm w-full`}>
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={handleMinusInCart}
                   aria-label={`Decrease ${product.name} quantity`}
-                  className="stepper-btn w-7 h-7 rounded-lg bg-white text-mani-950 hover:bg-red-50 hover:text-red-600 active:scale-90 flex items-center justify-center border border-mani-900/20 shadow-2xs font-bold transition-all cursor-pointer"
+                  className="stepper-btn w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white text-mani-950 hover:bg-red-50 hover:text-red-600 active:scale-90 flex items-center justify-center border border-mani-900/20 shadow-2xs font-bold transition-all cursor-pointer"
                 >
-                  <Minus className="w-3 h-3 stroke-[2.5]" />
+                  <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
 
                 <input
@@ -261,24 +218,24 @@ export default function FlavorCard({
                   value={quantity}
                   onChange={handleDirectInput}
                   aria-label={`${product.name} quantity in order`}
-                  className="w-7 text-center font-display text-xs sm:text-sm font-bold bg-transparent text-mani-950 focus:outline-none rounded p-0"
+                  className="w-8 sm:w-9 text-center font-display text-sm sm:text-base font-bold bg-transparent text-mani-950 focus:outline-none rounded p-0"
                 />
 
                 <button
                   type="button"
                   onClick={handlePlusInCart}
                   aria-label={`Increase ${product.name} quantity`}
-                  className={`stepper-btn w-7 h-7 rounded-lg ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white border border-amber-300'} active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer`}
+                  className={`stepper-btn w-8 h-8 sm:w-9 sm:h-9 rounded-xl ${currentTheme?.stepPillActive || 'bg-[#FF6B00] text-white border border-amber-300'} active:scale-90 flex items-center justify-center shadow-xs font-bold transition-all cursor-pointer`}
                 >
-                  <Plus className="w-3 h-3 stroke-[2.5]" />
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
               </div>
 
-              <div className="pr-1.5 text-right min-w-0">
-                <div className="font-display text-xs sm:text-sm font-bold text-mani-950 truncate leading-tight">
+              <div className="pr-2 text-right min-w-0">
+                <div className="font-display text-sm sm:text-base font-bold text-mani-950 truncate leading-tight">
                   {formatPHP(quantity * (product.price || 50))}
                 </div>
-                <div className={`text-[9px] font-extrabold ${currentTheme?.cutoffHighlightText || 'text-[#FF6B00]'} uppercase tracking-wider truncate`}>
+                <div className={`text-[10px] font-extrabold ${currentTheme?.cutoffHighlightText || 'text-[#FF6B00]'} uppercase tracking-wider truncate`}>
                   {quantity} tub{quantity > 1 ? 's' : ''} added
                 </div>
               </div>
