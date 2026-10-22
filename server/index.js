@@ -89,7 +89,7 @@ let settings = {
   spreadsheetId: process.env.GOOGLE_SHEET_ID || '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI',
   appsScriptUrl: process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec',
   timezone: TIMEZONE,
-  theme: 'chinese-new-year',
+  theme: 'valentines-day',
   themeUpdatedAt: 1729300000000,
   manualFormOpen: true,
   paymentMethods: {
@@ -112,7 +112,7 @@ if (fs.existsSync(SETTINGS_FILE)) {
     settings = {
       ...settings,
       ...loaded,
-      theme: (loaded.theme && VALID_THEMES.includes(loaded.theme)) ? loaded.theme : 'chinese-new-year',
+      theme: (loaded.theme && VALID_THEMES.includes(loaded.theme)) ? loaded.theme : 'valentines-day',
       themeUpdatedAt: loaded.themeUpdatedAt || 1729300000000,
       manualFormOpen: loaded.manualFormOpen !== undefined ? Boolean(loaded.manualFormOpen) : true,
       paymentMethods: {

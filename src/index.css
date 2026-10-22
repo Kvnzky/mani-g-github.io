@@ -80,12 +80,12 @@
 
   :root[data-theme="valentines-day"],
   [data-theme="valentines-day"] {
-    --bg-cream: #1E0512;
-    --bg-indigo: #260817;
-    --text-roast: #FFF1F2;
-    --accent-amber: #E11D48;
-    --accent-gold: #FB7185;
-    --theme-border: #E11D48;
+    --bg-cream: #4A0E2E;
+    --bg-indigo: #800F2F;
+    --text-roast: #FFF5F7;
+    --accent-amber: #FF4D6D;
+    --accent-gold: #FFCCD5;
+    --theme-border: #FFCCD5;
   }
 
   :root[data-theme="easter"],
@@ -158,10 +158,10 @@
 
   html[data-theme="valentines-day"] body,
   body[data-theme="valentines-day"] {
-    background: linear-gradient(180deg, #1E0512 0%, #260817 55%, #1E0512 100%);
-    background-color: #1E0512;
-    color: #FFF1F2;
-    accent-color: #E11D48;
+    background: linear-gradient(180deg, #800F2F 0%, #C9184A 50%, #4A0E2E 100%);
+    background-color: #4A0E2E;
+    color: #FFF5F7;
+    accent-color: #FF4D6D;
   }
 
   html[data-theme="easter"] body,
@@ -292,11 +292,11 @@
 
 [data-theme="valentines-day"] .bg-peanut-pattern,
 [data-theme="valentines-day"].bg-peanut-pattern {
-  background-color: #1E0512;
+  background-color: #4A0E2E;
   background-image:
-    radial-gradient(rgba(225, 29, 72, 0.16) 1.25px, transparent 1.25px),
-    radial-gradient(rgba(251, 113, 133, 0.12) 1.25px, transparent 1.25px),
-    linear-gradient(180deg, #1E0512 0%, #260817 50%, #1E0512 100%);
+    radial-gradient(rgba(255, 204, 213, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(255, 77, 109, 0.18) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #800F2F 0%, #C9184A 50%, #4A0E2E 100%);
 }
 
 [data-theme="easter"] .bg-peanut-pattern,
@@ -1854,3 +1854,155 @@ body.chinese-new-year-theme {
 
 .animate-petal { animation: petalDrift 13s linear infinite; }
 .animate-lantern { animation: lanternFloat 4.8s ease-in-out infinite; }
+
+
+/* ============================================================
+   VALENTINE'S DAY FESTIVE SPECIAL - CRUSH KITA, CRUSH MO RIN BA?
+   ============================================================ */
+body.valentines-day-theme,
+.valentines-day-theme {
+  background-color: #4A0E2E !important;
+  color: #FFF5F7 !important;
+  background-image: 
+    radial-gradient(rgba(255, 204, 213, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(255, 77, 109, 0.18) 1.25px, #4A0E2E 1.25px) !important;
+  background-size: 36px 36px !important;
+  background-position: 0 0, 18px 18px !important;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Header & Nav Glow */
+.valentines-day-theme header,
+.valentines-day-theme nav,
+.valentines-day-theme .hero {
+  background: rgba(74, 14, 46, 0.94) !important;
+  backdrop-filter: blur(14px) !important;
+  border-bottom: 2px solid rgba(255, 204, 213, 0.75) !important;
+  box-shadow: 0 4px 24px rgba(201, 24, 74, 0.35) !important;
+}
+
+/* Valentine Banner Badge for Hero/Headline */
+.valentines-day-theme .hero-title::after,
+.valentines-day-theme .hero h1::after {
+  content: " 💘 Crush Kita, Crush Mo Rin Ba?";
+  display: inline-block;
+  font-size: 0.45em;
+  font-weight: 900;
+  vertical-align: middle;
+  background: linear-gradient(135deg, #FFCCD5, #FFB3C1, #FFF5F7);
+  color: #800F2F;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-left: 8px;
+  border: 1.5px solid #FFCCD5;
+  box-shadow: 0 2px 14px rgba(255, 77, 109, 0.45);
+  letter-spacing: 0.5px;
+}
+
+/* Product Cards & Content Containers - Romantic Pink Radiance */
+.valentines-day-theme .card,
+.valentines-day-theme .product-card {
+  border: 2px solid rgba(255, 204, 213, 0.65) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 8px 30px -4px rgba(74, 14, 46, 0.5),
+    0 0 24px rgba(255, 77, 109, 0.28),
+    0 4px 0 0 #FF4D6D !important;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* Subtle corner heart accent on cards */
+.valentines-day-theme .card::before,
+.valentines-day-theme .product-card::before {
+  content: "💖";
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 1.1rem;
+  opacity: 0.85;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  pointer-events: none;
+}
+
+.valentines-day-theme .card:hover,
+.valentines-day-theme .product-card:hover {
+  transform: translateY(-6px) scale(1.01) !important;
+  border-color: #FFFFFF !important;
+  box-shadow: 
+    0 14px 38px -4px rgba(74, 14, 46, 0.65),
+    0 0 32px rgba(255, 77, 109, 0.5),
+    0 6px 0 0 #FFCCD5 !important;
+}
+
+/* Glowing romantic candlelight pink box-shadow on tub photo */
+.valentines-day-theme .product-card .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 26px rgba(255, 77, 109, 0.65),
+    0 4px 32px rgba(255, 204, 213, 0.45),
+    0 0 48px rgba(201, 24, 74, 0.35),
+    inset 0 0 16px rgba(255, 204, 213, 0.3) !important;
+}
+
+.valentines-day-theme .product-card:hover .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 34px rgba(255, 77, 109, 0.85),
+    0 6px 38px rgba(255, 204, 213, 0.6),
+    0 0 56px rgba(201, 24, 74, 0.5),
+    inset 0 0 20px rgba(255, 204, 213, 0.4) !important;
+}
+
+/* Primary buttons */
+.valentines-day-theme button.btn-primary,
+.valentines-day-theme .btn-primary,
+.valentines-day-theme [class*="btn-primary"] {
+  background: linear-gradient(135deg, #FF4D6D 0%, #C9184A 50%, #800F2F 100%) !important;
+  color: #FFFFFF !important;
+  font-weight: 900 !important;
+  border: 2px solid #FFCCD5 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 18px rgba(255, 77, 109, 0.45) !important;
+  transition: all 0.25s ease !important;
+}
+
+.valentines-day-theme button.btn-primary:hover,
+.valentines-day-theme .btn-primary:hover,
+.valentines-day-theme [class*="btn-primary"]:hover {
+  background: linear-gradient(135deg, #FFCCD5 0%, #FF4D6D 60%, #C9184A 100%) !important;
+  color: #590D22 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 24px rgba(255, 77, 109, 0.6) !important;
+}
+
+/* Small quantity adjustment steppers */
+.valentines-day-theme .stepper-btn,
+.valentines-day-theme button.stepper-btn {
+  background: #ffffff !important;
+  color: #C9184A !important;
+  border: 1px solid rgba(255, 204, 213, 0.6) !important;
+  border-radius: 8px !important;
+}
+.valentines-day-theme .stepper-btn:hover {
+  background: #FFF0F3 !important;
+  color: #800F2F !important;
+  border-color: #FF4D6D !important;
+}
+
+/* Price Tags & Badges */
+.valentines-day-theme .price {
+  background: linear-gradient(135deg, #FF4D6D, #C9184A) !important;
+  color: #FFFFFF !important;
+  font-weight: 900 !important;
+  border: 1.5px solid #FFCCD5 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+/* Floating Hearts & Rose Petals Animations */
+@keyframes heartDrift {
+  0% { transform: translateY(-10vh) translateX(0px) scale(0.9); opacity: 0; }
+  15% { opacity: 0.85; }
+  85% { opacity: 0.85; }
+  100% { transform: translateY(115vh) translateX(35px) scale(1.1); opacity: 0; }
+}
+
+.animate-floating-heart { animation: heartDrift 14s linear infinite; }

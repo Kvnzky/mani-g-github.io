@@ -487,19 +487,28 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
   if (themeId === 'valentines-day') {
     return (
       <div className="relative w-full max-w-[620px] mx-auto flex items-center justify-center p-3 select-none">
-        {/* Ambient Romantic Rose Glow Backdrops */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-[#E11D48]/25 via-[#FB7185]/20 to-[#BE123C]/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-6 -right-6 w-40 h-40 bg-[#FB7185]/25 rounded-full blur-2xl pointer-events-none animate-pulse" />
-        <div className="absolute -bottom-6 -left-6 w-44 h-44 bg-[#E11D48]/25 rounded-full blur-2xl pointer-events-none" />
+        {/* Ambient Romantic Rose Glow Backdrops in Soft Pink & Rose Red */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#C9184A]/40 via-[#FF4D6D]/35 to-[#FFCCD5]/35 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-6 -right-6 w-44 h-44 bg-[#FFCCD5]/30 rounded-full blur-2xl pointer-events-none animate-pulse" />
+        <div className="absolute -bottom-6 -left-6 w-48 h-48 bg-[#C9184A]/35 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Rotating Soft Heart & Sunburst Aura behind card */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-25">
+          <svg className="w-80 h-80 sm:w-96 sm:h-96 animate-sunburst-spin text-[#FFCCD5]/40" viewBox="0 0 100 100" fill="currentColor">
+            {[0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5].map((deg) => (
+              <polygon key={deg} points="50,50 48,0 52,0" transform={`rotate(${deg} 50 50)`} />
+            ))}
+          </svg>
+        </div>
 
         {/* Main Romantic Composition Card */}
-        <div className="relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#360B21]/90 via-[#1E0512]/95 to-[#240815] border-2 border-[#E11D48] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
+        <div className="card relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#800F2F]/95 via-[#590D22]/98 to-[#360B21] border-2 border-[#FFCCD5] p-6 sm:p-8 shadow-[0_0_35px_rgba(255,77,109,0.35)] backdrop-blur-md overflow-hidden">
           {/* Decorative Corner Accents */}
           <div className="absolute -top-3 -right-3 text-2xl rotate-12 drop-shadow-md select-none pointer-events-none">
-            💖🌹
+            💘🌹
           </div>
           <div className="absolute -bottom-2 -left-2 text-2xl -rotate-12 drop-shadow-md select-none pointer-events-none">
-            💌💝
+            💌💖
           </div>
 
           {/* Central Logo & Heart Halo Feature */}
@@ -507,78 +516,78 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
             <div className="relative inline-block animate-float-slow">
               {/* Sweet Heart Pin atop logo */}
               <div className="absolute -top-4 -right-2 z-20 pointer-events-none transform rotate-12 drop-shadow-md">
-                <svg className="w-10 h-10" viewBox="0 0 24 24" fill="#E11D48">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="#FDA4AF" strokeWidth="1" />
+                <svg className="w-11 h-11" viewBox="0 0 24 24" fill="#FF4D6D">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="#FFCCD5" strokeWidth="1.2" />
                 </svg>
               </div>
 
               {/* Glowing Romantic Rose Ring Wreath behind logo */}
-              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#4A0E2E] via-[#240815] to-[#360B21] border-4 border-[#FB7185] p-3 shadow-warm-lg flex items-center justify-center mx-auto">
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#800F2F] via-[#C9184A] to-[#590D22] border-4 border-[#FFCCD5] p-3 shadow-[0_4px_22px_rgba(255,77,109,0.55)] flex items-center justify-center mx-auto">
                 <img
                   src="./logo.png"
                   alt="Mani Wandering Valentine Logo"
-                  className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(225,29,72,0.5)]"
+                  className="w-full h-full object-contain drop-shadow-[0_4px_16px_rgba(255,77,109,0.7)]"
                 />
               </div>
 
               {/* Sweet Romantic Ribbon Tag */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#BE123C] via-[#E11D48] to-[#FB7185] text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-rose-300 shadow-snack-sm flex items-center gap-1">
-                <span>💖 Crush at First Crunch</span>
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#FFCCD5] via-[#FFB3C1] to-[#FFF5F7] text-[#800F2F] text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-[#FFCCD5] shadow-[0_2px_12px_rgba(255,77,109,0.5)] flex items-center gap-1">
+                <span>💘 Crush Kita, Crush Mo Rin Ba?</span>
               </div>
             </div>
 
             {/* Featured Valentine Tubs Mini Showcase */}
             <div className="pt-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#FDA4AF] mb-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#FFCCD5] mb-3">
                 🌹 Sweet, Salty &amp; Spicy • Perfect for Date Nights &amp; Salo-Salo
               </p>
 
               <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-                {/* Tub 1: Sweet & Salty Crush */}
-                <div className="rounded-2xl p-2 bg-[#1E0512]/90 border border-rose-900/60 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FB7185] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-rose-800/50">
-                    <img src="./images/products/salted.jpg" alt="Sweet & Salty Mani" className="w-full h-full object-cover" />
+                {/* Tub 1: Sweetheart Salted */}
+                <div className="rounded-2xl p-2 bg-[#4A0E2E]/90 border border-[#FFCCD5]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FFCCD5] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#FFCCD5]/60 shadow-[0_0_14px_rgba(255,77,109,0.4)]">
+                    <img src="./images/products/salted.jpg" alt="Sweetheart Salted Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-rose-300 block leading-tight">💝 Sweet &amp; Salty</span>
-                    <span className="text-[9px] text-rose-200/90 font-medium">Date Night Fave</span>
+                    <span className="text-[10px] font-black text-[#FFCCD5] block leading-tight">💘 Sweetheart</span>
+                    <span className="text-[9px] text-[#FFF5F7]/90 font-medium">Date Night Fave</span>
                   </div>
                 </div>
 
-                {/* Tub 2: Passionate Kick Spicy */}
-                <div className="rounded-2xl p-2 bg-[#1E0512]/90 border border-[#E11D48]/70 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-rose-300 transition-all scale-105 bg-gradient-to-b from-[#420E29] to-[#1E0512]">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#E11D48]">
-                    <img src="./images/products/spicy.jpg" alt="Passionate Kick Spicy Mani" className="w-full h-full object-cover" />
+                {/* Tub 2: Forever BBQ */}
+                <div className="rounded-2xl p-2 bg-[#590D22]/90 border border-[#FF4D6D]/70 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FFFFFF] transition-all scale-105 bg-gradient-to-b from-[#800F2F] to-[#590D22]">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#FFCCD5] shadow-[0_0_18px_rgba(255,77,109,0.6)]">
+                    <img src="./images/products/bbq.jpg" alt="Forever BBQ Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-rose-200 block leading-tight">🔥 Passionate</span>
-                    <span className="text-[9px] text-amber-200/90 font-bold">#1 Kilig Spice</span>
+                    <span className="text-[10px] font-black text-[#FFCCD5] block leading-tight">🌹 Forever BBQ</span>
+                    <span className="text-[9px] text-[#FFB3C1] font-bold">#1 Kilig Crunch</span>
                   </div>
                 </div>
 
-                {/* Tub 3: Golden Darling Salted Egg */}
-                <div className="rounded-2xl p-2 bg-[#1E0512]/90 border border-rose-900/60 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FB7185] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-400/40">
+                {/* Tub 3: Golden Darling Egg */}
+                <div className="rounded-2xl p-2 bg-[#4A0E2E]/90 border border-[#FFCCD5]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FFCCD5] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#FFCCD5]/60 shadow-[0_0_14px_rgba(255,77,109,0.4)]">
                     <img src="./images/products/salted-egg.jpg" alt="Golden Darling Salted Egg Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🥚 Darling Egg</span>
-                    <span className="text-[9px] text-rose-200/90 font-medium">Velvety Umami</span>
+                    <span className="text-[10px] font-black text-[#FFCCD5] block leading-tight">🥚 Darling Egg</span>
+                    <span className="text-[9px] text-[#FFF5F7]/90 font-medium">Velvety Umami</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 3 Value Pillars */}
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-rose-100">
-              <span className="inline-flex items-center gap-1 bg-[#18040F]/90 px-2.5 py-1 rounded-xl border border-rose-800/40">
-                <Heart className="w-3 h-3 text-[#FB7185] fill-[#FB7185]" /> Date Night &amp; Merienda Ready
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-[#FFF5F7]">
+              <span className="inline-flex items-center gap-1 bg-[#590D22]/90 px-2.5 py-1 rounded-xl border border-[#FFCCD5]/40">
+                <Gift className="w-3 h-3 text-[#FFCCD5]" /> Romantic Merienda
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#18040F]/90 px-2.5 py-1 rounded-xl border border-rose-800/40">
-                <Star className="w-3 h-3 text-[#FDE047]" /> Purong Crispy Bawang
+              <span className="inline-flex items-center gap-1 bg-[#590D22]/90 px-2.5 py-1 rounded-xl border border-[#FFCCD5]/40">
+                <Star className="w-3 h-3 text-[#FFD700]" /> Purong Crispy Bawang
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#18040F]/90 px-2.5 py-1 rounded-xl border border-rose-800/40">
-                <Sparkles className="w-3 h-3 text-rose-300" /> Bagong Luto with Love
+              <span className="inline-flex items-center gap-1 bg-[#590D22]/90 px-2.5 py-1 rounded-xl border border-[#FFCCD5]/40">
+                <Sparkles className="w-3 h-3 text-[#FFCCD5]" /> Bagong Luto Weekly
               </span>
             </div>
           </div>

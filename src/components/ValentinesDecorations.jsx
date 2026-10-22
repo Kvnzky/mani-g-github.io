@@ -213,3 +213,28 @@ export function ValentinesHeartBoxSvg({ className = 'w-16 h-16' }) {
     </svg>
   );
 }
+
+
+/**
+ * Romantic Cupid Heart Icon with Arrow
+ */
+export function ValentinesCupidHeartSvg({ className = 'w-5 h-5' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#FF4D6D" stroke="#C9184A" strokeWidth="1.2" />
+      <line x1="2" y1="2" x2="22" y2="22" stroke="#FFD700" strokeWidth="1.5" strokeLinecap="round" />
+      <polygon points="22,22 18,22 22,18" fill="#FFD700" />
+    </svg>
+  );
+}
+
+/**
+ * Delicate Rose Petal Icon
+ */
+export function ValentinesRosePetalSvg({ className = 'w-5 h-5' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      <path d="M12 2C8 6 6 10 7 14c1 4 5 7 5 7s4-3 5-7c1-4-1-8-5-12z" fill="#FF758F" stroke="#FF4D6D" strokeWidth="1" />
+    </svg>
+  );
+}
