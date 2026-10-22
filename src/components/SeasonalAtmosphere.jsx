@@ -44,30 +44,87 @@ function ThanksgivingLeaves() {
 }
 
 function ChristmasSnow() {
+  const snowflakes = [
+    // Tier 1: Foreground sharp crystalline snowflakes
+    { left: '4%', delay: '-2.4s', duration: '13s', size: 'w-4 h-4 sm:w-5 sm:h-5', opacity: 'opacity-90', sway: 'animate-leaf-sway' },
+    { left: '16%', delay: '-8.1s', duration: '15s', size: 'w-4.5 h-4.5', opacity: 'opacity-85', sway: 'animate-leaf-sway-alt' },
+    { left: '28%', delay: '-13.5s', duration: '14s', size: 'w-5 h-5', opacity: 'opacity-95', sway: 'animate-leaf-sway' },
+    { left: '46%', delay: '-4.2s', duration: '12.5s', size: 'w-4 h-4', opacity: 'opacity-90', sway: 'animate-leaf-sway-alt' },
+    { left: '62%', delay: '-10.8s', duration: '14.5s', size: 'w-4.5 h-4.5', opacity: 'opacity-85', sway: 'animate-leaf-sway' },
+    { left: '78%', delay: '-6.5s', duration: '13.5s', size: 'w-5 h-5 sm:w-6 sm:h-6', opacity: 'opacity-90', sway: 'animate-leaf-sway-alt' },
+    { left: '92%', delay: '-1.8s', duration: '15s', size: 'w-4 h-4', opacity: 'opacity-85', sway: 'animate-leaf-sway' },
+
+    // Tier 2: Mid-ground floating soft flakes
+    { left: '10%', delay: '-6.2s', duration: '17s', size: 'w-3 h-3 sm:w-3.5 sm:h-3.5', opacity: 'opacity-75', sway: 'animate-leaf-sway-alt' },
+    { left: '22%', delay: '-15.1s', duration: '18s', size: 'w-3 h-3', opacity: 'opacity-70', sway: 'animate-leaf-sway' },
+    { left: '38%', delay: '-3.7s', duration: '16.5s', size: 'w-3.5 h-3.5', opacity: 'opacity-75', sway: 'animate-leaf-sway-alt' },
+    { left: '54%', delay: '-11.4s', duration: '19s', size: 'w-3 h-3', opacity: 'opacity-70', sway: 'animate-leaf-sway' },
+    { left: '70%', delay: '-7.9s', duration: '17.5s', size: 'w-3.5 h-3.5', opacity: 'opacity-75', sway: 'animate-leaf-sway-alt' },
+    { left: '85%', delay: '-14.3s', duration: '18s', size: 'w-3 h-3', opacity: 'opacity-70', sway: 'animate-leaf-sway' },
+
+    // Tier 3: Soft ambient background snow specks
+    { left: '7%', delay: '-9.0s', duration: '22s', size: 'w-2 h-2', opacity: 'opacity-50', sway: 'animate-leaf-sway' },
+    { left: '33%', delay: '-17.2s', duration: '24s', size: 'w-2 h-2', opacity: 'opacity-45', sway: 'animate-leaf-sway-alt' },
+    { left: '66%', delay: '-5.5s', duration: '21s', size: 'w-2.5 h-2.5', opacity: 'opacity-55', sway: 'animate-leaf-sway' },
+    { left: '96%', delay: '-12.8s', duration: '23s', size: 'w-2 h-2', opacity: 'opacity-50', sway: 'animate-leaf-sway-alt' }
+  ];
+
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
-      {/* Drifting Soft Snowflakes & Holiday Stars */}
-      {[
-        { left: '5%', delay: '0s', duration: '12s', size: 'w-3 h-3', opacity: 'opacity-70' },
-        { left: '18%', delay: '2s', duration: '15s', size: 'w-4 h-4', opacity: 'opacity-80' },
-        { left: '32%', delay: '4s', duration: '11s', size: 'w-2.5 h-2.5', opacity: 'opacity-60' },
-        { left: '48%', delay: '1s', duration: '16s', size: 'w-3.5 h-3.5', opacity: 'opacity-75' },
-        { left: '64%', delay: '3s', duration: '13s', size: 'w-4 h-4', opacity: 'opacity-85' },
-        { left: '79%', delay: '5s', duration: '14s', size: 'w-3 h-3', opacity: 'opacity-70' },
-        { left: '92%', delay: '2.5s', duration: '17s', size: 'w-2.5 h-2.5', opacity: 'opacity-60' }
-      ].map((flake, i) => (
+    <div className="pointer-events-none fixed inset-0 z-[1] overflow-hidden select-none" aria-hidden="true">
+      {/* Drifting Soft Snowflakes with 3D Sway & Staggered Motion */}
+      {snowflakes.map((flake, i) => (
         <div
           key={i}
-          className={`absolute -top-6 text-white/80 ${flake.opacity} animate-fall`}
+          className={`fixed -top-8 text-white/90 ${flake.opacity} animate-leaf-fall`}
           style={{
             left: flake.left,
             animationDelay: flake.delay,
             animationDuration: flake.duration
           }}
         >
-          <svg className={flake.size} viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
+          <div className={flake.sway}>
+            <svg
+              className={`${flake.size} drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            >
+              {/* 6-Branched Crystal Snowflake */}
+              <line x1="12" y1="2" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              <line x1="4.93" y1="19.07" x2="19.07" y2="4.93" />
+              {/* Branch Crystal V-Notches */}
+              <path d="M10 5 L12 3 L14 5" />
+              <path d="M10 19 L12 21 L14 19" />
+              <path d="M5 10 L3 12 L5 14" />
+              <path d="M19 10 L21 12 L19 14" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+            </svg>
+          </div>
+        </div>
+      ))}
+
+      {/* Twinkling Warm Gold Holiday Fairy Dust Specks */}
+      {[
+        { left: '12%', top: '18%', delay: '0s', size: 'w-2 h-2' },
+        { left: '35%', top: '42%', delay: '1.2s', size: 'w-2.5 h-2.5' },
+        { left: '68%', top: '25%', delay: '2.4s', size: 'w-2 h-2' },
+        { left: '88%', top: '58%', delay: '1.8s', size: 'w-2.5 h-2.5' }
+      ].map((spark, i) => (
+        <div
+          key={`xmas-spark-${i}`}
+          style={{
+            left: spark.left,
+            top: spark.top,
+            animationDelay: spark.delay,
+            animationDuration: '3.5s'
+          }}
+          className="fixed animate-pulse pointer-events-none select-none"
+        >
+          <div className={`${spark.size} rounded-full bg-[#E9D8A6] blur-[1px] shadow-[0_0_8px_#E9D8A6] opacity-80`} />
         </div>
       ))}
     </div>

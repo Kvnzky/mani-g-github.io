@@ -108,10 +108,11 @@
 
   /* Theme-specific body background overrides */
   html[data-theme="christmas"] body,
-  body[data-theme="christmas"] {
-    background: linear-gradient(180deg, #0A1D13 0%, #0E281B 55%, #0A1D13 100%);
-    background-color: #0A1D13;
-    color: #ECFDF5;
+  body[data-theme="christmas"],
+  body.christmas-theme {
+    background: linear-gradient(180deg, #0B2545 0%, #134074 45%, #0A1F18 100%);
+    background-color: #0B2545;
+    color: #F8FAFC;
     accent-color: #DC2626;
   }
 
@@ -180,7 +181,7 @@
 
   html[data-theme="christmas"] :focus-visible,
   [data-theme="christmas"] :focus-visible {
-    outline: 3px solid #DC2626;
+    outline: 3px solid #E9D8A6;
   }
 
   html[data-theme="default"] :focus-visible,
@@ -230,12 +231,14 @@
 }
 
 [data-theme="christmas"] .bg-peanut-pattern,
-[data-theme="christmas"].bg-peanut-pattern {
-  background-color: #0A1D13;
+[data-theme="christmas"].bg-peanut-pattern,
+.christmas-theme .bg-peanut-pattern,
+.christmas-theme.bg-peanut-pattern {
+  background-color: #0B2545;
   background-image:
-    radial-gradient(rgba(220, 38, 38, 0.16) 1.25px, transparent 1.25px),
-    radial-gradient(rgba(251, 191, 36, 0.14) 1.25px, transparent 1.25px),
-    linear-gradient(180deg, #0A1D13 0%, #0E281B 50%, #0A1D13 100%);
+    radial-gradient(rgba(233, 216, 166, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(220, 38, 38, 0.18) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #0B2545 0%, #134074 50%, #0A1F18 100%);
 }
 
 [data-theme="default"] .bg-peanut-pattern,
@@ -367,11 +370,13 @@
     inset 0 0 14px rgba(255, 107, 0, 0.25);
 }
 
-[data-theme="christmas"] .shadow-pumpkin-tub {
+[data-theme="christmas"] .shadow-pumpkin-tub,
+.christmas-theme .shadow-pumpkin-tub {
   box-shadow:
-    0 0 22px rgba(220, 38, 38, 0.45),
-    0 0 42px rgba(251, 191, 36, 0.22),
-    inset 0 0 14px rgba(220, 38, 38, 0.25);
+    0 0 24px rgba(233, 216, 166, 0.55),
+    0 4px 30px rgba(220, 38, 38, 0.35),
+    0 0 46px rgba(245, 158, 11, 0.28),
+    inset 0 0 16px rgba(233, 216, 166, 0.28);
 }
 
 [data-theme="thanksgiving"] .shadow-pumpkin-tub,
@@ -417,11 +422,12 @@
     0 4px 0 0 #FF6B00;
 }
 
-[data-theme="christmas"] .shadow-pumpkin-card {
+[data-theme="christmas"] .shadow-pumpkin-card,
+.christmas-theme .shadow-pumpkin-card {
   box-shadow:
-    0 8px 28px -4px rgba(220, 38, 38, 0.28),
-    0 0 18px rgba(251, 191, 36, 0.16),
-    0 4px 0 0 #DC2626;
+    0 8px 30px -4px rgba(11, 37, 69, 0.5),
+    0 0 24px rgba(233, 216, 166, 0.3),
+    0 4px 0 0 #E9D8A6;
 }
 
 [data-theme="thanksgiving"] .shadow-pumpkin-card,
@@ -466,11 +472,12 @@
     0 6px 0 0 #FBBF24;
 }
 
-[data-theme="christmas"] .shadow-pumpkin-card-hover {
+[data-theme="christmas"] .shadow-pumpkin-card-hover,
+.christmas-theme .shadow-pumpkin-card-hover {
   box-shadow:
-    0 14px 36px -4px rgba(220, 38, 38, 0.48),
-    0 0 26px rgba(251, 191, 36, 0.32),
-    0 6px 0 0 #FBBF24;
+    0 14px 38px -4px rgba(11, 37, 69, 0.65),
+    0 0 32px rgba(233, 216, 166, 0.45),
+    0 6px 0 0 #E9D8A6;
 }
 
 [data-theme="thanksgiving"] .shadow-pumpkin-card-hover {
@@ -1359,3 +1366,162 @@ body.thanksgiving-theme {
 }
 
 
+
+/* ============================================================
+   CHRISTMAS FESTIVE SPECIAL - PASKONG PAGKA-CRUNCH!
+   ============================================================ */
+body.christmas-theme {
+  background-color: #0B2545 !important;
+  color: #F8FAFC !important;
+  background-image: 
+    radial-gradient(rgba(233, 216, 166, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(220, 38, 38, 0.18) 1.25px, #0B2545 1.25px) !important;
+  background-size: 36px 36px !important;
+  background-position: 0 0, 18px 18px !important;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Header & Nav Glow */
+.christmas-theme header,
+.christmas-theme nav,
+.christmas-theme .hero {
+  background: rgba(11, 37, 69, 0.94) !important;
+  backdrop-filter: blur(14px) !important;
+  border-bottom: 2px solid rgba(233, 216, 166, 0.75) !important;
+  box-shadow: 0 4px 24px rgba(11, 37, 69, 0.45) !important;
+}
+
+/* Autumn/Holiday Banner Badge for Hero/Headline */
+.christmas-theme .hero-title::after,
+.christmas-theme .hero h1::after {
+  content: " 🎄 Paskong Pagka-crunch!";
+  display: inline-block;
+  font-size: 0.45em;
+  font-weight: 800;
+  vertical-align: middle;
+  background: linear-gradient(135deg, #DC2626, #B91C1C, #E9D8A6);
+  color: #ffffff;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-left: 8px;
+  border: 1.5px solid #E9D8A6;
+  box-shadow: 0 2px 12px rgba(233, 216, 166, 0.45);
+  letter-spacing: 0.5px;
+}
+
+/* Product Cards & Content Containers - Tree Lights Golden Glow */
+.christmas-theme .card,
+.christmas-theme .product-card {
+  border: 2px solid rgba(233, 216, 166, 0.65) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 8px 30px -4px rgba(11, 37, 69, 0.5),
+    0 0 24px rgba(233, 216, 166, 0.28),
+    0 4px 0 0 #E9D8A6 !important;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* Subtle corner gift accent on cards */
+.christmas-theme .card::before,
+.christmas-theme .product-card::before {
+  content: "🎁";
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 1.1rem;
+  opacity: 0.75;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  pointer-events: none;
+}
+
+.christmas-theme .card:hover,
+.christmas-theme .product-card:hover {
+  transform: translateY(-6px) scale(1.01) !important;
+  border-color: #FDE047 !important;
+  box-shadow: 
+    0 14px 38px -4px rgba(11, 37, 69, 0.65),
+    0 0 32px rgba(233, 216, 166, 0.45),
+    0 6px 0 0 #E9D8A6 !important;
+}
+
+/* Tree-light golden box-shadow on tub photo */
+.christmas-theme .product-card .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 24px rgba(233, 216, 166, 0.55),
+    0 4px 30px rgba(220, 38, 38, 0.35),
+    0 0 46px rgba(245, 158, 11, 0.28),
+    inset 0 0 16px rgba(233, 216, 166, 0.28) !important;
+}
+
+.christmas-theme .product-card:hover .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 32px rgba(233, 216, 166, 0.75),
+    0 6px 36px rgba(220, 38, 38, 0.5),
+    0 0 54px rgba(245, 158, 11, 0.4),
+    inset 0 0 20px rgba(233, 216, 166, 0.35) !important;
+}
+
+/* Primary buttons */
+.christmas-theme button.btn-primary,
+.christmas-theme .btn-primary,
+.christmas-theme [class*="btn-primary"] {
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 45%, #E9D8A6 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: 2px solid #E9D8A6 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 18px rgba(220, 38, 38, 0.45) !important;
+  transition: all 0.25s ease !important;
+}
+
+.christmas-theme button.btn-primary:hover,
+.christmas-theme .btn-primary:hover,
+.christmas-theme [class*="btn-primary"]:hover {
+  background: linear-gradient(135deg, #134074 0%, #DC2626 55%, #E9D8A6 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 24px rgba(233, 216, 166, 0.55) !important;
+}
+
+/* Small quantity adjustment steppers */
+.christmas-theme .stepper-btn,
+.christmas-theme button.stepper-btn {
+  background: #ffffff !important;
+  color: #0B2545 !important;
+  border: 1px solid rgba(233, 216, 166, 0.5) !important;
+  border-radius: 8px !important;
+}
+.christmas-theme .stepper-btn:hover {
+  background: #FEF3C7 !important;
+  color: #B45309 !important;
+  border-color: #E9D8A6 !important;
+}
+
+/* Price Tags & Badges */
+.christmas-theme .price {
+  background: linear-gradient(135deg, #DC2626, #B91C1C) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: 1.5px solid #E9D8A6 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+/* Fairy Lights Twinkle Animations */
+@keyframes fairyTwinkleA {
+  0%, 100% { opacity: 0.95; filter: drop-shadow(0 0 6px #FDE047); transform: scale(1); }
+  50% { opacity: 0.4; filter: drop-shadow(0 0 2px #EAB308); transform: scale(0.85); }
+}
+
+@keyframes fairyTwinkleB {
+  0%, 100% { opacity: 0.4; filter: drop-shadow(0 0 2px #EF4444); transform: scale(0.85); }
+  50% { opacity: 0.95; filter: drop-shadow(0 0 7px #F87171); transform: scale(1); }
+}
+
+@keyframes fairyTwinkleC {
+  0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 5px #34D399); transform: scale(0.95); }
+  50% { opacity: 0.35; filter: drop-shadow(0 0 2px #10B981); transform: scale(0.8); }
+}
+
+.animate-fairy-a { animation: fairyTwinkleA 2.2s ease-in-out infinite; }
+.animate-fairy-b { animation: fairyTwinkleB 2.8s ease-in-out infinite 0.5s; }
+.animate-fairy-c { animation: fairyTwinkleC 2.5s ease-in-out infinite 1s; }

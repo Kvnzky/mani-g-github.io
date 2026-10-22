@@ -13,7 +13,7 @@ import HalloweenAtmosphere, { PlayfulSkeletonSvg, SharpBatSvg, CornerWebWithSpid
 import HalloweenMascotVideo from './components/HalloweenMascotVideo';
 import SeasonalAtmosphere from './components/SeasonalAtmosphere';
 import SeasonalHeroVisual from './components/SeasonalHeroVisual';
-import { SantaPeanutSvg, ChristmasCornerGarland, ChristmasStarOrnament } from './components/ChristmasDecorations';
+import { SantaPeanutSvg, ChristmasCornerGarland, ChristmasStarOrnament, ChristmasFairyLights, ChristmasGiftBoxSvg } from './components/ChristmasDecorations';
 import { HarvestPeanutSvg, ThanksgivingCornerGarland, ThanksgivingLeafOrnament } from './components/ThanksgivingDecorations';
 import { NewYearPeanutSvg, NewYearCornerGarland, NewYearSparkleOrnament } from './components/NewYearDecorations';
 import { ChineseNewYearPeanutSvg, ChineseNewYearCornerGarland, ChineseNewYearLanternOrnament } from './components/ChineseNewYearDecorations';
@@ -198,7 +198,7 @@ export default function App() {
         return savedTheme;
       }
     } catch (e) {}
-    return 'thanksgiving';
+    return 'christmas';
   });
 
   // Admin Preview Theme (does not affect public visitors until published)
@@ -1442,10 +1442,13 @@ export default function App() {
                   <ChristmasCornerGarland position="left" />
                   <ChristmasCornerGarland position="right" />
                   <div className="pointer-events-none select-none absolute top-3 right-28 sm:right-36 opacity-90 animate-float-slow">
-                    <ChristmasStarOrnament className="w-10 sm:w-14 h-auto drop-shadow-[0_2px_12px_rgba(251,191,36,0.6)]" />
+                    <ChristmasStarOrnament className="w-10 sm:w-14 h-auto drop-shadow-[0_2px_12px_rgba(233,216,166,0.6)]" />
                   </div>
-                  <div className="pointer-events-none select-none hidden sm:block absolute top-6 left-[44%] opacity-80 animate-float-reverse">
-                    <ChristmasStarOrnament className="w-8 sm:w-10 h-auto drop-shadow-[0_2px_10px_rgba(251,191,36,0.5)]" />
+                  <div className="pointer-events-none select-none absolute top-3 left-28 sm:left-36 opacity-90 animate-float-reverse hidden sm:block">
+                    <ChristmasStarOrnament className="w-8 sm:w-12 h-auto drop-shadow-[0_2px_10px_rgba(233,216,166,0.5)]" />
+                  </div>
+                  <div className="absolute top-0 inset-x-0 z-20 pointer-events-none">
+                    <ChristmasFairyLights className="w-full h-5" />
                   </div>
                 </>
               )}
@@ -1623,7 +1626,7 @@ export default function App() {
                     <div className="flex items-center gap-3.5">
                       {/* Supporting Seasonal Character */}
                       <div className={`shrink-0 ${
-                        effectiveThemeId === 'christmas' ? 'bg-[#0D2418]/90 border border-emerald-600/60'
+                        effectiveThemeId === 'christmas' ? 'bg-[#0B2545]/95 border border-[#E9D8A6]'
                         : effectiveThemeId === 'thanksgiving' ? 'bg-[#3B1F0E]/95 border border-[#D4A373]'
                         : effectiveThemeId === 'new-year' ? 'bg-[#0B1120]/90 border border-[#EAB308]/60'
                         : effectiveThemeId === 'chinese-new-year' ? 'bg-[#260707]/90 border border-amber-500/60'
@@ -1708,7 +1711,7 @@ export default function App() {
                           {tab.count !== undefined && (
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                               isActive 
-                                ? (effectiveThemeId === 'christmas' ? 'bg-[#0D2418] text-amber-300' : effectiveThemeId === 'thanksgiving' ? 'bg-[#2A170B] text-amber-300' : effectiveThemeId === 'new-year' ? 'bg-[#0B1120] text-amber-300' : effectiveThemeId === 'chinese-new-year' ? 'bg-[#260707] text-amber-200' : effectiveThemeId === 'valentines-day' ? 'bg-[#240815] text-rose-200' : 'bg-[#1F1025] text-amber-300')
+                                ? (effectiveThemeId === 'christmas' ? 'bg-[#0B2545] text-[#E9D8A6]' : effectiveThemeId === 'thanksgiving' ? 'bg-[#2A170B] text-amber-300' : effectiveThemeId === 'new-year' ? 'bg-[#0B1120] text-amber-300' : effectiveThemeId === 'chinese-new-year' ? 'bg-[#260707] text-amber-200' : effectiveThemeId === 'valentines-day' ? 'bg-[#240815] text-rose-200' : 'bg-[#1F1025] text-amber-300')
                                 : 'bg-black/30 text-amber-300'
                             }`}>
                               {tab.count}

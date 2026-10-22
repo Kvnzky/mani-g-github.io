@@ -127,3 +127,72 @@ export function SantaPeanutSvg({ className = 'w-16 h-20' }) {
     </svg>
   );
 }
+
+
+/**
+ * Twinkling Holiday Fairy Lights String
+ * Draped across the top of hero or section borders
+ */
+export function ChristmasFairyLights({ className = 'w-full h-5' }) {
+  const bulbs = [
+    { x: 3, y: 7, color: '#E9D8A6', anim: 'animate-fairy-a' },
+    { x: 10, y: 12, color: '#DC2626', anim: 'animate-fairy-b' },
+    { x: 18, y: 9, color: '#10B981', anim: 'animate-fairy-c' },
+    { x: 26, y: 13, color: '#F59E0B', anim: 'animate-fairy-a' },
+    { x: 34, y: 8, color: '#E9D8A6', anim: 'animate-fairy-b' },
+    { x: 42, y: 12, color: '#DC2626', anim: 'animate-fairy-c' },
+    { x: 50, y: 7, color: '#10B981', anim: 'animate-fairy-a' },
+    { x: 58, y: 13, color: '#E9D8A6', anim: 'animate-fairy-b' },
+    { x: 66, y: 9, color: '#DC2626', anim: 'animate-fairy-c' },
+    { x: 74, y: 12, color: '#F59E0B', anim: 'animate-fairy-a' },
+    { x: 82, y: 8, color: '#10B981', anim: 'animate-fairy-b' },
+    { x: 90, y: 13, color: '#DC2626', anim: 'animate-fairy-c' },
+    { x: 97, y: 8, color: '#E9D8A6', anim: 'animate-fairy-a' }
+  ];
+
+  return (
+    <div aria-hidden="true" className={`pointer-events-none select-none overflow-hidden ${className}`}>
+      <svg viewBox="0 0 100 18" preserveAspectRatio="none" className="w-full h-full">
+        {/* Draped dark green string wire */}
+        <path
+          d="M0 6 Q12 14 25 7 Q37 15 50 6 Q62 14 75 7 Q87 15 100 6"
+          stroke="#0A1F18"
+          strokeWidth="0.8"
+          fill="none"
+          opacity="0.8"
+        />
+        {/* Twinkling fairy light bulbs */}
+        {bulbs.map((b, i) => (
+          <g key={i} className={b.anim}>
+            {/* Socket cap */}
+            <rect x={b.x - 0.7} y={b.y - 3} width="1.4" height="2.2" rx="0.3" fill="#0A1F18" />
+            {/* Glowing teardrop bulb */}
+            <ellipse cx={b.x} cy={b.y + 0.5} rx="1.5" ry="2.2" fill={b.color} />
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Festive Christmas Mini Gift Box Icon
+ */
+export function ChristmasGiftBoxSvg({ className = 'w-5 h-5' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      {/* Box base */}
+      <rect x="3" y="10" width="18" height="11" rx="2" fill="#DC2626" stroke="#991B1B" strokeWidth="1" />
+      {/* Box lid */}
+      <rect x="2" y="7" width="20" height="4" rx="1.5" fill="#EF4444" stroke="#991B1B" strokeWidth="1" />
+      {/* Golden ribbon vertical */}
+      <rect x="10.5" y="7" width="3" height="14" fill="#E9D8A6" stroke="#D4A373" strokeWidth="0.6" />
+      {/* Golden ribbon horizontal */}
+      <rect x="3" y="13.5" width="18" height="3" fill="#E9D8A6" stroke="#D4A373" strokeWidth="0.6" />
+      {/* Ribbon bow atop */}
+      <path d="M12 7 C9 3 6 5 9 7 C11 8 12 7 12 7 Z" fill="#E9D8A6" stroke="#D4A373" strokeWidth="0.6" />
+      <path d="M12 7 C15 3 18 5 15 7 C13 8 12 7 12 7 Z" fill="#E9D8A6" stroke="#D4A373" strokeWidth="0.6" />
+      <circle cx="12" cy="7" r="1.2" fill="#D4A373" />
+    </svg>
+  );
+}

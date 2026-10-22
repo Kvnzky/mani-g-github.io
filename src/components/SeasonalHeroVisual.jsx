@@ -17,13 +17,13 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
   if (themeId === 'christmas') {
     return (
       <div className="relative w-full max-w-[620px] mx-auto flex items-center justify-center p-3 select-none">
-        {/* Ambient Holiday Glow Backdrops */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-[#DC2626]/25 via-[#FBBF24]/15 to-[#15803D]/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-6 -right-6 w-40 h-40 bg-[#FBBF24]/20 rounded-full blur-2xl pointer-events-none animate-pulse" />
-        <div className="absolute -bottom-6 -left-6 w-44 h-44 bg-[#DC2626]/20 rounded-full blur-2xl pointer-events-none" />
+        {/* Ambient Holiday Glow Backdrops in Midnight Navy, Evergreen & Warm Gold */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#0B2545]/40 via-[#DC2626]/20 to-[#E9D8A6]/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-6 -right-6 w-44 h-44 bg-[#E9D8A6]/20 rounded-full blur-2xl pointer-events-none animate-pulse" />
+        <div className="absolute -bottom-6 -left-6 w-48 h-48 bg-[#DC2626]/25 rounded-full blur-2xl pointer-events-none" />
 
         {/* Main Festive Composition Card */}
-        <div className="relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#133523]/90 via-[#0A1D13]/95 to-[#0D2418] border-2 border-[#DC2626] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
+        <div className="card relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#0B2545]/95 via-[#134074]/95 to-[#0A1F18] border-2 border-[#E9D8A6] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
           {/* Decorative Corner Pine Garland Accent */}
           <div className="absolute -top-3 -right-3 text-2xl rotate-12 drop-shadow-md select-none pointer-events-none">
             🎄⭐
@@ -41,16 +41,16 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
                   {/* Red cone */}
                   <path d="M12 40 C18 20 38 6 50 14 C48 24 44 34 46 40 Z" fill="#DC2626" />
                   {/* Fold and shadow */}
-                  <path d="M46 22 C40 26 36 32 34 40 C38 40 42 40 46 40 Z" fill="#B91C1C" opacity="0.6" />
+                  <path d="M46 22 C40 26 36 32 34 40 C38 40 42 40 46 40 Z" fill="#991B1B" opacity="0.6" />
                   {/* White pom-pom */}
-                  <circle cx="52" cy="14" r="5" fill="#FFFFFF" stroke="#E5E7EB" strokeWidth="1" />
+                  <circle cx="52" cy="14" r="5" fill="#FFFFFF" stroke="#E9D8A6" strokeWidth="1" />
                   {/* White fuzzy brim */}
-                  <rect x="8" y="38" width="42" height="10" rx="5" fill="#FFFFFF" stroke="#E5E7EB" strokeWidth="1" />
+                  <rect x="8" y="38" width="42" height="10" rx="5" fill="#FFFFFF" stroke="#E9D8A6" strokeWidth="1" />
                 </svg>
               </div>
 
               {/* Glowing Golden Ring Wreath behind logo */}
-              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#15803D] via-[#0D2418] to-[#123322] border-4 border-[#FBBF24] p-3 shadow-warm-lg flex items-center justify-center mx-auto">
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#DC2626] via-[#134074] to-[#0B2545] border-4 border-[#E9D8A6] p-3 shadow-warm-lg flex items-center justify-center mx-auto">
                 <img
                   src="./logo.png"
                   alt="Mani Wandering Christmas Logo"
@@ -58,64 +58,64 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
                 />
               </div>
 
-              {/* Little Maligayang Pasko Ribbon Tag */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#DC2626] text-white text-[11px] font-black uppercase tracking-wider px-3 py-0.5 rounded-full border border-amber-300 shadow-snack-sm flex items-center gap-1">
-                <span>🎄 Maligayang Pasko</span>
+              {/* Paskong Pagka-crunch Ribbon Tag */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#DC2626] via-[#B91C1C] to-[#E9D8A6] text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-[#E9D8A6] shadow-snack-sm flex items-center gap-1">
+                <span>🎁 Paskong Pagka-crunch!</span>
               </div>
             </div>
 
             {/* Featured Holiday Tubs Mini Showcase */}
             <div className="pt-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#FBBF24] mb-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#E9D8A6] mb-3">
                 ⭐ Pinakamasarap na Pang-Noche Buena at Monito-Monita
               </p>
 
               <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
                 {/* Tub 1: Santa's Classic Salted */}
-                <div className="rounded-2xl p-2 bg-[#0D2418]/90 border border-emerald-600/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#DC2626] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-emerald-500/40">
+                <div className="rounded-2xl p-2 bg-[#0B2545] border border-[#E9D8A6]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#E9D8A6] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#E9D8A6]/40">
                     <img src="./images/products/salted.jpg" alt="Salted Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-300 block leading-tight">⭐ Classic</span>
-                    <span className="text-[9px] text-emerald-200/90 font-medium">Santa’s Fave</span>
+                    <span className="text-[10px] font-black text-[#E9D8A6] block leading-tight">⭐ Santa's Salted</span>
+                    <span className="text-[9px] text-slate-200/90 font-medium">Santa’s Fave</span>
                   </div>
                 </div>
 
                 {/* Tub 2: Holiday Fire Crunch Spicy */}
-                <div className="rounded-2xl p-2 bg-[#0D2418]/90 border border-[#DC2626]/70 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-amber-300 transition-all scale-105 bg-gradient-to-b from-[#180808] to-[#0D2418]">
+                <div className="rounded-2xl p-2 bg-gradient-to-b from-[#DC2626]/30 to-[#0B2545] border-2 border-[#DC2626] flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#E9D8A6] transition-all scale-105">
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#DC2626]">
                     <img src="./images/products/spicy.jpg" alt="Spicy Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-rose-300 block leading-tight">🔥 Holiday Fire</span>
-                    <span className="text-[9px] text-amber-200/90 font-bold">#1 Pulutan</span>
+                    <span className="text-[10px] font-black text-rose-200 block leading-tight">🔥 Holiday Fire</span>
+                    <span className="text-[9px] text-[#E9D8A6] font-bold">#1 Pulutan</span>
                   </div>
                 </div>
 
                 {/* Tub 3: Golden Star Salted Egg */}
-                <div className="rounded-2xl p-2 bg-[#0D2418]/90 border border-emerald-600/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#DC2626] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-400/40">
+                <div className="rounded-2xl p-2 bg-[#0B2545] border border-[#E9D8A6]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#E9D8A6] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#E9D8A6]/40">
                     <img src="./images/products/salted-egg.jpg" alt="Salted Egg Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🥚 Golden Star</span>
-                    <span className="text-[9px] text-emerald-200/90 font-medium">Rich Umami</span>
+                    <span className="text-[10px] font-black text-[#E9D8A6] block leading-tight">🥚 Golden Star</span>
+                    <span className="text-[9px] text-slate-200/90 font-medium">Rich Umami</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 3 Value Pillars */}
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-emerald-100">
-              <span className="inline-flex items-center gap-1 bg-[#081810]/90 px-2.5 py-1 rounded-xl border border-emerald-600/40">
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-slate-100">
+              <span className="inline-flex items-center gap-1 bg-[#0B2545]/90 px-2.5 py-1 rounded-xl border border-[#E9D8A6]/40">
                 <Gift className="w-3 h-3 text-[#DC2626]" /> Reusable Tubs
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#081810]/90 px-2.5 py-1 rounded-xl border border-emerald-600/40">
-                <Star className="w-3 h-3 text-[#FBBF24]" /> Purong Crispy Bawang
+              <span className="inline-flex items-center gap-1 bg-[#0B2545]/90 px-2.5 py-1 rounded-xl border border-[#E9D8A6]/40">
+                <Star className="w-3 h-3 text-[#E9D8A6]" /> Purong Crispy Bawang
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#081810]/90 px-2.5 py-1 rounded-xl border border-emerald-600/40">
-                <Sparkles className="w-3 h-3 text-amber-300" /> Bagong Luto Weekly
+              <span className="inline-flex items-center gap-1 bg-[#0B2545]/90 px-2.5 py-1 rounded-xl border border-[#E9D8A6]/40">
+                <Sparkles className="w-3 h-3 text-[#E9D8A6]" /> Bagong Luto Weekly
               </span>
             </div>
           </div>
