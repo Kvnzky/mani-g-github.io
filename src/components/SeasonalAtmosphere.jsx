@@ -134,49 +134,82 @@ function ChristmasSnow() {
 function NewYearSparkles() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
-      {/* Drifting Champagne Gold Stars, Silver Diamonds & Firework Sparkles */}
+      {/* Background Firework Burst Accents in Midnight Sky */}
       {[
-        { left: '8%', delay: '0s', duration: '14s', size: 'w-4 h-4', color: '#FACC15', type: 'star' },
-        { left: '22%', delay: '3s', duration: '17s', size: 'w-3 h-3', color: '#E2E8F0', type: 'diamond' },
-        { left: '38%', delay: '1s', duration: '15s', size: 'w-5 h-5', color: '#FDE047', type: 'burst' },
-        { left: '55%', delay: '5s', duration: '19s', size: 'w-3.5 h-3.5', color: '#FACC15', type: 'star' },
-        { left: '72%', delay: '2s', duration: '16s', size: 'w-4 h-4', color: '#CBD5E1', type: 'diamond' },
-        { left: '88%', delay: '4s', duration: '18s', size: 'w-5 h-5', color: '#FDE047', type: 'burst' }
-      ].map((item, i) => (
+        { left: '12%', top: '16%', delay: '0s', size: 'w-16 h-16', color: '#FFD700' },
+        { left: '82%', top: '22%', delay: '1.4s', size: 'w-20 h-20', color: '#E2E8F0' },
+        { left: '25%', top: '55%', delay: '2.2s', size: 'w-14 h-14', color: '#38BDF8' },
+        { left: '75%', top: '68%', delay: '0.8s', size: 'w-16 h-16', color: '#FFD700' },
+      ].map((fw, i) => (
         <div
-          key={i}
-          className="absolute -top-10 opacity-75 animate-fall"
+          key={`fw-${i}`}
+          className="absolute animate-firework opacity-80"
           style={{
-            left: item.left,
-            animationDelay: item.delay,
-            animationDuration: item.duration
+            left: fw.left,
+            top: fw.top,
+            animationDelay: fw.delay,
+            animationDuration: '3.6s',
           }}
         >
-          {item.type === 'star' ? (
-            <svg className={item.size} viewBox="0 0 24 24" fill={item.color}>
-              <polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9" />
-            </svg>
-          ) : item.type === 'diamond' ? (
-            <svg className={item.size} viewBox="0 0 24 24" fill={item.color}>
-              <polygon points="12,2 22,12 12,22 2,12" />
-            </svg>
+          <svg className={fw.size} viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="3" fill="#FFFFFF" />
+            <line x1="20" y1="4" x2="20" y2="36" stroke={fw.color} strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3,3" />
+            <line x1="4" y1="20" x2="36" y2="20" stroke={fw.color} strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3,3" />
+            <line x1="8" y1="8" x2="32" y2="32" stroke="#FFFFFF" strokeWidth="1.2" strokeLinecap="round" strokeDasharray="2,2" />
+            <line x1="32" y1="8" x2="8" y2="32" stroke="#FFFFFF" strokeWidth="1.2" strokeLinecap="round" strokeDasharray="2,2" />
+            <circle cx="20" cy="3" r="1.5" fill={fw.color} />
+            <circle cx="20" cy="37" r="1.5" fill={fw.color} />
+            <circle cx="3" cy="20" r="1.5" fill={fw.color} />
+            <circle cx="37" cy="20" r="1.5" fill={fw.color} />
+            <circle cx="8" cy="8" r="1.2" fill="#FFFFFF" />
+            <circle cx="32" cy="8" r="1.2" fill="#FFFFFF" />
+            <circle cx="8" cy="32" r="1.2" fill="#FFFFFF" />
+            <circle cx="32" cy="32" r="1.2" fill="#FFFFFF" />
+          </svg>
+        </div>
+      ))}
+
+      {/* CSS-Animated Floating & Tumbling Confetti Pieces */}
+      {[
+        { left: '6%', delay: '0s', duration: '11s', color: '#FFD700', type: 'ribbon', w: 'w-2', h: 'h-4' },
+        { left: '16%', delay: '3.2s', duration: '13s', color: '#E2E8F0', type: 'square', w: 'w-2.5', h: 'h-2.5' },
+        { left: '28%', delay: '1.2s', duration: '12s', color: '#FFD700', type: 'circle', w: 'w-2', h: 'h-2' },
+        { left: '38%', delay: '4.5s', duration: '14s', color: '#38BDF8', type: 'ribbon', w: 'w-2', h: 'h-4' },
+        { left: '48%', delay: '0.8s', duration: '11.5s', color: '#F43F5E', type: 'square', w: 'w-2.5', h: 'h-2.5' },
+        { left: '58%', delay: '2.8s', duration: '13.5s', color: '#FFD700', type: 'star', w: 'w-3', h: 'h-3' },
+        { left: '68%', delay: '5.1s', duration: '12.5s', color: '#E2E8F0', type: 'ribbon', w: 'w-2', h: 'h-4' },
+        { left: '78%', delay: '1.8s', duration: '14s', color: '#FFD700', type: 'circle', w: 'w-2.5', h: 'h-2.5' },
+        { left: '88%', delay: '3.9s', duration: '12s', color: '#38BDF8', type: 'square', w: 'w-2', h: 'h-2' },
+        { left: '94%', delay: '0.5s', duration: '13s', color: '#FFD700', type: 'star', w: 'w-3.5', h: 'h-3.5' }
+      ].map((c, i) => (
+        <div
+          key={`confetti-${i}`}
+          className="absolute -top-8 animate-confetti opacity-85"
+          style={{
+            left: c.left,
+            animationDelay: c.delay,
+            animationDuration: c.duration,
+          }}
+        >
+          {c.type === 'ribbon' ? (
+            <div className={`${c.w} ${c.h} rounded-[2px] transform rotate-12`} style={{ backgroundColor: c.color }} />
+          ) : c.type === 'square' ? (
+            <div className={`${c.w} ${c.h} rounded-sm transform rotate-45`} style={{ backgroundColor: c.color }} />
+          ) : c.type === 'circle' ? (
+            <div className={`${c.w} ${c.h} rounded-full`} style={{ backgroundColor: c.color }} />
           ) : (
-            <svg className={item.size} viewBox="0 0 24 24" fill="none">
-              <line x1="12" y1="2" x2="12" y2="22" stroke={item.color} strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="2" y1="12" x2="22" y2="12" stroke={item.color} strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="5" y1="5" x2="19" y2="19" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" />
-              <line x1="19" y1="5" x2="5" y2="19" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" />
-              <circle cx="12" cy="12" r="2" fill="#FFFFFF" />
+            <svg className={`${c.w} ${c.h}`} viewBox="0 0 24 24" fill={c.color}>
+              <polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9" />
             </svg>
           )}
         </div>
       ))}
 
-      {/* Subtle Ambient Twinkling Celebration Stars */}
+      {/* Ambient Twinkling Celebration Stars */}
       {[
-        { left: '15%', top: '25%', delay: '0s', size: 'w-3 h-3', color: '#FACC15' },
-        { left: '80%', top: '35%', delay: '1.2s', size: 'w-3.5 h-3.5', color: '#E2E8F0' },
-        { left: '50%', top: '65%', delay: '2.4s', size: 'w-3 h-3', color: '#FDE047' }
+        { left: '14%', top: '28%', delay: '0s', size: 'w-3.5 h-3.5', color: '#FFD700' },
+        { left: '84%', top: '38%', delay: '1.2s', size: 'w-3 h-3', color: '#E2E8F0' },
+        { left: '46%', top: '72%', delay: '2.1s', size: 'w-3.5 h-3.5', color: '#FFD700' }
       ].map((star, i) => (
         <div
           key={`twinkle-${i}`}
@@ -185,10 +218,10 @@ function NewYearSparkles() {
             left: star.left,
             top: star.top,
             animationDelay: star.delay,
-            animationDuration: '3.5s'
+            animationDuration: '3s'
           }}
         >
-          <svg className={star.size} viewBox="0 0 24 24" fill={star.color} opacity="0.6">
+          <svg className={star.size} viewBox="0 0 24 24" fill={star.color} opacity="0.75">
             <polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9" />
           </svg>
         </div>

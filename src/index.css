@@ -53,13 +53,19 @@
   }
 
   :root[data-theme="new-year"],
-  [data-theme="new-year"] {
-    --bg-cream: #070A14;
-    --bg-indigo: #0B1120;
-    --text-roast: #F8FAFC;
-    --accent-amber: #EAB308;
-    --accent-gold: #FBBF24;
-    --theme-border: #EAB308;
+  [data-theme="new-year"],
+  .new-year-theme {
+    --bg-cream: #0B132B;
+    --bg-indigo: #1C2541;
+    --text-roast: #FFFFFF;
+    --text-secondary: #FFD700;
+    --accent-amber: #FFD700;
+    --accent-gold: #FFE066;
+    --theme-border: #FFD700;
+    --border-warm: #FFD700;
+    --brand-gold: #FFD700;
+    --brand-silver: #E2E8F0;
+    --glow-celebration: rgba(255, 215, 0, 0.4);
   }
 
   :root[data-theme="chinese-new-year"],
@@ -134,11 +140,12 @@
   }
 
   html[data-theme="new-year"] body,
-  body[data-theme="new-year"] {
-    background: linear-gradient(180deg, #070A14 0%, #0B1120 55%, #070A14 100%);
-    background-color: #070A14;
+  body[data-theme="new-year"],
+  body.new-year-theme {
+    background: linear-gradient(180deg, #0B132B 0%, #1C2541 45%, #070D1F 100%);
+    background-color: #0B132B;
     color: #F8FAFC;
-    accent-color: #EAB308;
+    accent-color: #FFD700;
   }
 
   html[data-theme="chinese-new-year"] body,
@@ -196,7 +203,7 @@
 
   html[data-theme="new-year"] :focus-visible,
   [data-theme="new-year"] :focus-visible {
-    outline: 3px solid #EAB308;
+    outline: 3px solid #FFD700;
   }
 
   html[data-theme="chinese-new-year"] :focus-visible,
@@ -264,12 +271,14 @@
 }
 
 [data-theme="new-year"] .bg-peanut-pattern,
-[data-theme="new-year"].bg-peanut-pattern {
-  background-color: #070A14;
+[data-theme="new-year"].bg-peanut-pattern,
+.new-year-theme .bg-peanut-pattern,
+.new-year-theme.bg-peanut-pattern {
+  background-color: #0B132B;
   background-image:
-    radial-gradient(rgba(234, 179, 8, 0.16) 1.25px, transparent 1.25px),
-    radial-gradient(rgba(248, 250, 252, 0.1) 1.25px, transparent 1.25px),
-    linear-gradient(180deg, #070A14 0%, #0B1120 50%, #070A14 100%);
+    radial-gradient(rgba(255, 215, 0, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(226, 232, 240, 0.16) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #0B132B 0%, #1C2541 50%, #070D1F 100%);
 }
 
 [data-theme="chinese-new-year"] .bg-peanut-pattern,
@@ -335,13 +344,14 @@
   border-color: #EA580C !important;
 }
 
-[data-theme="new-year"] .bg-hero-snack {
+[data-theme="new-year"] .bg-hero-snack,
+.new-year-theme .bg-hero-snack {
   background:
-    radial-gradient(circle at 18% 22%, rgba(234, 179, 8, 0.3) 0%, transparent 48%),
-    radial-gradient(circle at 84% 25%, rgba(248, 250, 252, 0.18) 0%, transparent 45%),
-    radial-gradient(circle at 50% 92%, rgba(225, 29, 72, 0.22) 0%, transparent 55%),
-    linear-gradient(160deg, #10172A 0%, #070A14 55%, #1E243B 100%);
-  border-color: #EAB308 !important;
+    radial-gradient(circle at 18% 22%, rgba(255, 215, 0, 0.35) 0%, transparent 48%),
+    radial-gradient(circle at 84% 25%, rgba(226, 232, 240, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 50% 92%, rgba(28, 37, 65, 0.45) 0%, transparent 55%),
+    linear-gradient(160deg, #0B132B 0%, #1C2541 50%, #070D1F 100%);
+  border-color: #FFD700 !important;
 }
 
 [data-theme="chinese-new-year"] .bg-hero-snack {
@@ -388,11 +398,13 @@
     inset 0 0 16px rgba(212, 163, 115, 0.28);
 }
 
-[data-theme="new-year"] .shadow-pumpkin-tub {
+[data-theme="new-year"] .shadow-pumpkin-tub,
+.new-year-theme .shadow-pumpkin-tub {
   box-shadow:
-    0 0 22px rgba(234, 179, 8, 0.45),
-    0 0 42px rgba(248, 250, 252, 0.2),
-    inset 0 0 14px rgba(234, 179, 8, 0.25);
+    0 0 26px rgba(255, 215, 0, 0.6),
+    0 4px 32px rgba(226, 232, 240, 0.35),
+    0 0 48px rgba(255, 215, 0, 0.3),
+    inset 0 0 16px rgba(255, 215, 0, 0.28);
 }
 
 [data-theme="chinese-new-year"] .shadow-pumpkin-tub {
@@ -438,11 +450,12 @@
     0 4px 0 0 #D4A373;
 }
 
-[data-theme="new-year"] .shadow-pumpkin-card {
+[data-theme="new-year"] .shadow-pumpkin-card,
+.new-year-theme .shadow-pumpkin-card {
   box-shadow:
-    0 8px 28px -4px rgba(234, 179, 8, 0.28),
-    0 0 18px rgba(248, 250, 252, 0.16),
-    0 4px 0 0 #EAB308;
+    0 8px 30px -4px rgba(11, 19, 43, 0.5),
+    0 0 24px rgba(255, 215, 0, 0.3),
+    0 4px 0 0 #FFD700;
 }
 
 [data-theme="chinese-new-year"] .shadow-pumpkin-card {
@@ -487,11 +500,12 @@
     0 6px 0 0 #FBBF24;
 }
 
-[data-theme="new-year"] .shadow-pumpkin-card-hover {
+[data-theme="new-year"] .shadow-pumpkin-card-hover,
+.new-year-theme .shadow-pumpkin-card-hover {
   box-shadow:
-    0 14px 36px -4px rgba(234, 179, 8, 0.48),
-    0 0 26px rgba(248, 250, 252, 0.28),
-    0 6px 0 0 #FDE047;
+    0 14px 38px -4px rgba(11, 19, 43, 0.65),
+    0 0 32px rgba(255, 215, 0, 0.45),
+    0 6px 0 0 #FFD700;
 }
 
 [data-theme="chinese-new-year"] .shadow-pumpkin-card-hover {
@@ -1525,3 +1539,161 @@ body.christmas-theme {
 .animate-fairy-a { animation: fairyTwinkleA 2.2s ease-in-out infinite; }
 .animate-fairy-b { animation: fairyTwinkleB 2.8s ease-in-out infinite 0.5s; }
 .animate-fairy-c { animation: fairyTwinkleC 2.5s ease-in-out infinite 1s; }
+
+/* ============================================================
+   NEW YEAR FESTIVE SPECIAL - BAGONG TAON, BAGONG CRUNCH!
+   ============================================================ */
+body.new-year-theme {
+  background-color: #0B132B !important;
+  color: #F8FAFC !important;
+  background-image: 
+    radial-gradient(rgba(255, 215, 0, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(226, 232, 240, 0.16) 1.25px, #0B132B 1.25px) !important;
+  background-size: 36px 36px !important;
+  background-position: 0 0, 18px 18px !important;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Header & Nav Glow */
+.new-year-theme header,
+.new-year-theme nav,
+.new-year-theme .hero {
+  background: rgba(11, 19, 43, 0.94) !important;
+  backdrop-filter: blur(14px) !important;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.75) !important;
+  box-shadow: 0 4px 24px rgba(11, 19, 43, 0.45) !important;
+}
+
+/* Autumn/Holiday/New Year Banner Badge for Hero/Headline */
+.new-year-theme .hero-title::after,
+.new-year-theme .hero h1::after {
+  content: " ✨ Bagong Taon, Bagong Crunch!";
+  display: inline-block;
+  font-size: 0.45em;
+  font-weight: 900;
+  vertical-align: middle;
+  background: linear-gradient(135deg, #FFD700, #FACC15, #E2E8F0);
+  color: #0B132B;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-left: 8px;
+  border: 1.5px solid #FFD700;
+  box-shadow: 0 2px 14px rgba(255, 215, 0, 0.5);
+  letter-spacing: 0.5px;
+}
+
+/* Product Cards & Content Containers - Sparkler Glow */
+.new-year-theme .card,
+.new-year-theme .product-card {
+  border: 2px solid rgba(255, 215, 0, 0.65) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 8px 30px -4px rgba(11, 19, 43, 0.5),
+    0 0 24px rgba(255, 215, 0, 0.28),
+    0 4px 0 0 #FFD700 !important;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* Subtle corner sparkler accent on cards */
+.new-year-theme .card::before,
+.new-year-theme .product-card::before {
+  content: "✨";
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 1.1rem;
+  opacity: 0.85;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  pointer-events: none;
+}
+
+.new-year-theme .card:hover,
+.new-year-theme .product-card:hover {
+  transform: translateY(-6px) scale(1.01) !important;
+  border-color: #FFFFFF !important;
+  box-shadow: 
+    0 14px 38px -4px rgba(11, 19, 43, 0.65),
+    0 0 32px rgba(255, 215, 0, 0.5),
+    0 6px 0 0 #FFD700 !important;
+}
+
+/* Sparkler golden box-shadow on tub photo */
+.new-year-theme .product-card .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 26px rgba(255, 215, 0, 0.6),
+    0 4px 32px rgba(226, 232, 240, 0.35),
+    0 0 48px rgba(255, 215, 0, 0.3),
+    inset 0 0 16px rgba(255, 215, 0, 0.28) !important;
+}
+
+.new-year-theme .product-card:hover .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 34px rgba(255, 215, 0, 0.8),
+    0 6px 38px rgba(226, 232, 240, 0.5),
+    0 0 56px rgba(255, 215, 0, 0.45),
+    inset 0 0 20px rgba(255, 215, 0, 0.38) !important;
+}
+
+/* Primary buttons */
+.new-year-theme button.btn-primary,
+.new-year-theme .btn-primary,
+.new-year-theme [class*="btn-primary"] {
+  background: linear-gradient(135deg, #FFD700 0%, #FACC15 50%, #E2E8F0 100%) !important;
+  color: #0B132B !important;
+  font-weight: 900 !important;
+  border: 2px solid #FFD700 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 18px rgba(255, 215, 0, 0.45) !important;
+  transition: all 0.25s ease !important;
+}
+
+.new-year-theme button.btn-primary:hover,
+.new-year-theme .btn-primary:hover,
+.new-year-theme [class*="btn-primary"]:hover {
+  background: linear-gradient(135deg, #1C2541 0%, #FFD700 60%, #FFFFFF 100%) !important;
+  color: #0B132B !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 24px rgba(255, 215, 0, 0.6) !important;
+}
+
+/* Small quantity adjustment steppers */
+.new-year-theme .stepper-btn,
+.new-year-theme button.stepper-btn {
+  background: #ffffff !important;
+  color: #0B132B !important;
+  border: 1px solid rgba(255, 215, 0, 0.5) !important;
+  border-radius: 8px !important;
+}
+.new-year-theme .stepper-btn:hover {
+  background: #FEF3C7 !important;
+  color: #B45309 !important;
+  border-color: #FFD700 !important;
+}
+
+/* Price Tags & Badges */
+.new-year-theme .price {
+  background: linear-gradient(135deg, #FFD700, #F59E0B) !important;
+  color: #0B132B !important;
+  font-weight: 900 !important;
+  border: 1.5px solid #FFFFFF !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+/* Confetti Flutter & Tumble Animation */
+@keyframes confettiFall {
+  0% { transform: translateY(-10vh) rotate(0deg) translateX(0px); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(115vh) rotate(720deg) translateX(25px); opacity: 0; }
+}
+
+@keyframes fireworkBurst {
+  0% { transform: scale(0.2); opacity: 0; }
+  50% { transform: scale(1.15); opacity: 0.95; }
+  75% { transform: scale(1.05); opacity: 0.7; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
+
+.animate-confetti { animation: confettiFall 14s linear infinite; }
+.animate-firework { animation: fireworkBurst 3.2s ease-out infinite; }

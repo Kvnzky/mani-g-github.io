@@ -253,87 +253,96 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
   if (themeId === 'new-year') {
     return (
       <div className="relative w-full max-w-[620px] mx-auto flex items-center justify-center p-3 select-none">
-        {/* Ambient Celebration Glow Backdrops in Midnight Navy, Champagne Gold & Celebration Crimson */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-[#EAB308]/25 via-[#E11D48]/15 to-[#0B1120]/40 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-6 -right-6 w-40 h-40 bg-[#FDE047]/20 rounded-full blur-2xl pointer-events-none animate-pulse" />
-        <div className="absolute -bottom-6 -left-6 w-44 h-44 bg-[#E11D48]/20 rounded-full blur-2xl pointer-events-none" />
+        {/* Ambient Celebration Glow Backdrops in Midnight Navy, Celebration Gold & Rich Indigo */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#0B132B]/50 via-[#1C2541]/45 to-[#FFD700]/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-6 -right-6 w-44 h-44 bg-[#FFD700]/25 rounded-full blur-2xl pointer-events-none animate-pulse" />
+        <div className="absolute -bottom-6 -left-6 w-48 h-48 bg-[#1C2541]/40 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Rotating Celebration Starburst Flare behind card */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
+          <svg className="w-80 h-80 sm:w-96 sm:h-96 animate-sunburst-spin text-[#FFD700]/30" viewBox="0 0 100 100" fill="currentColor">
+            {[0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5].map((deg) => (
+              <polygon key={deg} points="50,50 48,0 52,0" transform={`rotate(${deg} 50 50)`} />
+            ))}
+          </svg>
+        </div>
 
         {/* Main Celebration Composition Card */}
-        <div className="relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#10172A]/95 via-[#0B1120]/95 to-[#070A14] border-2 border-[#EAB308] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
+        <div className="card relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#1C2541]/95 via-[#0B132B]/98 to-[#050B1A] border-2 border-[#FFD700] p-6 sm:p-8 shadow-[0_0_35px_rgba(255,215,0,0.35)] backdrop-blur-md overflow-hidden">
           {/* Decorative Corner Fireworks & Confetti Accents */}
           <div className="absolute -top-2 -right-2 text-2xl rotate-12 drop-shadow-md select-none pointer-events-none">
-            🎆✨
+            🎆🎉
           </div>
           <div className="absolute -bottom-2 -left-2 text-2xl -rotate-12 drop-shadow-md select-none pointer-events-none">
-            🥂⭐
+            🥳✨
           </div>
 
-          {/* Central Logo & Champagne Gold Wreath */}
+          {/* Central Logo & Celebration Gold Wreath */}
           <div className="text-center space-y-4">
             <div className="relative inline-block animate-float-slow">
               {/* Starburst cluster above logo */}
               <div className="absolute -top-4 -right-2 z-20 pointer-events-none transform rotate-12 drop-shadow-md">
                 <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none">
-                  <line x1="24" y1="4" x2="24" y2="44" stroke="#FDE047" strokeWidth="2" strokeLinecap="round" />
-                  <line x1="4" y1="24" x2="44" y2="24" stroke="#FDE047" strokeWidth="2" strokeLinecap="round" />
-                  <line x1="10" y1="10" x2="38" y2="38" stroke="#E2E8F0" strokeWidth="1.5" strokeLinecap="round" />
-                  <line x1="38" y1="10" x2="10" y2="38" stroke="#E2E8F0" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="24" cy="24" r="4" fill="#FFFFFF" />
+                  <line x1="24" y1="4" x2="24" y2="44" stroke="#FFD700" strokeWidth="2.2" strokeLinecap="round" />
+                  <line x1="4" y1="24" x2="44" y2="24" stroke="#FFD700" strokeWidth="2.2" strokeLinecap="round" />
+                  <line x1="10" y1="10" x2="38" y2="38" stroke="#E2E8F0" strokeWidth="1.6" strokeLinecap="round" />
+                  <line x1="38" y1="10" x2="10" y2="38" stroke="#E2E8F0" strokeWidth="1.6" strokeLinecap="round" />
+                  <circle cx="24" cy="24" r="4.5" fill="#FFFFFF" />
                 </svg>
               </div>
 
-              {/* Glowing Midnight & Champagne Gold Ring Wreath behind logo */}
-              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#1E293B] via-[#0B1120] to-[#10172A] border-4 border-[#FDE047] p-3 shadow-warm-lg flex items-center justify-center mx-auto">
+              {/* Glowing Midnight & Celebration Gold Ring Wreath behind logo */}
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#1C2541] via-[#0B132B] to-[#141E33] border-4 border-[#FFD700] p-3 shadow-[0_4px_22px_rgba(255,215,0,0.55)] flex items-center justify-center mx-auto">
                 <img
                   src="./logo.png"
                   alt="Mani Wandering New Year Logo"
-                  className="w-full h-full object-contain drop-shadow-[0_4px_14px_rgba(234,179,8,0.55)]"
+                  className="w-full h-full object-contain drop-shadow-[0_4px_16px_rgba(255,215,0,0.7)]"
                 />
               </div>
 
               {/* Celebration Ribbon Tag */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#BE123C] to-[#EAB308] text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-amber-200 shadow-snack-sm flex items-center gap-1">
-                <span>✨ Manigong Bagong Taon</span>
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#FFD700] via-[#FACC15] to-[#E2E8F0] text-[#0B132B] text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-[#FFD700] shadow-[0_2px_12px_rgba(255,215,0,0.5)] flex items-center gap-1">
+                <span>🎆 Bagong Taon, Bagong Crunch!</span>
               </div>
             </div>
 
             {/* Featured New Year Celebration Tubs Mini Showcase */}
             <div className="pt-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#FDE047] mb-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#FFD700] mb-3">
                 ⭐ Pinakamasarap na Pang-Media Noche at Bagong Taon
               </p>
 
               <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-                {/* Tub 1: Midnight Classic Salted */}
-                <div className="rounded-2xl p-2 bg-[#070A14]/90 border border-slate-700/60 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#EAB308] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-500/40">
-                    <img src="./images/products/salted.jpg" alt="Midnight Classic Salted Mani" className="w-full h-full object-cover" />
+                {/* Tub 1: Midnight Gold Salted */}
+                <div className="rounded-2xl p-2 bg-[#0B132B]/90 border border-[#FFD700]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FFD700] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#FFD700]/60 shadow-[0_0_12px_rgba(255,215,0,0.4)]">
+                    <img src="./images/products/salted.jpg" alt="Midnight Gold Salted Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🎆 Midnight</span>
+                    <span className="text-[10px] font-black text-[#FFD700] block leading-tight">🎆 Midnight Gold</span>
                     <span className="text-[9px] text-slate-300 font-medium">Media Noche Fave</span>
                   </div>
                 </div>
 
                 {/* Tub 2: Countdown Spark Spicy */}
-                <div className="rounded-2xl p-2 bg-[#070A14]/90 border border-[#E11D48]/70 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-amber-300 transition-all scale-105 bg-gradient-to-b from-[#1E1120] to-[#070A14]">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#E11D48]">
+                <div className="rounded-2xl p-2 bg-[#1C2541]/90 border border-[#FFD700]/70 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FFFFFF] transition-all scale-105 bg-gradient-to-b from-[#1C2541] to-[#0B132B]">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#FFD700] shadow-[0_0_16px_rgba(255,215,0,0.6)]">
                     <img src="./images/products/spicy.jpg" alt="Countdown Spark Spicy Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-rose-300 block leading-tight">💥 Countdown</span>
-                    <span className="text-[9px] text-amber-200/90 font-bold">#1 Pulutan</span>
+                    <span className="text-[10px] font-black text-[#FFD700] block leading-tight">💥 Countdown Spark</span>
+                    <span className="text-[9px] text-[#E2E8F0] font-bold">#1 Pulutan Crunch</span>
                   </div>
                 </div>
 
-                {/* Tub 3: Golden Fortune Egg Salted Egg */}
-                <div className="rounded-2xl p-2 bg-[#070A14]/90 border border-slate-700/60 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#EAB308] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-400/40">
-                    <img src="./images/products/salted-egg.jpg" alt="Golden Fortune Egg Mani" className="w-full h-full object-cover" />
+                {/* Tub 3: Midnight Fortune Egg */}
+                <div className="rounded-2xl p-2 bg-[#0B132B]/90 border border-[#FFD700]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FFD700] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#FFD700]/60 shadow-[0_0_12px_rgba(255,215,0,0.4)]">
+                    <img src="./images/products/salted-egg.jpg" alt="Midnight Fortune Egg Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-300 block leading-tight">🥚 Fortune Egg</span>
-                    <span className="text-[9px] text-slate-300 font-medium">Lucky Umami</span>
+                    <span className="text-[10px] font-black text-[#FFD700] block leading-tight">🥚 Fortune Egg</span>
+                    <span className="text-[9px] text-slate-300 font-medium">Swerte & Umami</span>
                   </div>
                 </div>
               </div>
@@ -341,14 +350,14 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
 
             {/* 3 Value Pillars */}
             <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-slate-200">
-              <span className="inline-flex items-center gap-1 bg-[#05070D]/90 px-2.5 py-1 rounded-xl border border-[#EAB308]/40">
-                <Gift className="w-3 h-3 text-[#E11D48]" /> Media Noche Ready
+              <span className="inline-flex items-center gap-1 bg-[#1C2541]/90 px-2.5 py-1 rounded-xl border border-[#FFD700]/40">
+                <Gift className="w-3 h-3 text-[#FFD700]" /> Media Noche Ready
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#05070D]/90 px-2.5 py-1 rounded-xl border border-[#EAB308]/40">
-                <Star className="w-3 h-3 text-[#FDE047]" /> Purong Crispy Bawang
+              <span className="inline-flex items-center gap-1 bg-[#1C2541]/90 px-2.5 py-1 rounded-xl border border-[#FFD700]/40">
+                <Star className="w-3 h-3 text-[#E2E8F0]" /> Purong Crispy Bawang
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#05070D]/90 px-2.5 py-1 rounded-xl border border-[#EAB308]/40">
-                <Sparkles className="w-3 h-3 text-amber-300" /> Bagong Luto Weekly
+              <span className="inline-flex items-center gap-1 bg-[#1C2541]/90 px-2.5 py-1 rounded-xl border border-[#FFD700]/40">
+                <Sparkles className="w-3 h-3 text-[#FFD700]" /> Bagong Luto Weekly
               </span>
             </div>
           </div>

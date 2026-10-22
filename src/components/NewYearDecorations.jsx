@@ -235,3 +235,41 @@ export function NewYearToastSvg({ className = 'w-16 h-16' }) {
     </svg>
   );
 }
+
+
+/**
+ * Festive New Year Party Hat Icon
+ */
+export function NewYearPartyHatSvg({ className = 'w-5 h-5' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      {/* Party Hat Cone */}
+      <polygon points="12,2 4,20 20,20" fill="#0B132B" stroke="#FFD700" strokeWidth="1.2" />
+      {/* Decorative Diagonal Stripes */}
+      <path d="M6 16 L18 16" stroke="#FFD700" strokeWidth="1.2" />
+      <path d="M8 12 L16 12" stroke="#E2E8F0" strokeWidth="1.2" />
+      <path d="M10 7 L14 7" stroke="#FFD700" strokeWidth="1.2" />
+      {/* Pom-pom atop */}
+      <circle cx="12" cy="2" r="2.2" fill="#FFD700" stroke="#FFE066" strokeWidth="0.8" />
+      {/* Base trim with silver dots */}
+      <circle cx="6" cy="18.5" r="1" fill="#E2E8F0" />
+      <circle cx="12" cy="18.5" r="1" fill="#E2E8F0" />
+      <circle cx="18" cy="18.5" r="1" fill="#E2E8F0" />
+    </svg>
+  );
+}
+
+/**
+ * Celebration Starburst Flare Icon
+ */
+export function NewYearFireworkBurstSvg({ className = 'w-5 h-5' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      <line x1="12" y1="2" x2="12" y2="22" stroke="#FFD700" strokeWidth="1.8" strokeLinecap="round" />
+      <line x1="2" y1="12" x2="22" y2="12" stroke="#FFD700" strokeWidth="1.8" strokeLinecap="round" />
+      <line x1="5" y1="5" x2="19" y2="19" stroke="#E2E8F0" strokeWidth="1.2" strokeLinecap="round" />
+      <line x1="19" y1="5" x2="5" y2="19" stroke="#E2E8F0" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="2.5" fill="#FFFFFF" />
+    </svg>
+  );
+}
