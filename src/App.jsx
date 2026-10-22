@@ -16,7 +16,7 @@ import SeasonalHeroVisual from './components/SeasonalHeroVisual';
 import { SantaPeanutSvg, ChristmasCornerGarland, ChristmasStarOrnament, ChristmasFairyLights, ChristmasGiftBoxSvg } from './components/ChristmasDecorations';
 import { HarvestPeanutSvg, ThanksgivingCornerGarland, ThanksgivingLeafOrnament } from './components/ThanksgivingDecorations';
 import { NewYearPeanutSvg, NewYearCornerGarland, NewYearSparkleOrnament, NewYearPartyHatSvg, NewYearFireworkBurstSvg } from './components/NewYearDecorations';
-import { ChineseNewYearPeanutSvg, ChineseNewYearCornerGarland, ChineseNewYearLanternOrnament } from './components/ChineseNewYearDecorations';
+import { ChineseNewYearPeanutSvg, ChineseNewYearCornerGarland, ChineseNewYearLanternOrnament, ChineseNewYearAngpaoCoinSvg, ChineseNewYearGoldIngotSvg } from './components/ChineseNewYearDecorations';
 import { ValentinesPeanutSvg, ValentinesCornerGarland, ValentinesHeartOrnament } from './components/ValentinesDecorations';
 import { THEMES, getTheme, VALID_THEME_IDS, DEFAULT_THEME } from './config/themes';
 import { initThanksgivingLeaves } from './utils/thanksgivingLeaves';
@@ -198,7 +198,7 @@ export default function App() {
         return savedTheme;
       }
     } catch (e) {}
-    return 'new-year';
+    return 'chinese-new-year';
   });
 
   // Admin Preview Theme (does not affect public visitors until published)
@@ -1310,7 +1310,7 @@ export default function App() {
   };
 
   return (
-    <div data-theme={effectiveThemeId} className={`relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 ${effectiveThemeId === 'thanksgiving' ? 'thanksgiving-theme' : ''} ${effectiveThemeId === 'christmas' ? 'christmas-theme' : ''} ${effectiveThemeId === 'new-year' ? 'new-year-theme' : ''} ${effectiveThemeId === 'christmas' ? 'selection:bg-[#DC2626] selection:text-white' : effectiveThemeId === 'thanksgiving' ? 'selection:bg-[#D4A373] selection:text-[#2E1C0C]' : effectiveThemeId === 'new-year' ? 'selection:bg-[#FFD700] selection:text-[#0B132B]' : effectiveThemeId === 'chinese-new-year' ? 'selection:bg-[#DC2626] selection:text-amber-200' : effectiveThemeId === 'valentines-day' ? 'selection:bg-[#E11D48] selection:text-white' : 'selection:bg-[#FF6B00] selection:text-white'}`}>
+    <div data-theme={effectiveThemeId} className={`relative min-h-screen flex flex-col bg-peanut-pattern text-mani-900 ${effectiveThemeId === 'thanksgiving' ? 'thanksgiving-theme' : ''} ${effectiveThemeId === 'christmas' ? 'christmas-theme' : ''} ${effectiveThemeId === 'new-year' ? 'new-year-theme' : ''} ${effectiveThemeId === 'chinese-new-year' ? 'chinese-new-year-theme' : ''} ${effectiveThemeId === 'christmas' ? 'selection:bg-[#DC2626] selection:text-white' : effectiveThemeId === 'thanksgiving' ? 'selection:bg-[#D4A373] selection:text-[#2E1C0C]' : effectiveThemeId === 'new-year' ? 'selection:bg-[#FFD700] selection:text-[#0B132B]' : effectiveThemeId === 'chinese-new-year' ? 'selection:bg-[#FFD700] selection:text-[#800020]' : effectiveThemeId === 'valentines-day' ? 'selection:bg-[#E11D48] selection:text-white' : 'selection:bg-[#FF6B00] selection:text-white'}`}>
       {/* Skip to Content for Keyboard & Screen Reader Users */}
       <a
         href="#flavors-menu"
@@ -1629,7 +1629,7 @@ export default function App() {
                         effectiveThemeId === 'christmas' ? 'bg-[#0B2545]/95 border border-[#E9D8A6]'
                         : effectiveThemeId === 'thanksgiving' ? 'bg-[#3B1F0E]/95 border border-[#D4A373]'
                         : effectiveThemeId === 'new-year' ? 'bg-[#1C2541]/90 border border-[#FFD700]/60'
-                        : effectiveThemeId === 'chinese-new-year' ? 'bg-[#260707]/90 border border-amber-500/60'
+                        : effectiveThemeId === 'chinese-new-year' ? 'bg-[#500014]/90 border border-[#FFD700]/60'
                         : effectiveThemeId === 'valentines-day' ? 'bg-[#240815]/90 border border-rose-500/60'
                         : 'bg-[#1F1025]/90 border border-[#FF6B00]/60'
                       } p-1.5 rounded-2xl shadow-inner`}>
@@ -1711,7 +1711,7 @@ export default function App() {
                           {tab.count !== undefined && (
                             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                               isActive 
-                                ? (effectiveThemeId === 'christmas' ? 'bg-[#0B2545] text-[#E9D8A6]' : effectiveThemeId === 'thanksgiving' ? 'bg-[#2A170B] text-amber-300' : effectiveThemeId === 'new-year' ? 'bg-[#0B132B] text-[#FFD700]' : effectiveThemeId === 'chinese-new-year' ? 'bg-[#260707] text-amber-200' : effectiveThemeId === 'valentines-day' ? 'bg-[#240815] text-rose-200' : 'bg-[#1F1025] text-amber-300')
+                                ? (effectiveThemeId === 'christmas' ? 'bg-[#0B2545] text-[#E9D8A6]' : effectiveThemeId === 'thanksgiving' ? 'bg-[#2A170B] text-amber-300' : effectiveThemeId === 'new-year' ? 'bg-[#0B132B] text-[#FFD700]' : effectiveThemeId === 'chinese-new-year' ? 'bg-[#500014] text-[#FFD700]' : effectiveThemeId === 'valentines-day' ? 'bg-[#240815] text-rose-200' : 'bg-[#1F1025] text-amber-300')
                                 : 'bg-black/30 text-amber-300'
                             }`}>
                               {tab.count}

@@ -205,3 +205,29 @@ export function ChineseNewYearAngpaoCoinSvg({ className = 'w-16 h-16' }) {
     </svg>
   );
 }
+
+
+/**
+ * Auspicious Golden Yuanbao (Gold Ingot) Icon
+ */
+export function ChineseNewYearGoldIngotSvg({ className = 'w-5 h-5' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      <path d="M2 13 Q7 19 12 19 Q17 19 22 13 Q21 6 12 6 Q3 6 2 13 Z" fill="#FFD700" stroke="#B45309" strokeWidth="1.2" />
+      <ellipse cx="12" cy="11" rx="7.5" ry="3.5" fill="#FFE066" stroke="#D97706" strokeWidth="0.8" />
+      <circle cx="12" cy="10" r="2.5" fill="#FFFBEB" />
+    </svg>
+  );
+}
+
+/**
+ * Delicate Cherry Blossom Petal Icon
+ */
+export function ChineseNewYearCherryBlossomSvg({ className = 'w-5 h-5' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      <path d="M12 2 C8 6 6 10 7 14 C8 18 12 21 12 21 C12 21 16 18 17 14 C18 10 16 6 12 2 Z" fill="#FFB7C5" stroke="#F43F5E" strokeWidth="1" />
+      <circle cx="12" cy="14" r="1.5" fill="#FFE066" />
+    </svg>
+  );
+}

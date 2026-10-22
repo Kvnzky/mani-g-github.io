@@ -70,12 +70,12 @@
 
   :root[data-theme="chinese-new-year"],
   [data-theme="chinese-new-year"] {
-    --bg-cream: #1F0606;
-    --bg-indigo: #290808;
-    --text-roast: #FEF3C7;
-    --accent-amber: #DC2626;
-    --accent-gold: #F59E0B;
-    --theme-border: #DC2626;
+    --bg-cream: #5A0515;
+    --bg-indigo: #800020;
+    --text-roast: #FFF8E7;
+    --accent-amber: #C8102E;
+    --accent-gold: #FFD700;
+    --theme-border: #FFD700;
   }
 
   :root[data-theme="valentines-day"],
@@ -150,10 +150,10 @@
 
   html[data-theme="chinese-new-year"] body,
   body[data-theme="chinese-new-year"] {
-    background: linear-gradient(180deg, #1F0606 0%, #290808 55%, #1F0606 100%);
-    background-color: #1F0606;
-    color: #FEF3C7;
-    accent-color: #DC2626;
+    background: linear-gradient(180deg, #800020 0%, #5A0515 50%, #35000C 100%);
+    background-color: #5A0515;
+    color: #FFF8E7;
+    accent-color: #FFD700;
   }
 
   html[data-theme="valentines-day"] body,
@@ -283,11 +283,11 @@
 
 [data-theme="chinese-new-year"] .bg-peanut-pattern,
 [data-theme="chinese-new-year"].bg-peanut-pattern {
-  background-color: #1F0606;
+  background-color: #5A0515;
   background-image:
-    radial-gradient(rgba(220, 38, 38, 0.18) 1.25px, transparent 1.25px),
-    radial-gradient(rgba(245, 158, 11, 0.14) 1.25px, transparent 1.25px),
-    linear-gradient(180deg, #1F0606 0%, #290808 50%, #1F0606 100%);
+    radial-gradient(rgba(255, 215, 0, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(200, 16, 46, 0.18) 1.25px, transparent 1.25px),
+    linear-gradient(180deg, #800020 0%, #5A0515 50%, #35000C 100%);
 }
 
 [data-theme="valentines-day"] .bg-peanut-pattern,
@@ -1697,3 +1697,160 @@ body.new-year-theme {
 
 .animate-confetti { animation: confettiFall 14s linear infinite; }
 .animate-firework { animation: fireworkBurst 3.2s ease-out infinite; }
+
+
+/* ============================================================
+   CHINESE NEW YEAR FESTIVE SPECIAL - LUCKY CRUNCH, PROSPEROUS YEAR!
+   ============================================================ */
+body.chinese-new-year-theme {
+  background-color: #5A0515 !important;
+  color: #FFF8E7 !important;
+  background-image: 
+    radial-gradient(rgba(255, 215, 0, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(200, 16, 46, 0.18) 1.25px, #5A0515 1.25px) !important;
+  background-size: 36px 36px !important;
+  background-position: 0 0, 18px 18px !important;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Header & Nav Glow */
+.chinese-new-year-theme header,
+.chinese-new-year-theme nav,
+.chinese-new-year-theme .hero {
+  background: rgba(128, 0, 32, 0.94) !important;
+  backdrop-filter: blur(14px) !important;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.75) !important;
+  box-shadow: 0 4px 24px rgba(128, 0, 32, 0.45) !important;
+}
+
+/* Lunar New Year Banner Badge for Hero/Headline */
+.chinese-new-year-theme .hero-title::after,
+.chinese-new-year-theme .hero h1::after {
+  content: " 🧧 Lucky Crunch, Prosperous Year!";
+  display: inline-block;
+  font-size: 0.45em;
+  font-weight: 900;
+  vertical-align: middle;
+  background: linear-gradient(135deg, #FFD700, #FACC15, #FFE066);
+  color: #800020;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-left: 8px;
+  border: 1.5px solid #FFD700;
+  box-shadow: 0 2px 14px rgba(255, 215, 0, 0.5);
+  letter-spacing: 0.5px;
+}
+
+/* Product Cards & Content Containers - Lantern Radiance */
+.chinese-new-year-theme .card,
+.chinese-new-year-theme .product-card {
+  border: 2px solid rgba(255, 215, 0, 0.65) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 8px 30px -4px rgba(128, 0, 32, 0.5),
+    0 0 24px rgba(255, 215, 0, 0.28),
+    0 4px 0 0 #FFD700 !important;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* Subtle corner red envelope accent on cards */
+.chinese-new-year-theme .card::before,
+.chinese-new-year-theme .product-card::before {
+  content: "🧧";
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 1.1rem;
+  opacity: 0.85;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  pointer-events: none;
+}
+
+.chinese-new-year-theme .card:hover,
+.chinese-new-year-theme .product-card:hover {
+  transform: translateY(-6px) scale(1.01) !important;
+  border-color: #FFFFFF !important;
+  box-shadow: 
+    0 14px 38px -4px rgba(128, 0, 32, 0.65),
+    0 0 32px rgba(255, 215, 0, 0.5),
+    0 6px 0 0 #FFD700 !important;
+}
+
+/* Lantern golden box-shadow on tub photo */
+.chinese-new-year-theme .product-card .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 26px rgba(255, 215, 0, 0.65),
+    0 4px 32px rgba(200, 16, 46, 0.4),
+    0 0 48px rgba(255, 215, 0, 0.35),
+    inset 0 0 16px rgba(255, 215, 0, 0.3) !important;
+}
+
+.chinese-new-year-theme .product-card:hover .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 34px rgba(255, 215, 0, 0.85),
+    0 6px 38px rgba(200, 16, 46, 0.55),
+    0 0 56px rgba(255, 215, 0, 0.5),
+    inset 0 0 20px rgba(255, 215, 0, 0.4) !important;
+}
+
+/* Primary buttons */
+.chinese-new-year-theme button.btn-primary,
+.chinese-new-year-theme .btn-primary,
+.chinese-new-year-theme [class*="btn-primary"] {
+  background: linear-gradient(135deg, #FFD700 0%, #FACC15 50%, #FFE066 100%) !important;
+  color: #800020 !important;
+  font-weight: 900 !important;
+  border: 2px solid #FFD700 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 18px rgba(255, 215, 0, 0.45) !important;
+  transition: all 0.25s ease !important;
+}
+
+.chinese-new-year-theme button.btn-primary:hover,
+.chinese-new-year-theme .btn-primary:hover,
+.chinese-new-year-theme [class*="btn-primary"]:hover {
+  background: linear-gradient(135deg, #C8102E 0%, #FFD700 60%, #FFFFFF 100%) !important;
+  color: #800020 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 24px rgba(255, 215, 0, 0.6) !important;
+}
+
+/* Small quantity adjustment steppers */
+.chinese-new-year-theme .stepper-btn,
+.chinese-new-year-theme button.stepper-btn {
+  background: #ffffff !important;
+  color: #800020 !important;
+  border: 1px solid rgba(255, 215, 0, 0.5) !important;
+  border-radius: 8px !important;
+}
+.chinese-new-year-theme .stepper-btn:hover {
+  background: #FEF3C7 !important;
+  color: #800020 !important;
+  border-color: #FFD700 !important;
+}
+
+/* Price Tags & Badges */
+.chinese-new-year-theme .price {
+  background: linear-gradient(135deg, #FFD700, #F59E0B) !important;
+  color: #800020 !important;
+  font-weight: 900 !important;
+  border: 1.5px solid #FFFFFF !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+/* Cherry Blossom Petals & Red Lantern Keyframe Animations */
+@keyframes petalDrift {
+  0% { transform: translateY(-10vh) translateX(0px) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.95; }
+  90% { opacity: 0.95; }
+  100% { transform: translateY(115vh) translateX(45px) rotate(360deg); opacity: 0; }
+}
+
+@keyframes lanternFloat {
+  0%, 100% { transform: translateY(0px) rotate(-3deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+
+.animate-petal { animation: petalDrift 13s linear infinite; }
+.animate-lantern { animation: lanternFloat 4.8s ease-in-out infinite; }
