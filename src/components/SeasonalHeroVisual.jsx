@@ -1,5 +1,6 @@
 import React from 'react';
 import HalloweenMascotVideo from './HalloweenMascotVideo';
+import ChristmasMascotVideo from './ChristmasMascotVideo';
 import { Sparkles, Gift, Star, Award, Heart, Users } from 'lucide-react';
 import { HarvestCornucopiaSvg, HarvestPeanutSvg } from './ThanksgivingDecorations';
 
@@ -16,110 +17,17 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
 
   if (themeId === 'christmas') {
     return (
-      <div className="relative w-full max-w-[620px] mx-auto flex items-center justify-center p-3 select-none">
-        {/* Ambient Holiday Glow Backdrops in Midnight Navy, Evergreen & Warm Gold */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-[#0B2545]/40 via-[#DC2626]/20 to-[#E9D8A6]/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-6 -right-6 w-44 h-44 bg-[#E9D8A6]/20 rounded-full blur-2xl pointer-events-none animate-pulse" />
-        <div className="absolute -bottom-6 -left-6 w-48 h-48 bg-[#DC2626]/25 rounded-full blur-2xl pointer-events-none" />
+      <div className="relative w-full max-w-[660px] mx-auto flex items-center justify-center select-none">
+        {/* Soft Ambient Holiday Glow Backdrops */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#0B2545]/40 via-[#DC2626]/20 to-[#E9D8A6]/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-6 -right-6 w-44 h-44 bg-[#E9D8A6]/15 rounded-full blur-2xl pointer-events-none animate-pulse" />
+        <div className="absolute -bottom-6 -left-6 w-48 h-48 bg-[#DC2626]/20 rounded-full blur-2xl pointer-events-none" />
 
-        {/* Main Festive Composition Card */}
-        <div className="card relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#0B2545]/95 via-[#134074]/95 to-[#0A1F18] border-2 border-[#E9D8A6] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
-          {/* Decorative Corner Pine Garland Accent */}
-          <div className="absolute -top-3 -right-3 text-2xl rotate-12 drop-shadow-md select-none pointer-events-none">
-            🎄⭐
-          </div>
-          <div className="absolute -bottom-2 -left-2 text-2xl -rotate-12 drop-shadow-md select-none pointer-events-none">
-            🎁🔔
-          </div>
-
-          {/* Central Logo & Santa Hat Feature */}
-          <div className="text-center space-y-4">
-            <div className="relative inline-block animate-float-slow">
-              {/* Santa Hat SVG sitting atop the logo */}
-              <div className="absolute -top-5 -right-3 z-20 pointer-events-none transform rotate-12 drop-shadow-md">
-                <svg className="w-14 h-12" viewBox="0 0 64 54" fill="none">
-                  {/* Red cone */}
-                  <path d="M12 40 C18 20 38 6 50 14 C48 24 44 34 46 40 Z" fill="#DC2626" />
-                  {/* Fold and shadow */}
-                  <path d="M46 22 C40 26 36 32 34 40 C38 40 42 40 46 40 Z" fill="#991B1B" opacity="0.6" />
-                  {/* White pom-pom */}
-                  <circle cx="52" cy="14" r="5" fill="#FFFFFF" stroke="#E9D8A6" strokeWidth="1" />
-                  {/* White fuzzy brim */}
-                  <rect x="8" y="38" width="42" height="10" rx="5" fill="#FFFFFF" stroke="#E9D8A6" strokeWidth="1" />
-                </svg>
-              </div>
-
-              {/* Glowing Golden Ring Wreath behind logo */}
-              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#DC2626] via-[#134074] to-[#0B2545] border-4 border-[#E9D8A6] p-3 shadow-warm-lg flex items-center justify-center mx-auto">
-                <img
-                  src="./logo.png"
-                  alt="Mani Wandering Christmas Logo"
-                  className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(220,38,38,0.5)]"
-                />
-              </div>
-
-              {/* Paskong Pagka-crunch Ribbon Tag */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#DC2626] via-[#B91C1C] to-[#E9D8A6] text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full border border-[#E9D8A6] shadow-snack-sm flex items-center gap-1">
-                <span>🎁 Paskong Pagka-crunch!</span>
-              </div>
-            </div>
-
-            {/* Featured Holiday Tubs Mini Showcase */}
-            <div className="pt-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#E9D8A6] mb-3">
-                ⭐ Pinakamasarap na Pang-Noche Buena at Monito-Monita
-              </p>
-
-              <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-                {/* Tub 1: Santa's Classic Salted */}
-                <div className="rounded-2xl p-2 bg-[#0B2545] border border-[#E9D8A6]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#E9D8A6] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#E9D8A6]/40">
-                    <img src="./images/products/salted.jpg" alt="Salted Mani" className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-[#E9D8A6] block leading-tight">⭐ Santa's Salted</span>
-                    <span className="text-[9px] text-slate-200/90 font-medium">Santa’s Fave</span>
-                  </div>
-                </div>
-
-                {/* Tub 2: Holiday Fire Crunch Spicy */}
-                <div className="rounded-2xl p-2 bg-gradient-to-b from-[#DC2626]/30 to-[#0B2545] border-2 border-[#DC2626] flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#E9D8A6] transition-all scale-105">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#DC2626]">
-                    <img src="./images/products/spicy.jpg" alt="Spicy Mani" className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-rose-200 block leading-tight">🔥 Holiday Fire</span>
-                    <span className="text-[9px] text-[#E9D8A6] font-bold">#1 Pulutan</span>
-                  </div>
-                </div>
-
-                {/* Tub 3: Golden Star Salted Egg */}
-                <div className="rounded-2xl p-2 bg-[#0B2545] border border-[#E9D8A6]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#E9D8A6] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#E9D8A6]/40">
-                    <img src="./images/products/salted-egg.jpg" alt="Salted Egg Mani" className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-[#E9D8A6] block leading-tight">🥚 Golden Star</span>
-                    <span className="text-[9px] text-slate-200/90 font-medium">Rich Umami</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 3 Value Pillars */}
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-slate-100">
-              <span className="inline-flex items-center gap-1 bg-[#0B2545]/90 px-2.5 py-1 rounded-xl border border-[#E9D8A6]/40">
-                <Gift className="w-3 h-3 text-[#DC2626]" /> Reusable Tubs
-              </span>
-              <span className="inline-flex items-center gap-1 bg-[#0B2545]/90 px-2.5 py-1 rounded-xl border border-[#E9D8A6]/40">
-                <Star className="w-3 h-3 text-[#E9D8A6]" /> Purong Crispy Bawang
-              </span>
-              <span className="inline-flex items-center gap-1 bg-[#0B2545]/90 px-2.5 py-1 rounded-xl border border-[#E9D8A6]/40">
-                <Sparkles className="w-3 h-3 text-[#E9D8A6]" /> Bagong Luto Weekly
-              </span>
-            </div>
-          </div>
-        </div>
+        <ChristmasMascotVideo
+          variant="hero"
+          ariaLabel="Mani Wandering Christmas Peanut Mascot"
+          className="w-full aspect-video lg:scale-105 xl:scale-110 origin-center"
+        />
       </div>
     );
   }

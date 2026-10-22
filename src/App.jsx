@@ -198,7 +198,7 @@ export default function App() {
         return savedTheme;
       }
     } catch (e) {}
-    return 'valentines-day';
+    return 'christmas';
   });
 
   // Admin Preview Theme (does not affect public visitors until published)
