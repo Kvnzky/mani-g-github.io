@@ -809,7 +809,7 @@ const htmlTemplate = `<!DOCTYPE html>
                   {/* End Left Column */}
 
                   {/* Right Column (Desktop 5 cols, Sticky): Customer Info & Live Checkout */}
-                  <div id="portable-checkout-section" className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
+                  <div id="portable-checkout-section" className="lg:col-span-5 space-y-6">
                     {/* 2. Order Summary */}
                     <div id="portable-order-summary" className="bg-white p-5 sm:p-6 rounded-3xl border-2 border-amber-300/80 shadow-warm space-y-4">
                       <div className="flex justify-between items-center border-b border-mani-100 pb-3 flex-wrap gap-2">
@@ -847,7 +847,7 @@ const htmlTemplate = `<!DOCTYPE html>
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          <div className="divide-y divide-mani-100 max-h-52 overflow-y-auto pr-1">
+                          <div className="divide-y divide-mani-100">
                             {products.filter(p => (quantities[p.id] || 0) > 0).map(p => (
                               <div key={p.id} className="py-2.5 flex justify-between items-center text-xs">
                                 <div className="flex items-center gap-2">

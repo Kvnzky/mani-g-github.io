@@ -1741,7 +1741,7 @@ export default function App() {
               </div>
 
               {/* Right Column (Desktop 5 cols, Sticky): 2. Order Summary, 3. Customer Info, 4. Shipping Info, 5. Payment & Checkout */}
-              <div id="checkout-section" className="lg:col-span-5 space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1.5 scrollbar-thin">
+              <div id="checkout-section" className="lg:col-span-5 space-y-6">
                 {/* 2. Active Order Summary / Cart */}
                 <section>
                   <OrderSummaryCard

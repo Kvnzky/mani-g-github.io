@@ -82,7 +82,7 @@ export default function OrderSummaryCard({
       ) : (
         /* Active Selected Items List */
         <div className="space-y-3">
-          <div className="divide-y divide-mani-100 max-h-68 overflow-y-auto pr-1">
+          <div className="divide-y divide-mani-100">
             {selectedItems.map((p) => {
               const qty = quantities[p.id] || 0;
               const isRecentlyAdded = recentlyAddedId === p.id;
