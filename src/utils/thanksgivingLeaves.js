@@ -4,7 +4,7 @@
 export function initThanksgivingLeaves() {
   if (typeof document === 'undefined') return;
 
-  const leavesContainerId = 'thanksgiving-leaves-container';
+  const leavesContainerId = 'thanksgiving-fx-leaves-container';
   let container = document.getElementById(leavesContainerId);
 
   // If theme is active and container doesn't exist, create it
@@ -12,7 +12,7 @@ export function initThanksgivingLeaves() {
     if (!container) {
       container = document.createElement('div');
       container.id = leavesContainerId;
-      container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden;';
+      container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;overflow:hidden;';
       document.body.appendChild(container);
 
       const leafIcons = ['🍂', '🍁', '🌰'];

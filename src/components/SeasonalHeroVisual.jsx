@@ -1,6 +1,6 @@
 import React from 'react';
 import HalloweenMascotVideo from './HalloweenMascotVideo';
-import { Sparkles, Gift, Star, Award, Heart } from 'lucide-react';
+import { Sparkles, Gift, Star, Award, Heart, Users } from 'lucide-react';
 import { HarvestCornucopiaSvg, HarvestPeanutSvg } from './ThanksgivingDecorations';
 
 export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
