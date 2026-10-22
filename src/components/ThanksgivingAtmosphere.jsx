@@ -198,7 +198,7 @@ export function CuteRoamingTurkey({ variant = 'primary' }) {
         {/* Floating Festive Speech Bubble */}
         {!isSecondary ? (
           <div className="absolute -top-7 left-12 whitespace-nowrap bg-gradient-to-r from-[#241306]/95 via-[#3A1C0C]/95 to-[#241306]/95 text-amber-200 border-2 border-amber-400 px-3 py-1 rounded-full text-[11px] font-display font-bold shadow-warm-lg flex items-center gap-1.5 backdrop-blur-md">
-            <span>Gobble gobble! Give thanks for the crunch! 🦃🥜</span>
+            <span>Gobble gobble! Fiesta ng Pasasalamat! 🦃🥜</span>
           </div>
         ) : (
           <div className="absolute -top-6 left-8 whitespace-nowrap bg-gradient-to-r from-[#241306]/95 to-[#3A1C0C]/95 text-amber-300 border border-amber-400 px-2.5 py-0.5 rounded-full text-[10px] font-display font-bold shadow-md">
@@ -396,32 +396,32 @@ export function CuteRoamingChipmunk() {
  */
 const THANKSGIVING_FALLING_FOLIAGE = [
   // Tier 1: Foreground prominent leaves (sharp, vibrant, rich sway)
-  { id: 1, left: '4%', delay: '-2.2s', duration: '14s', swayDuration: '4.5s', color: '#EA580C', variant: 'maple', size: 'w-7 h-7 sm:w-8 sm:h-8', opacity: 'opacity-85', mobileHidden: false },
-  { id: 2, left: '16%', delay: '-9.4s', duration: '16s', swayDuration: '5.2s', color: '#D97706', variant: 'oak', size: 'w-6 h-6 sm:w-7 sm:h-7', opacity: 'opacity-80', mobileHidden: false },
-  { id: 3, left: '27%', delay: '-14.1s', duration: '15s', swayDuration: '4.8s', color: '#881337', variant: 'maple', size: 'w-7 h-7', opacity: 'opacity-85', mobileHidden: true },
-  { id: 4, left: '48%', delay: '-4.6s', duration: '13.5s', swayDuration: '3.8s', color: '#D97706', variant: 'whirlybird', size: 'w-6 h-6', opacity: 'opacity-90', mobileHidden: false },
-  { id: 5, left: '71%', delay: '-6.3s', duration: '16.5s', swayDuration: '5.5s', color: '#F59E0B', variant: 'ginkgo', size: 'w-6 h-6 sm:w-7 sm:h-7', opacity: 'opacity-85', mobileHidden: false },
-  { id: 6, left: '88%', delay: '-11.8s', duration: '15s', swayDuration: '4.6s', color: '#C2410C', variant: 'maple', size: 'w-7 h-7 sm:w-8 sm:h-8', opacity: 'opacity-80', mobileHidden: false },
+  { id: 1, left: '4%', delay: '-2.2s', duration: '14s', swayDuration: '4.5s', color: '#D4A373', variant: 'maple', size: 'w-7 h-7 sm:w-8 sm:h-8', opacity: 'opacity-85', mobileHidden: false },
+  { id: 2, left: '16%', delay: '-9.4s', duration: '16s', swayDuration: '5.2s', color: '#881337', variant: 'oak', size: 'w-6 h-6 sm:w-7 sm:h-7', opacity: 'opacity-80', mobileHidden: false },
+  { id: 3, left: '27%', delay: '-14.1s', duration: '15s', swayDuration: '4.8s', color: '#582F0E', variant: 'maple', size: 'w-7 h-7', opacity: 'opacity-85', mobileHidden: true },
+  { id: 4, left: '48%', delay: '-4.6s', duration: '13.5s', swayDuration: '3.8s', color: '#D4A373', variant: 'whirlybird', size: 'w-6 h-6', opacity: 'opacity-90', mobileHidden: false },
+  { id: 5, left: '71%', delay: '-6.3s', duration: '16.5s', swayDuration: '5.5s', color: '#D97706', variant: 'ginkgo', size: 'w-6 h-6 sm:w-7 sm:h-7', opacity: 'opacity-85', mobileHidden: false },
+  { id: 6, left: '88%', delay: '-11.8s', duration: '15s', swayDuration: '4.6s', color: '#881337', variant: 'maple', size: 'w-7 h-7 sm:w-8 sm:h-8', opacity: 'opacity-80', mobileHidden: false },
 
   // Tier 2: Mid-ground tumbling foliage & acorns
-  { id: 7, left: '9%', delay: '-7.1s', duration: '18s', swayDuration: '5.6s', color: '#F59E0B', variant: 'acorn', size: 'w-5 h-5', opacity: 'opacity-75', mobileHidden: true },
+  { id: 7, left: '9%', delay: '-7.1s', duration: '18s', swayDuration: '5.6s', color: '#D4A373', variant: 'acorn', size: 'w-5 h-5', opacity: 'opacity-75', mobileHidden: true },
   { id: 8, left: '22%', delay: '-1.5s', duration: '17.5s', swayDuration: '5.0s', color: '#FBBF24', variant: 'ginkgo', size: 'w-5 h-5', opacity: 'opacity-75', mobileHidden: false },
-  { id: 9, left: '35%', delay: '-13.2s', duration: '19s', swayDuration: '5.8s', color: '#EA580C', variant: 'oak', size: 'w-5 h-5', opacity: 'opacity-70', mobileHidden: false },
+  { id: 9, left: '35%', delay: '-13.2s', duration: '19s', swayDuration: '5.8s', color: '#582F0E', variant: 'oak', size: 'w-5 h-5', opacity: 'opacity-70', mobileHidden: false },
   { id: 10, left: '42%', delay: '-5.7s', duration: '17s', swayDuration: '4.9s', color: '#881337', variant: 'maple', size: 'w-5 h-5 sm:w-6 sm:h-6', opacity: 'opacity-75', mobileHidden: true },
-  { id: 11, left: '58%', delay: '-15.9s', duration: '18.5s', swayDuration: '5.3s', color: '#C2410C', variant: 'whirlybird', size: 'w-5 h-5', opacity: 'opacity-80', mobileHidden: false },
-  { id: 12, left: '65%', delay: '-8.8s', duration: '18s', swayDuration: '5.1s', color: '#D97706', variant: 'acorn', size: 'w-5 h-5', opacity: 'opacity-70', mobileHidden: false },
-  { id: 13, left: '79%', delay: '-3.7s', duration: '19.5s', swayDuration: '6.0s', color: '#EA580C', variant: 'oak', size: 'w-5 h-5', opacity: 'opacity-75', mobileHidden: true },
-  { id: 14, left: '94%', delay: '-12.0s', duration: '17.5s', swayDuration: '4.7s', color: '#881337', variant: 'maple', size: 'w-5 h-5 sm:w-6 sm:h-6', opacity: 'opacity-75', mobileHidden: false },
+  { id: 11, left: '58%', delay: '-15.9s', duration: '18.5s', swayDuration: '5.3s', color: '#D4A373', variant: 'whirlybird', size: 'w-5 h-5', opacity: 'opacity-80', mobileHidden: false },
+  { id: 12, left: '65%', delay: '-8.8s', duration: '18s', swayDuration: '5.1s', color: '#78350F', variant: 'acorn', size: 'w-5 h-5', opacity: 'opacity-70', mobileHidden: false },
+  { id: 13, left: '79%', delay: '-3.7s', duration: '19.5s', swayDuration: '6.0s', color: '#881337', variant: 'oak', size: 'w-5 h-5', opacity: 'opacity-75', mobileHidden: true },
+  { id: 14, left: '94%', delay: '-12.0s', duration: '17.5s', swayDuration: '4.7s', color: '#D4A373', variant: 'maple', size: 'w-5 h-5 sm:w-6 sm:h-6', opacity: 'opacity-75', mobileHidden: false },
 
   // Tier 3: Ambient background drifting particles (soft, atmospheric depth)
   { id: 15, left: '2%', delay: '-16.2s', duration: '22s', swayDuration: '6.5s', color: '#F59E0B', variant: 'maple', size: 'w-4 h-4', opacity: 'opacity-50', mobileHidden: true },
-  { id: 16, left: '13%', delay: '-8.5s', duration: '21s', swayDuration: '6.2s', color: '#EA580C', variant: 'ginkgo', size: 'w-4 h-4', opacity: 'opacity-50', mobileHidden: false },
-  { id: 17, left: '31%', delay: '-18.1s', duration: '23s', swayDuration: '6.8s', color: '#D97706', variant: 'oak', size: 'w-4 h-4', opacity: 'opacity-45', mobileHidden: true },
-  { id: 18, left: '53%', delay: '-10.0s', duration: '20.5s', swayDuration: '6.0s', color: '#881337', variant: 'maple', size: 'w-4 h-4', opacity: 'opacity-50', mobileHidden: false },
+  { id: 16, left: '13%', delay: '-8.5s', duration: '21s', swayDuration: '6.2s', color: '#582F0E', variant: 'ginkgo', size: 'w-4 h-4', opacity: 'opacity-50', mobileHidden: false },
+  { id: 17, left: '31%', delay: '-18.1s', duration: '23s', swayDuration: '6.8s', color: '#881337', variant: 'oak', size: 'w-4 h-4', opacity: 'opacity-45', mobileHidden: true },
+  { id: 18, left: '53%', delay: '-10.0s', duration: '20.5s', swayDuration: '6.0s', color: '#D4A373', variant: 'maple', size: 'w-4 h-4', opacity: 'opacity-50', mobileHidden: false },
   { id: 19, left: '62%', delay: '-2.8s', duration: '22.5s', swayDuration: '6.4s', color: '#FBBF24', variant: 'whirlybird', size: 'w-4 h-4', opacity: 'opacity-55', mobileHidden: true },
-  { id: 20, left: '76%', delay: '-14.6s', duration: '21.5s', swayDuration: '6.3s', color: '#C2410C', variant: 'ginkgo', size: 'w-4 h-4', opacity: 'opacity-50', mobileHidden: false },
-  { id: 21, left: '84%', delay: '-6.9s', duration: '23s', swayDuration: '6.6s', color: '#F59E0B', variant: 'oak', size: 'w-4 h-4', opacity: 'opacity-45', mobileHidden: true },
-  { id: 22, left: '97%', delay: '-17.4s', duration: '20s', swayDuration: '5.9s', color: '#EA580C', variant: 'maple', size: 'w-4 h-4', opacity: 'opacity-50', mobileHidden: true }
+  { id: 20, left: '76%', delay: '-14.6s', duration: '21.5s', swayDuration: '6.3s', color: '#881337', variant: 'ginkgo', size: 'w-4 h-4', opacity: 'opacity-50', mobileHidden: false },
+  { id: 21, left: '84%', delay: '-6.9s', duration: '23s', swayDuration: '6.6s', color: '#D4A373', variant: 'oak', size: 'w-4 h-4', opacity: 'opacity-45', mobileHidden: true },
+  { id: 22, left: '97%', delay: '-17.4s', duration: '20s', swayDuration: '5.9s', color: '#582F0E', variant: 'maple', size: 'w-4 h-4', opacity: 'opacity-50', mobileHidden: true }
 ];
 
 /**

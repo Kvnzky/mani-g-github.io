@@ -89,7 +89,7 @@ let settings = {
   spreadsheetId: process.env.GOOGLE_SHEET_ID || '1CpPaE3QFmyAuptF4z52vGtpF_YFuuH-EmEHmQXpS8yI',
   appsScriptUrl: process.env.APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxFqu_Z8ZNEFoQ79ejaospmqByaTvGcrWAmkc4njilYdSJK8kvEDSslJejBwUl9z7DS/exec',
   timezone: TIMEZONE,
-  theme: 'christmas',
+  theme: 'thanksgiving',
   themeUpdatedAt: 1729300000000,
   manualFormOpen: true,
   paymentMethods: {
@@ -112,7 +112,7 @@ if (fs.existsSync(SETTINGS_FILE)) {
     settings = {
       ...settings,
       ...loaded,
-      theme: (loaded.theme && VALID_THEMES.includes(loaded.theme)) ? loaded.theme : 'christmas',
+      theme: (loaded.theme && VALID_THEMES.includes(loaded.theme)) ? loaded.theme : 'thanksgiving',
       themeUpdatedAt: loaded.themeUpdatedAt || 1729300000000,
       manualFormOpen: loaded.manualFormOpen !== undefined ? Boolean(loaded.manualFormOpen) : true,
       paymentMethods: {
@@ -306,7 +306,7 @@ const evaluateCutoff = () => {
       deliveryDay,
       flavorAvailability,
       paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
-      theme: settings.theme || 'christmas',
+      theme: settings.theme || 'thanksgiving',
       themeUpdatedAt: settings.themeUpdatedAt || 0,
       timezone: TIMEZONE,
       serverTime: now.toISOString(),
@@ -342,7 +342,7 @@ const evaluateCutoff = () => {
     deliveryDay,
     flavorAvailability,
     paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
-    theme: settings.theme || 'christmas',
+    theme: settings.theme || 'thanksgiving',
     themeUpdatedAt: settings.themeUpdatedAt || 0,
     timezone: TIMEZONE,
     serverTime: now.toISOString(),
@@ -1421,7 +1421,7 @@ app.get('/api/settings', requireAdminAuth, (req, res) => {
     spreadsheetId: settings.spreadsheetId,
     appsScriptUrl: settings.appsScriptUrl,
     timezone: settings.timezone,
-    theme: settings.theme || 'christmas',
+    theme: settings.theme || 'thanksgiving',
     themeUpdatedAt: settings.themeUpdatedAt || 0,
     manualFormOpen: settings.manualFormOpen !== false,
     paymentMethods: settings.paymentMethods || { cod: true, maribank: true, gcash: true },
@@ -1453,7 +1453,7 @@ app.post('/api/settings', requireAdminAuth, (req, res) => {
 // Public Theme Endpoint (used on initial client load and polling)
 app.get('/api/theme', (req, res) => {
   res.json({
-    theme: settings.theme || 'christmas',
+    theme: settings.theme || 'thanksgiving',
     themeUpdatedAt: settings.themeUpdatedAt || 0,
     availableThemes: VALID_THEMES
   });

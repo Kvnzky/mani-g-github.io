@@ -127,10 +127,10 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
   if (themeId === 'thanksgiving') {
     return (
       <div className="relative w-full max-w-[620px] mx-auto flex items-center justify-center p-3 select-none">
-        {/* Ambient Warm Harvest Glow Backdrops in Burnt Orange, Burgundy & Harvest Gold */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-[#EA580C]/30 via-[#881337]/25 to-[#F59E0B]/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-6 -right-6 w-44 h-44 bg-[#F59E0B]/25 rounded-full blur-2xl pointer-events-none animate-pulse" />
-        <div className="absolute -bottom-6 -left-6 w-48 h-48 bg-[#EA580C]/25 rounded-full blur-2xl pointer-events-none" />
+        {/* Ambient Warm Harvest Glow Backdrops in Chestnut Brown, Cranberry & Harvest Gold */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#582F0E]/35 via-[#881337]/30 to-[#D4A373]/35 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-6 -right-6 w-44 h-44 bg-[#D4A373]/25 rounded-full blur-2xl pointer-events-none animate-pulse" />
+        <div className="absolute -bottom-6 -left-6 w-48 h-48 bg-[#881337]/25 rounded-full blur-2xl pointer-events-none" />
 
         {/* Rotating Golden Harvest Sunburst Aura behind card */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
@@ -142,13 +142,13 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
         </div>
 
         {/* Main Harvest Composition Card */}
-        <div className="card relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#2E150B]/95 via-[#1B0C06]/98 to-[#240E06] border-2 border-[#EA580C] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
+        <div className="card relative z-10 w-full rounded-3xl bg-gradient-to-b from-[#3B1F0E]/95 via-[#2E1C0C]/98 to-[#1F1006] border-2 border-[#D4A373] p-6 sm:p-8 shadow-warm-xl backdrop-blur-md overflow-hidden">
           {/* Decorative Corner Foliage & Harvest Accents */}
           <div className="absolute -top-2 -right-2 text-2xl rotate-12 drop-shadow-md select-none pointer-events-none">
             🍂🦃
           </div>
           <div className="absolute -bottom-2 -left-2 text-2xl -rotate-12 drop-shadow-md select-none pointer-events-none">
-            🌽🥧
+            🌾🎃
           </div>
 
           {/* Central Logo, Mascot & Woven Cornucopia Showcase */}
@@ -158,59 +158,59 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
               <div className="relative flex items-center justify-center gap-2 sm:gap-3">
                 {/* Cheerful Harvest Mascot Peanut on Left */}
                 <div className="hidden sm:block transform -rotate-6 hover:rotate-0 transition-transform">
-                  <HarvestPeanutSvg className="w-14 h-18 sm:w-16 sm:h-20 drop-shadow-[0_4px_12px_rgba(234,88,12,0.4)]" />
+                  <HarvestPeanutSvg className="w-14 h-18 sm:w-16 sm:h-20 drop-shadow-[0_4px_12px_rgba(212,163,115,0.4)]" />
                 </div>
 
                 {/* Glowing Warm Harvest Ring Wreath with Mani Wandering Logo */}
                 <div className="relative">
-                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#EA580C] via-[#D97706] to-[#881337] border-4 border-[#FDE047] p-2.5 shadow-warm-lg flex items-center justify-center mx-auto">
+                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-[#881337] via-[#582F0E] to-[#D4A373] border-4 border-[#D4A373] p-2.5 shadow-warm-lg flex items-center justify-center mx-auto">
                     <img
                       src="./logo.png"
                       alt="Mani Wandering Thanksgiving Harvest Logo"
-                      className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(234,88,12,0.6)]"
+                      className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(212,163,115,0.6)]"
                     />
                   </div>
                   {/* Floating Golden Autumn Leaves Cluster above wreath */}
                   <div className="absolute -top-3 -right-2 z-20 pointer-events-none transform rotate-12 drop-shadow-md">
                     <svg className="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 48 48" fill="none">
-                      <path d="M24 4 L27 14 L36 10 L34 20 L44 20 L36 28 L42 36 L32 36 L32 44 L24 38 L16 44 L16 36 L6 36 L12 28 L4 20 L14 20 L12 10 L21 14 Z" fill="#EA580C" stroke="#FDE047" strokeWidth="1" />
+                      <path d="M24 4 L27 14 L36 10 L34 20 L44 20 L36 28 L42 36 L32 36 L32 44 L24 38 L16 44 L16 36 L6 36 L12 28 L4 20 L14 20 L12 10 L21 14 Z" fill="#D4A373" stroke="#FDE047" strokeWidth="1" />
                     </svg>
                   </div>
                 </div>
 
                 {/* Bountiful Woven Cornucopia on Right */}
                 <div className="hidden sm:block transform rotate-6 hover:rotate-0 transition-transform">
-                  <HarvestCornucopiaSvg className="w-14 h-14 sm:w-16 sm:h-16 drop-shadow-[0_4px_12px_rgba(245,158,11,0.4)]" />
+                  <HarvestCornucopiaSvg className="w-14 h-14 sm:w-16 sm:h-16 drop-shadow-[0_4px_12px_rgba(212,163,115,0.4)]" />
                 </div>
               </div>
 
               {/* Autumn Harvest Ribbon Tag */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#EA580C] via-[#D97706] to-[#881337] text-white text-[11px] font-black uppercase tracking-wider px-4 py-0.5 rounded-full border border-amber-300 shadow-snack-sm flex items-center gap-1.5">
-                <span>🦃 Pasasalamat Feast</span>
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gradient-to-r from-[#881337] via-[#582F0E] to-[#D4A373] text-white text-[11px] font-black uppercase tracking-wider px-4 py-0.5 rounded-full border border-amber-300 shadow-snack-sm flex items-center gap-1.5">
+                <span>🦃 Fiesta ng Pasasalamat!</span>
               </div>
             </div>
 
             {/* Featured Autumn Harvest Tubs Mini Showcase */}
             <div className="pt-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#FBBF24] mb-3">
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#D4A373] mb-3">
                 ⭐ Pinakamasarap na Pang-Salo-Salo at Pasasalamat
               </p>
 
               <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
                 {/* Tub 1: Classic Harvest Salted */}
-                <div className="rounded-2xl p-2 bg-[#281309] border border-[#EA580C]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FBBF24] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-400/40">
+                <div className="rounded-2xl p-2 bg-[#2E1C0C] border border-[#D4A373]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#D4A373] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#D4A373]/40">
                     <img src="./images/products/salted.jpg" alt="Harvest Salted Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-amber-200 block leading-tight">🍂 Classic Salted</span>
+                    <span className="text-[10px] font-black text-amber-200 block leading-tight">🍂 Harvest Salted</span>
                     <span className="text-[9px] text-amber-100 font-medium">Suki Favorite</span>
                   </div>
                 </div>
 
                 {/* Tub 2: Campfire Heat Spicy */}
-                <div className="rounded-2xl p-2 bg-gradient-to-b from-[#38160A] to-[#240E06] border-2 border-[#EA580C] flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-amber-300 transition-all scale-105">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#EA580C]">
+                <div className="rounded-2xl p-2 bg-gradient-to-b from-[#582F0E] to-[#2E1C0C] border-2 border-[#D4A373] flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-amber-300 transition-all scale-105">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#D4A373]">
                     <img src="./images/products/spicy.jpg" alt="Campfire Spicy Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
@@ -220,8 +220,8 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
                 </div>
 
                 {/* Tub 3: Golden Yolk Feast Salted Egg */}
-                <div className="rounded-2xl p-2 bg-[#281309] border border-[#EA580C]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#FBBF24] transition-all">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-amber-400/40">
+                <div className="rounded-2xl p-2 bg-[#2E1C0C] border border-[#D4A373]/50 flex flex-col items-center text-center space-y-1.5 shadow-sm hover:border-[#D4A373] transition-all">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-[#D4A373]/40">
                     <img src="./images/products/salted-egg.jpg" alt="Golden Feast Salted Egg Mani" className="w-full h-full object-cover" />
                   </div>
                   <div>
@@ -234,14 +234,14 @@ export default function SeasonalHeroVisual({ themeId = 'halloween' }) {
 
             {/* 3 Value Pillars */}
             <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-extrabold text-amber-100">
-              <span className="inline-flex items-center gap-1 bg-[#220E06]/90 px-2.5 py-1 rounded-xl border border-[#EA580C]/40">
-                <Heart className="w-3 h-3 text-[#EA580C]" /> Salo-Salo Ready
+              <span className="inline-flex items-center gap-1 bg-[#2E1C0C]/90 px-2.5 py-1 rounded-xl border border-[#D4A373]/40">
+                <Heart className="w-3 h-3 text-[#D4A373]" /> Salo-Salo Ready
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#220E06]/90 px-2.5 py-1 rounded-xl border border-[#EA580C]/40">
-                <Award className="w-3 h-3 text-[#F59E0B]" /> Purong Crispy Bawang
+              <span className="inline-flex items-center gap-1 bg-[#2E1C0C]/90 px-2.5 py-1 rounded-xl border border-[#D4A373]/40">
+                <Sparkles className="w-3 h-3 text-[#D4A373]" /> Laging Bagong Luto
               </span>
-              <span className="inline-flex items-center gap-1 bg-[#220E06]/90 px-2.5 py-1 rounded-xl border border-[#EA580C]/40">
-                <Sparkles className="w-3 h-3 text-amber-300" /> Bagong Luto Weekly
+              <span className="inline-flex items-center gap-1 bg-[#2E1C0C]/90 px-2.5 py-1 rounded-xl border border-[#D4A373]/40">
+                <Users className="w-3 h-3 text-[#D4A373]" /> Pampamilyang Crunch
               </span>
             </div>
           </div>

@@ -126,10 +126,10 @@
   html[data-theme="thanksgiving"] body,
   body[data-theme="thanksgiving"],
   body.thanksgiving-theme {
-    background: linear-gradient(180deg, #1B0C06 0%, #281309 55%, #1B0C06 100%);
-    background-color: #1B0C06;
+    background: linear-gradient(180deg, #582F0E 0%, #3D1E0B 40%, #2E1C0C 100%);
+    background-color: #2E1C0C;
     color: #FFFBEB;
-    accent-color: #EA580C;
+    accent-color: #D4A373;
   }
 
   html[data-theme="new-year"] body,
@@ -190,7 +190,7 @@
 
   html[data-theme="thanksgiving"] :focus-visible,
   [data-theme="thanksgiving"] :focus-visible {
-    outline: 3px solid #EA580C;
+    outline: 3px solid #D4A373;
   }
 
   html[data-theme="new-year"] :focus-visible,
@@ -377,9 +377,10 @@
 [data-theme="thanksgiving"] .shadow-pumpkin-tub,
 .thanksgiving-theme .shadow-pumpkin-tub {
   box-shadow:
-    0 0 22px rgba(217, 119, 6, 0.35),
-    0 0 42px rgba(253, 230, 138, 0.3),
-    inset 0 0 14px rgba(217, 119, 6, 0.2);
+    0 0 24px rgba(212, 163, 115, 0.55),
+    0 4px 30px rgba(245, 158, 11, 0.4),
+    0 0 46px rgba(253, 230, 138, 0.3),
+    inset 0 0 16px rgba(212, 163, 115, 0.28);
 }
 
 [data-theme="new-year"] .shadow-pumpkin-tub {
@@ -426,9 +427,9 @@
 [data-theme="thanksgiving"] .shadow-pumpkin-card,
 .thanksgiving-theme .shadow-pumpkin-card {
   box-shadow:
-    0 8px 30px -4px rgba(234, 88, 12, 0.38),
-    0 0 20px rgba(245, 158, 11, 0.22),
-    0 4px 0 0 #EA580C;
+    0 8px 30px -4px rgba(88, 47, 14, 0.45),
+    0 0 22px rgba(212, 163, 115, 0.3),
+    0 4px 0 0 #D4A373;
 }
 
 [data-theme="new-year"] .shadow-pumpkin-card {
@@ -1209,55 +1210,55 @@ input[type=number] {
   --glow-harvest: rgba(234, 88, 12, 0.35); /* Warm luminous harvest glow */
 }
 
-/* 2. Page & Background Texture */
+/* 2. Page & Background Texture - Autumn Gradient & Subtle Pattern */
 body.thanksgiving-theme {
-  background-color: #1B0C06 !important;
+  background-color: #2E1C0C !important;
   color: #FFFBEB !important;
   background-image: 
-    radial-gradient(rgba(234, 88, 12, 0.22) 1.25px, transparent 1.25px),
-    radial-gradient(rgba(245, 158, 11, 0.16) 1.25px, #1B0C06 1.25px) !important;
+    radial-gradient(rgba(212, 163, 115, 0.22) 1.25px, transparent 1.25px),
+    radial-gradient(rgba(136, 19, 55, 0.16) 1.25px, #2E1C0C 1.25px) !important;
   background-size: 36px 36px !important;
   background-position: 0 0, 18px 18px !important;
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* 3. Hero & Header Festive Glow */
+/* 3. Hero & Header Festive Glow with Harvest Gold & Cranberry Accents */
 .thanksgiving-theme header,
 .thanksgiving-theme nav,
 .thanksgiving-theme .hero {
-  background: rgba(36, 17, 9, 0.94) !important;
+  background: rgba(46, 28, 12, 0.94) !important;
   backdrop-filter: blur(14px) !important;
-  border-bottom: 2px solid rgba(234, 88, 12, 0.75) !important;
-  box-shadow: 0 4px 24px rgba(234, 88, 12, 0.25) !important;
+  border-bottom: 2px solid rgba(212, 163, 115, 0.75) !important;
+  box-shadow: 0 4px 24px rgba(88, 47, 14, 0.35) !important;
 }
 
 /* Autumn Banner Badge for Hero/Headline */
 .thanksgiving-theme .hero-title::after,
 .thanksgiving-theme .hero h1::after {
-  content: " 🦃 Pasasalamat Edition";
+  content: " 🦃 Fiesta ng Pasasalamat!";
   display: inline-block;
   font-size: 0.45em;
   font-weight: 800;
   vertical-align: middle;
-  background: linear-gradient(135deg, #EA580C, #881337);
+  background: linear-gradient(135deg, #881337, #582F0E, #D4A373);
   color: #ffffff;
-  padding: 4px 12px;
+  padding: 4px 14px;
   border-radius: 999px;
   margin-left: 8px;
-  border: 1.5px solid #FDE047;
-  box-shadow: 0 2px 12px rgba(234, 88, 12, 0.4);
+  border: 1.5px solid #D4A373;
+  box-shadow: 0 2px 12px rgba(212, 163, 115, 0.45);
   letter-spacing: 0.5px;
 }
 
-/* 4. Product Cards & Content Containers - Preserves high-contrast card interiors */
+/* 4. Product Cards & Content Containers - Autumn Candlelight Glow */
 .thanksgiving-theme .card,
 .thanksgiving-theme .product-card {
-  border: 2px solid rgba(234, 88, 12, 0.65) !important;
+  border: 2px solid rgba(212, 163, 115, 0.65) !important;
   border-radius: 20px !important;
   box-shadow: 
-    0 8px 30px -4px rgba(234, 88, 12, 0.35),
-    0 0 20px rgba(245, 158, 11, 0.2),
-    0 4px 0 0 #EA580C !important;
+    0 8px 30px -4px rgba(88, 47, 14, 0.45),
+    0 0 24px rgba(212, 163, 115, 0.28),
+    0 4px 0 0 #D4A373 !important;
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
 }
 
@@ -1270,53 +1271,70 @@ body.thanksgiving-theme {
   right: 12px;
   font-size: 1.1rem;
   opacity: 0.75;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   pointer-events: none;
 }
 
 .thanksgiving-theme .card:hover,
 .thanksgiving-theme .product-card:hover {
   transform: translateY(-6px) scale(1.01) !important;
-  border-color: #FBBF24 !important;
+  border-color: #FDE047 !important;
   box-shadow: 
-    0 14px 38px -4px rgba(234, 88, 12, 0.5),
-    0 0 28px rgba(251, 191, 36, 0.35),
-    0 6px 0 0 #FBBF24 !important;
+    0 14px 38px -4px rgba(88, 47, 14, 0.65),
+    0 0 32px rgba(212, 163, 115, 0.45),
+    0 6px 0 0 #D4A373 !important;
 }
 
-/* 5. Buttons (CTAs & Order Buttons) */
+/* Candlelight golden box-shadow on tub photo */
+.thanksgiving-theme .product-card .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 24px rgba(212, 163, 115, 0.55),
+    0 4px 30px rgba(245, 158, 11, 0.4),
+    0 0 46px rgba(253, 230, 138, 0.3),
+    inset 0 0 16px rgba(212, 163, 115, 0.28) !important;
+}
+
+.thanksgiving-theme .product-card:hover .shadow-pumpkin-tub {
+  box-shadow:
+    0 0 32px rgba(212, 163, 115, 0.75),
+    0 6px 36px rgba(245, 158, 11, 0.55),
+    0 0 54px rgba(253, 230, 138, 0.45),
+    inset 0 0 20px rgba(212, 163, 115, 0.38) !important;
+}
+
+/* 5. Buttons (CTAs & Order Buttons) - Cranberry Red to Harvest Gold */
 .thanksgiving-theme button.btn-primary,
 .thanksgiving-theme .btn-primary,
 .thanksgiving-theme [class*="btn-primary"] {
-  background: linear-gradient(135deg, #EA580C 0%, #D97706 50%, #C2410C 100%) !important;
+  background: linear-gradient(135deg, #881337 0%, #9F1239 45%, #D4A373 100%) !important;
   color: #ffffff !important;
   font-weight: 800 !important;
-  border: 2px solid #FDE047 !important;
+  border: 2px solid #D4A373 !important;
   border-radius: 12px !important;
-  box-shadow: 0 4px 18px rgba(234, 88, 12, 0.45) !important;
+  box-shadow: 0 4px 18px rgba(136, 19, 55, 0.45) !important;
   transition: all 0.25s ease !important;
 }
 
 .thanksgiving-theme button.btn-primary:hover,
 .thanksgiving-theme .btn-primary:hover,
 .thanksgiving-theme [class*="btn-primary"]:hover {
-  background: linear-gradient(135deg, #F59E0B 0%, #EA580C 50%, #881337 100%) !important;
+  background: linear-gradient(135deg, #582F0E 0%, #881337 55%, #D4A373 100%) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 24px rgba(245, 158, 11, 0.55) !important;
+  box-shadow: 0 6px 24px rgba(212, 163, 115, 0.55) !important;
 }
 
 /* Small quantity adjustment steppers & close controls */
 .thanksgiving-theme .stepper-btn,
 .thanksgiving-theme button.stepper-btn {
   background: #ffffff !important;
-  color: #241306 !important;
-  border: 1px solid rgba(234, 88, 12, 0.35) !important;
+  color: #2E1C0C !important;
+  border: 1px solid rgba(212, 163, 115, 0.5) !important;
   border-radius: 8px !important;
 }
 .thanksgiving-theme .stepper-btn:hover {
   background: #FEF3C7 !important;
-  color: #92400E !important;
-  border-color: #F59E0B !important;
+  color: #78350F !important;
+  border-color: #D4A373 !important;
 }
 .thanksgiving-theme .stepper-btn:disabled {
   opacity: 0.35 !important;
@@ -1325,12 +1343,12 @@ body.thanksgiving-theme {
 
 /* Price Tags & Badges */
 .thanksgiving-theme .price {
-  background: linear-gradient(135deg, #EA580C, #C2410C) !important;
+  background: linear-gradient(135deg, #881337, #582F0E) !important;
   color: #ffffff !important;
   font-weight: 800 !important;
-  border: 1.5px solid #FDE047 !important;
+  border: 1.5px solid #D4A373 !important;
   border-radius: 8px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
 }
 
 /* 6. Falling and Swaying Leaves Animation */
